@@ -5,30 +5,30 @@
 'use strict';
 
 exports.run = async (core, server, socket, data) => {
-  if (socket.uType != 'admin') {
-    // ignore if not admin
-    return;
-  }
+	if (socket.uType != 'admin') {
+		// ignore if not admin
+		return;
+	}
 
-  let saveResult = core.managers.config.save();
+	let saveResult = core.managers.config.save();
 
-  if (!saveResult) {
-    server.reply({
-      cmd: 'warn',
-      text: 'Failed to save config, check logs.'
-    }, client);
+	if (!saveResult) {
+		server.reply({
+			cmd: 'warn',
+			text: 'Failed to save config, check logs.'
+		}, client);
 
-    return;
-  }
+		return;
+	}
 
-  server.broadcast({
-    cmd: 'info',
-    text: 'Config saved!'
-  }, { uType: 'mod' });
+	server.broadcast({
+		cmd: 'info',
+		text: 'Config saved!'
+	}, { uType: 'mod' });
 };
 
 exports.info = {
-  name: 'saveconfig',
-  usage: 'saveconfig',
-  description: 'Saves current config'
+	name: 'saveconfig',
+	usage: 'saveconfig',
+	description: 'Saves current config'
 };
