@@ -71,7 +71,7 @@ You can now run start the server software with a process manager like PM2.
 
 * **Marzavec** - *Initial work* - [https://github.com/marzavec](https://github.com/marzavec)
 
-See also the list of [contributors](https://github.com/hack-chat/main.git/contributors) who participated in this project.
+See also the list of [contributors](https://github.com/hack-chat/main/graphs/contributors) who participated in this project.
 
 ## License
 
@@ -79,4 +79,4 @@ This project is licensed under the WTFPL License - see the [http://www.wtfpl.net
 
 ## Acknowledgments
 
-* TODO
+* Andrew Belt [https://github.com/AndrewBelt/hack.chat](https://github.com/AndrewBelt/hack.chat)
