@@ -1,0 +1,47 @@
+body {
+  background: #272822;
+  color: #f8f8f2;
+}
+input,
+textarea {
+  color: #f8f8f2;
+}
+.messages {
+  border-color: #75715e;
+}
+.nick {
+  color: #66d9ef;
+}
+.trip {
+  color: #49483e;
+}
+.text a {
+  color: #f5f4f1;
+}
+.admin .nick {
+  color: #f92672;
+}
+.mod .nick {
+  color: #a1efe4;
+}
+.me .nick {
+  color: #ae81ff;
+}
+.info .nick,
+.info .text {
+  color: #a6e22e;
+}
+.warn .nick,
+.warn .text {
+  color: #f4bf75;
+}
+#footer {
+  background: #272822;
+}
+#sidebar {
+  background: #383830;
+  border-color: #75715e;
+}
+#chatform {
+  border-color: #75715e;
+}
