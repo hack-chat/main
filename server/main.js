@@ -1,11 +1,11 @@
 /**
-  * HackChat main server entry point
-  *
-  * Version: v2.0.0
-  * Developer: Marzavec ( https://github.com/marzavec )
-  * License: WTFPL ( http://www.wtfpl.net/txt/copying/ )
-  *
-  */
+	* HackChat main server entry point
+	*
+	* Version: v2.0.0
+	* Developer: Marzavec ( https://github.com/marzavec )
+	* License: WTFPL ( http://www.wtfpl.net/txt/copying/ )
+	*
+	*/
 
 'use strict';
 
