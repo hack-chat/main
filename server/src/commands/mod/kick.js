@@ -10,7 +10,11 @@ exports.run = async (core, server, socket, data) => {
     return;
   }
 
-  let targetNick = String(data.nick);
+  if (typeof data.nick !== 'string') {
+    return;
+  }
+
+  let targetNick = data.nick;
   let badClient = null;
   for (let client of server.clients) {
     // Find badClient's socket

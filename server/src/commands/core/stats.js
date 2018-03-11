@@ -50,6 +50,5 @@ exports.run = async (core, server, socket, data) => {
 
 exports.info = {
   name: 'stats',
-  usage: 'stats',
   description: 'Sends back current server stats to the calling client'
 };

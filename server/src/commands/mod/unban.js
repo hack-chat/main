@@ -10,11 +10,15 @@ exports.run = async (core, server, socket, data) => {
     return;
   }
 
-  let ip = String(data.ip);
-  let nick = String(data.nick); // for future upgrade
+  if (typeof data.ip !== 'string') {
+    return;
+  }
 
-  // TODO: remove ip from ratelimiter
-  // POLICE.pardon(ip)
+  let ip = data.ip;
+  let nick = data.nick; // for future upgrade
+
+  // TODO: support remove by nick future upgrade
+  server._police.pardon(badClient.remoteAddress);
   console.log(`${socket.nick} [${socket.trip}] unbanned ${/*nick || */ip} in ${socket.channel}`);
 
   server.reply({

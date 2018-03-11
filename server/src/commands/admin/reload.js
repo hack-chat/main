@@ -13,8 +13,9 @@ exports.run = async (core, server, socket, data) => {
   let loadResult = core.managers.dynamicImports.reloadDirCache('src/commands');
   loadResult += core.commands.loadCommands();
 
-  if (loadResult == '')
+  if (loadResult == '') {
     loadResult = 'Commands reloaded without errors!';
+  }
 
   server.reply({
     cmd: 'info',
@@ -29,6 +30,5 @@ exports.run = async (core, server, socket, data) => {
 
 exports.info = {
   name: 'reload',
-  usage: 'reload',
   description: '(Re)loads any new commands into memory, outputs errors if any'
 };

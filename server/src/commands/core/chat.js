@@ -4,15 +4,23 @@
 
 'use strict';
 
-exports.run = async (core, server, socket, data) => {
-  // process text
-  let text = String(data.text);
+function parseText(text) {
+  if (typeof text !== 'string') {
+    return false;
+  }
+
   // strip newlines from beginning and end
   text = text.replace(/^\s*\n|^\s+$|\n\s*$/g, '');
   // replace 3+ newlines with just 2 newlines
   text = text.replace(/\n{3,}/g, "\n\n");
+
+  return text;
+}
+
+exports.run = async (core, server, socket, data) => {
+  let text = parseText(data.text);
   if (!text) {
-    // lets not send empty text?
+    // lets not send objects or empty text, yea?
     return;
   }
 

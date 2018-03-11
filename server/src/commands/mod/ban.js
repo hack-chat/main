@@ -10,7 +10,11 @@ exports.run = async (core, server, socket, data) => {
     return;
   }
 
-  let targetNick = String(data.nick);
+  if (typeof data.nick !== 'string') {
+    return;
+  }
+
+  let targetNick = data.nick;
   let badClient = null;
   for (let client of server.clients) {
     // Find badClient's socket
@@ -38,11 +42,12 @@ exports.run = async (core, server, socket, data) => {
     return;
   }
 
-  // TODO: ratelimiting here
   // TODO: add reference to banned users nick or unban by nick cmd
-  //POLICE.arrest(getAddress(badClient))
+  server._police.arrest(badClient.remoteAddress);
   // TODO: add event to log?
+
   console.log(`${socket.nick} [${socket.trip}] banned ${targetNick} in ${socket.channel}`);
+
   server.broadcast({
     cmd: 'info',
     text: `Banned ${targetNick}`

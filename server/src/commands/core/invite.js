@@ -9,14 +9,16 @@ function verifyNickname(nick) {
 }
 
 exports.run = async (core, server, socket, data) => {
-  let targetNick = String(data.nick);
+  if (typeof data.nick !== 'string') {
+    return;
+  }
 
-  if (!verifyNickname(targetNick)) {
+  if (!verifyNickname(data.nick)) {
     // Not a valid nickname? Chances are we won't find them
     return;
   }
 
-  if (targetNick == socket.nick) {
+  if (data.nick == socket.nick) {
     // TODO: reply with something witty? They invited themself
     return;
   }
@@ -36,7 +38,7 @@ exports.run = async (core, server, socket, data) => {
     cmd: 'info',
     text: `${socket.nick} invited you to ?${channel}`
   };
-  let inviteSent = server.broadcast( payload, { channel: socket.channel, nick: targetNick });
+  let inviteSent = server.broadcast( payload, { channel: socket.channel, nick: data.nick });
 
   if (!inviteSent) {
     server.reply({
@@ -49,7 +51,7 @@ exports.run = async (core, server, socket, data) => {
 
   server.reply({
     cmd: 'info',
-    text: `You invited ${targetNick} to ?${channel}`
+    text: `You invited ${data.nick} to ?${channel}`
   }, socket);
 
   core.managers.stats.increment('invites-sent');

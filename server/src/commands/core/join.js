@@ -32,14 +32,18 @@ exports.run = async (core, server, socket, data) => {
     return;
   }
 
-  let channel = String(data.channel).trim();
+  if (typeof data.channel !== 'string' || typeof data.nick !== 'string') {
+    return;
+  }
+
+  let channel = data.channel.trim();
   if (!channel) {
     // Must join a non-blank channel
     return;
   }
 
   // Process nickname
-  let nick = String(data.nick);
+  let nick = data.nick;
   let nickArray = nick.split('#', 2);
   nick = nickArray[0].trim();
 

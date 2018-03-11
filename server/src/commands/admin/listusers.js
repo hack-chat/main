@@ -36,6 +36,5 @@ exports.run = async (core, server, socket, data) => {
 
 exports.info = {
   name: 'listusers',
-  usage: 'listusers',
   description: 'Outputs all current channels and sockets in those channels'
 };

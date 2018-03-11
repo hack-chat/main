@@ -79,4 +79,6 @@ This project is licensed under the WTFPL License - see the [http://www.wtfpl.net
 
 ## Acknowledgments
 
-* Andrew Belt [https://github.com/AndrewBelt/hack.chat](https://github.com/AndrewBelt/hack.chat)
+* Andrew Belt, [https://github.com/AndrewBelt/hack.chat](https://github.com/AndrewBelt/hack.chat), for original base work
+
+* wwAndrew [https://github.com/sendMeYourGitOrSomething](https://youtu.be/oHg5SJYRHA0), for finding server flaws including attack vectors

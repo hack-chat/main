@@ -63,7 +63,6 @@ class server extends wsServer {
     * @param {String} data Message sent from client
     */
   handleData (socket, data) {
-    // TODO: Rate limit here
     // Don't penalize yet, but check whether IP is rate-limited
     if (this._police.frisk(socket.remoteAddress, 0)) {
       this.reply({ cmd: 'warn', text: "Your IP is being rate-limited or blocked." }, socket);
@@ -87,18 +86,23 @@ class server extends wsServer {
       socket.close();
     }
 
-    if (args === null)
+    if (args === null) {
       return;
+    }
 
-    if (typeof args.cmd === 'undefined' || args.cmd == 'ping')
+    if (typeof args.cmd === 'undefined' || args.cmd == 'ping') {
       return;
+    }
 
-    var cmd = args.cmd;
-
-    if (typeof socket.channel === 'undefined' && cmd !== 'join')
+    if (typeof args.cmd !== 'string') {
       return;
+    }
 
-    if (typeof this._cmdBlacklist[cmd] === 'function') {
+    if (typeof socket.channel === 'undefined' && args.cmd !== 'join') {
+      return;
+    }
+
+    if (typeof this._cmdBlacklist[args.cmd] === 'function') {
       return;
     }
 

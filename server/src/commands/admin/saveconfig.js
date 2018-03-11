@@ -21,6 +21,11 @@ exports.run = async (core, server, socket, data) => {
     return;
   }
 
+  server.reply({
+    cmd: 'info',
+    text: 'Config saved!'
+  }, socket);
+
   server.broadcast({
     cmd: 'info',
     text: 'Config saved!'
@@ -29,6 +34,5 @@ exports.run = async (core, server, socket, data) => {
 
 exports.info = {
   name: 'saveconfig',
-  usage: 'saveconfig',
   description: 'Saves current config'
 };
