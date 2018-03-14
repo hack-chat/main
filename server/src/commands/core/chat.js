@@ -1,10 +1,10 @@
 /*
-
+  Description: Rebroadcasts any `text` to all clients in a `channel`
 */
 
 'use strict';
 
-function parseText(text) {
+const parseText = (text) => {
   if (typeof text !== 'string') {
     return false;
   }
@@ -15,7 +15,7 @@ function parseText(text) {
   text = text.replace(/\n{3,}/g, "\n\n");
 
   return text;
-}
+};
 
 exports.run = async (core, server, socket, data) => {
   let text = parseText(data.text);

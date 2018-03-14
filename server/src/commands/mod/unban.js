@@ -1,5 +1,5 @@
 /*
-
+  Description: Removes a target ip from the ratelimiter
 */
 
 'use strict';
@@ -15,16 +15,31 @@ exports.run = async (core, server, socket, data) => {
   }
 
   let ip = data.ip;
-  let nick = data.nick; // for future upgrade
+  let hash = data.hash; // TODO unban by hash
 
-  // TODO: support remove by nick future upgrade
-  server._police.pardon(badClient.remoteAddress);
-  console.log(`${socket.nick} [${socket.trip}] unbanned ${/*nick || */ip} in ${socket.channel}`);
+  // TODO unban by hash
+  let recordFound = server._police.pardon(data.ip);
+
+  if (!recordFound) {
+    server.reply({
+      cmd: 'warn',
+      text: 'Could not find target in records'
+    }, socket);
+
+    return;
+  }
+
+  console.log(`${socket.nick} [${socket.trip}] unbanned ${/*hash || */ip} in ${socket.channel}`);
 
   server.reply({
     cmd: 'info',
-    text: `Unbanned ${/*nick || */ip}`
+    text: `${socket.nick} unbanned a userhash: ${server.getSocketHash(ip)}`
   }, socket);
+
+  server.broadcast({
+    cmd: 'info',
+    text: `${socket.nick} unbanned a userhash: ${server.getSocketHash(ip)}`
+  }, { uType: 'mod' });
 
   core.managers.stats.decrement('users-banned');
 };

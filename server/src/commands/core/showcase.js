@@ -1,5 +1,5 @@
 /*
-
+  Description: This is a template module that should not be on prod
 */
 
 'use strict';
@@ -14,21 +14,26 @@ const createReply = (echoInput) => {
   return `You want me to echo: ${echoInput}?`
 };
 
-// `exports.run()` is required and will always be passed (core, server, socket, data)
-// be sure it's asyn too
-// this is the main function
+/*
+  `exports.run()` is required and will always be passed (core, server, socket, data)
+
+  be sure it's async too
+  this is the main function that will run when called
+*/
 exports.run = async (core, server, socket, data) => {
 
   server.reply({
     cmd: 'info',
-    text: `SHOWCASE MODULE: ${core.showcase} - ${this.createReply(data.echo)}`
+    text: `SHOWCASE MODULE: ${core.showcase} - ${createReply(data.echo)}`
   }, socket);
 
 };
 
-// `exports.init()` is optional, and will only be run when the module is loaded into memory
-// it will always be passed a reference to the global core class
-// note: this will fire again if a reload is issued, keep that in mind
+/*
+  `exports.init()` is optional, and will only be run when the module is loaded into memory
+  it will always be passed a reference to the global core class
+  note: this will fire again if a reload is issued, keep that in mind
+*/
 exports.init = (core) => {
   if (typeof core.showcase === 'undefined') {
     core.showcase = 'init is a handy place to put global data by assigning it to `core`';

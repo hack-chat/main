@@ -1,5 +1,5 @@
 /*
-
+  Description: Forces a change on the target socket's channel, then broadcasts event
 */
 
 'use strict';
@@ -15,16 +15,9 @@ exports.run = async (core, server, socket, data) => {
   }
 
   let targetNick = data.nick;
-  let badClient = null;
-  for (let client of server.clients) {
-    // Find badClient's socket
-    if (client.channel == socket.channel && client.nick == targetNick) {
-      badClient = client;
-      break;
-    }
-  }
+  let badClient = server.findSockets({ channel: socket.channel, nick: targetNick });
 
-  if (!badClient) {
+  if (badClient.length === 0) {
     server.reply({
       cmd: 'warn',
       text: 'Could not find user in channel'
@@ -32,6 +25,8 @@ exports.run = async (core, server, socket, data) => {
 
     return;
   }
+
+  badClient = badClient[0];
 
   if (badClient.uType !== 'user') {
     server.reply({
@@ -42,7 +37,6 @@ exports.run = async (core, server, socket, data) => {
     return;
   }
 
-  // TODO: add event to log?
   let newChannel = Math.random().toString(36).substr(2, 8);
   badClient.channel = newChannel;
 
@@ -54,7 +48,7 @@ exports.run = async (core, server, socket, data) => {
     nick: targetNick
   }, { channel: socket.channel });
 
-  // publicly broadcast event (TODO: should this be supressed?)
+  // publicly broadcast event
   server.broadcast({
     cmd: 'info',
     text: `Kicked ${targetNick}`

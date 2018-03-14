@@ -1,5 +1,5 @@
 /*
-
+  Description: Adds the target socket's ip to the ratelimiter
 */
 
 'use strict';
@@ -15,16 +15,9 @@ exports.run = async (core, server, socket, data) => {
   }
 
   let targetNick = data.nick;
-  let badClient = null;
-  for (let client of server.clients) {
-    // Find badClient's socket
-    if (client.channel == socket.channel && client.nick == targetNick) {
-      badClient = client;
-      break;
-    }
-  }
+  let badClient = server.findSockets({ channel: socket.channel, nick: targetNick });
 
-  if (!badClient) {
+  if (badClient.length === 0) {
     server.reply({
       cmd: 'warn',
       text: 'Could not find user in channel'
@@ -32,6 +25,8 @@ exports.run = async (core, server, socket, data) => {
 
     return;
   }
+
+  badClient = badClient[0];
 
   if (badClient.uType !== 'user') {
     server.reply({
@@ -42,16 +37,21 @@ exports.run = async (core, server, socket, data) => {
     return;
   }
 
-  // TODO: add reference to banned users nick or unban by nick cmd
+  // TODO unban by hash
   server._police.arrest(badClient.remoteAddress);
-  // TODO: add event to log?
 
   console.log(`${socket.nick} [${socket.trip}] banned ${targetNick} in ${socket.channel}`);
 
   server.broadcast({
     cmd: 'info',
     text: `Banned ${targetNick}`
-  }, { channel: socket.channel });
+  }, { channel: socket.channel, uType: 'user' });
+
+  server.broadcast({
+    cmd: 'info',
+    text: `${socket.nick} banned ${targetNick} in ${socket.channel}, userhash: ${server.getSocketHash(badClient)}`
+  }, { uType: 'mod' });
+
   badClient.close();
 
   core.managers.stats.increment('users-banned');

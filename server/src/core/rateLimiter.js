@@ -97,7 +97,10 @@ class Police {
 
     if (record) {
       record.arrested = false;
+      return true;
     }
+
+    return false;
   }
 }
 

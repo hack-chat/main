@@ -1,5 +1,5 @@
 /*
-
+  Description: Adds the target trip to the mod list then elevates the uType
 */
 
 'use strict';
@@ -16,14 +16,16 @@ exports.run = async (core, server, socket, data) => {
 
   core.config.mods.push(mod); // purposely not using `config.set()` to avoid auto-save
 
-  for (let client of server.clients) {
-    if (typeof client.trip !== 'undefined' && client.trip === data.trip) {
-      client.uType = 'mod';
+  let newMod = server.findSockets({ trip: data.trip });
 
-      server.reply({
+  if (newMod.length !== 0) {
+    for (let i = 0, l = newMod.length; i < l; i++) {
+      newMod[i].uType = 'mod';
+
+      server.send({
         cmd: 'info',
         text: 'You are now a mod.'
-      }, client);
+      }, newMod[i]);
     }
   }
 

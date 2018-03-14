@@ -1,12 +1,12 @@
 /*
-
+  Description: Generates a semi-unique channel name then broadcasts it to each client
 */
 
 'use strict';
 
-function verifyNickname(nick) {
+const verifyNickname = (nick) => {
   return /^[a-zA-Z0-9_]{1,24}$/.test(nick);
-}
+};
 
 exports.run = async (core, server, socket, data) => {
   if (typeof data.nick !== 'string') {
@@ -19,7 +19,7 @@ exports.run = async (core, server, socket, data) => {
   }
 
   if (data.nick == socket.nick) {
-    // TODO: reply with something witty? They invited themself
+    // They invited themself
     return;
   }
 

@@ -10,13 +10,16 @@
 'use strict';
 
 const wsServer = require('ws').Server;
+const socketReady = require('ws').OPEN;
+const crypto = require('crypto');
+const ipSalt = (Math.random().toString(36).substring(2, 16) + Math.random().toString(36).substring(2, (Math.random() * 16))).repeat(16);
 const Police = require('./rateLimiter');
 
 class server extends wsServer {
   /**
    * Create a HackChat server instance.
    *
-   * @param {Object} core Reference to the core server object
+   * @param {Object} core Reference to the global core object
    */
   constructor (core) {
     super({ port: core.config.websocketPort });
@@ -78,6 +81,7 @@ class server extends wsServer {
       return;
     }
 
+    // Start sent data verification
     var args = null;
     try {
       args = JSON.parse(data);
@@ -106,6 +110,7 @@ class server extends wsServer {
       return;
     }
 
+    // Finished verification, pass to command modules
     this._core.commands.handleCommand(this, socket, args);
   }
 
@@ -122,8 +127,8 @@ class server extends wsServer {
           nick: socket.nick
         }, { channel: socket.channel });
       }
-    } catch (e) {
-      // TODO: Should this be added to the error log?
+    } catch (err) {
+      console.log(`Server, handle close event error: ${err}`);
     }
   }
 
@@ -134,9 +139,7 @@ class server extends wsServer {
     * @param {String} err The sad stuff
     */
   handleError (socket, err) {
-    // Meh, yolo
-    // I mean;
-    // TODO: Should this be added to the error log?
+    console.log(`Server error: ${err}`);
   }
 
   /**
@@ -150,7 +153,7 @@ class server extends wsServer {
     data.time = Date.now();
 
     try {
-      if (socket.readyState == 1) { // Who says statically checking port status is bad practice? Everyone? Damnit. #TODO
+      if (socket.readyState === socketReady) {
         socket.send(JSON.stringify(data));
       }
     } catch (e) { }
@@ -170,16 +173,36 @@ class server extends wsServer {
     * Finds sockets/clients that meet the filter requirements, then passes the data to them
     *
     * @param {Object} data Object to convert to json for transmission
+    * @param {Object} filter see `this.findSockets()`
+    */
+  broadcast (data, filter) {
+    let targetSockets = this.findSockets(filter);
+
+    if (targetSockets.length === 0) {
+      return false;
+    }
+
+    for (let i = 0, l = targetSockets.length; i < l; i++) {
+      this.send(data, targetSockets[i]);
+    }
+
+    return true;
+  }
+
+  /**
+    * Finds sockets/clients that meet the filter requirements, returns result as array
+    *
+    * @param {Object} data Object to convert to json for transmission
     * @param {Object} filter The socket must of equal or greater attribs matching `filter`
     *                        = {} // matches all
     *                        = { channel: 'programming' } // matches any socket where (`socket.channel` === 'programming')
     *                        = { channel: 'programming', nick: 'Marzavec' } // matches any socket where (`socket.channel` === 'programming' && `socket.nick` === 'Marzavec')
     */
-  broadcast (data, filter) {
+  findSockets (filter) {
     let filterAttribs = Object.keys(filter);
     let reqCount = filterAttribs.length;
     let curMatch;
-    let sent = false;
+    let matches = [];
     for ( let socket of this.clients ) {
       curMatch = 0;
 
@@ -189,12 +212,29 @@ class server extends wsServer {
       }
 
       if (curMatch === reqCount) {
-        this.send(data, socket);
-        sent = true;
+        matches.push(socket);
       }
     }
 
-    return sent;
+    return matches;
+  }
+
+  /**
+    * Encrypts target socket's remote address using non-static variable length salt
+    * encodes and shortens the output, returns that value
+    *
+    * @param {Object||String} target Either the target socket or ip as string
+    */
+  getSocketHash (target) {
+    let sha = crypto.createHash('sha256');
+
+    if (typeof target === 'string') {
+      sha.update(target + ipSalt);
+    } else {
+      sha.update(target.remoteAddress + ipSalt);
+    }
+
+    return sha.digest('base64').substr(0, 15);
   }
 }
 

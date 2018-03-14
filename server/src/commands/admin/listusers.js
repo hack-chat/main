@@ -1,5 +1,5 @@
 /*
-
+  Description: Outputs all current channels and their user nicks
 */
 
 'use strict';

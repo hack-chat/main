@@ -202,10 +202,8 @@ class ConfigManager {
       fse.removeSync(backupPath);
 
       return true;
-    } catch (e) {
-      // TODO: restore backup
-      // TODO: output to logging engine?
-      console.log('Failed to save config file!');
+    } catch (err) {
+      console.log(`Failed to save config file: ${err}`);
 
       return false;
     }

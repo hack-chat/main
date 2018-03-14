@@ -1,5 +1,5 @@
 /*
-
+  Description: Outputs the current command module list or command categories
 */
 
 'use strict';
@@ -44,9 +44,8 @@ exports.run = async (core, server, socket, data) => {
   }, socket);
 };
 
-// optional parameters are marked, all others are required
 exports.info = {
-  name: 'help', // actual command name
+  name: 'help',
   usage: 'help ([ type:categories] | [category:<category name> | command:<command name> ])',
   description: 'Outputs information about the servers current protocol'
 };

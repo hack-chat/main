@@ -1,5 +1,5 @@
 /*
-
+  Description: Emmits a server-wide message as `info`
 */
 
 'use strict';

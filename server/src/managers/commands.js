@@ -17,7 +17,7 @@ class CommandManager {
   /**
     * Create a `CommandManager` instance for handling commands/protocol
     *
-    * @param {Object} core reference to the global core object
+    * @param {Object} core Reference to the global core object
     */
   constructor (core) {
     this.core = core;
@@ -57,8 +57,7 @@ class CommandManager {
     let error = this._validateCommand(command);
 
     if (error) {
-      // TODO: Add to logger?
-      let errText = `Failed to load '${name}': ${error}\n\n`;
+      let errText = `Failed to load '${name}': ${error}`;
       console.log(errText);
       return errText;
     }
@@ -82,8 +81,7 @@ class CommandManager {
       try {
         command.init(this.core);
       } catch (err) {
-        // TODO: Add to logger?
-        let errText = `Failed to initialize '${name}': ${err}\n\n`;
+        let errText = `Failed to initialize '${name}': ${err}`;
         console.log(errText);
         return errText;
       }
@@ -227,8 +225,7 @@ class CommandManager {
     try {
       return await command.run(this.core, server, socket, data);
     } catch (err) {
-      // TODO: Add to logger?
-      let errText = `Failed to execute '${command.info.name}': ${err}\n\n`;
+      let errText = `Failed to execute '${command.info.name}': ${err}`;
       console.log(errText);
 
       server.reply({

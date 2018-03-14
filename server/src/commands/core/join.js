@@ -1,20 +1,20 @@
 /*
-
+  Description: Initial entry point, applies `channel` and `nick` to the calling socket
 */
 
 'use strict';
 
 const crypto = require('crypto');
 
-function hash(password) {
-  var sha = crypto.createHash('sha256');
+const hash = (password) => {
+  let sha = crypto.createHash('sha256');
   sha.update(password);
   return sha.digest('base64').substr(0, 6);
-}
+};
 
-function verifyNickname(nick) {
+const verifyNickname = (nick) => {
   return /^[a-zA-Z0-9_]{1,24}$/.test(nick);
-}
+};
 
 exports.run = async (core, server, socket, data) => {
   if (server._police.frisk(socket.remoteAddress, 3)) {
@@ -53,7 +53,7 @@ exports.run = async (core, server, socket, data) => {
       text: 'Nickname must consist of up to 24 letters, numbers, and underscores'
     }, socket);
 
-    return
+    return;
   }
 
   for (let client of server.clients) {
@@ -99,7 +99,8 @@ exports.run = async (core, server, socket, data) => {
   server.broadcast({
     cmd: 'onlineAdd',
     nick: nick,
-    trip: trip || 'null'
+    trip: trip || 'null',
+    hash: server.getSocketHash(socket)
   }, { channel: channel });
 
   socket.uType = uType;

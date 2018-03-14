@@ -1,5 +1,5 @@
 /*
-
+  Description: Clears and resets the command modules, outputting any errors
 */
 
 'use strict';
@@ -14,7 +14,9 @@ exports.run = async (core, server, socket, data) => {
   loadResult += core.commands.loadCommands();
 
   if (loadResult == '') {
-    loadResult = 'Commands reloaded without errors!';
+    loadResult = `Loaded ${core.commands._commands.length} commands, 0 errors`;
+  } else {
+    loadResult = `Loaded ${core.commands._commands.length} commands, error(s): ${loadResult}`;
   }
 
   server.reply({

@@ -1,5 +1,5 @@
 /*
-
+  Description: Writes any changes to the config to the disk
 */
 
 'use strict';
