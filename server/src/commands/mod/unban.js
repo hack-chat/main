@@ -10,44 +10,48 @@ exports.run = async (core, server, socket, data) => {
     return;
   }
 
-  if (typeof data.ip !== 'string') {
-    return;
-  }
-
-  let ip = data.ip;
-  let hash = data.hash; // TODO unban by hash
-
-  // TODO unban by hash
-  let recordFound = server._police.pardon(data.ip);
-
-  if (!recordFound) {
+  if (typeof data.ip !== 'string' && typeof data.hash !== 'string') {
     server.reply({
       cmd: 'warn',
-      text: 'Could not find target in records'
+      text: "hash:'targethash' or ip:'1.2.3.4' is required"
     }, socket);
 
     return;
   }
 
-  console.log(`${socket.nick} [${socket.trip}] unbanned ${/*hash || */ip} in ${socket.channel}`);
+  let mode, target;
+
+  if (typeof data.ip === 'string') {
+    mode = 'ip';
+    target = data.ip;
+  } else {
+    mode = 'hash';
+    target = data.hash;
+  }
+
+  server._police.pardon(target);
+
+  if (mode === 'ip') {
+    target = server.getSocketHash(target);
+  }
+
+  console.log(`${socket.nick} [${socket.trip}] unbanned ${target} in ${socket.channel}`);
 
   server.reply({
     cmd: 'info',
-    text: `${socket.nick} unbanned a userhash: ${server.getSocketHash(ip)}`
+    text: `Unbanned ${target}`
   }, socket);
 
   server.broadcast({
     cmd: 'info',
-    text: `${socket.nick} unbanned a userhash: ${server.getSocketHash(ip)}`
+    text: `${socket.nick} unbanned: ${target}`
   }, { uType: 'mod' });
 
   core.managers.stats.decrement('users-banned');
 };
 
-exports.requiredData = ['ip'];
-
 exports.info = {
   name: 'unban',
-  usage: 'unban {ip}',
+  usage: 'unban {[ip || hash]}',
   description: 'Removes target ip from the ratelimiter'
 };

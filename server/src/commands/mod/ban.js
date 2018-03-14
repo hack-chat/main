@@ -38,7 +38,8 @@ exports.run = async (core, server, socket, data) => {
   }
 
   // TODO unban by hash
-  server._police.arrest(badClient.remoteAddress);
+  let clientHash = server.getSocketHash(badClient);
+  server._police.arrest(badClient.remoteAddress, clientHash);
 
   console.log(`${socket.nick} [${socket.trip}] banned ${targetNick} in ${socket.channel}`);
 
@@ -49,7 +50,7 @@ exports.run = async (core, server, socket, data) => {
 
   server.broadcast({
     cmd: 'info',
-    text: `${socket.nick} banned ${targetNick} in ${socket.channel}, userhash: ${server.getSocketHash(badClient)}`
+    text: `${socket.nick} banned ${targetNick} in ${socket.channel}, userhash: ${clientHash}`
   }, { uType: 'mod' });
 
   badClient.close();

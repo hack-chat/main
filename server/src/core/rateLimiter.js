@@ -18,6 +18,7 @@ class Police {
     this._records = {};
     this._halflife = 30000; // ms
     this._threshold = 25;
+    this._hashes = [];
   }
 
   /**
@@ -76,12 +77,11 @@ class Police {
     *
     * @memberof Police
     */
-  arrest (id) {
-    var record = this.search(id);
+  arrest (id, hash) {
+    let record = this.search(id);
 
-    if (record) {
-      record.arrested = true;
-    }
+    record.arrested = true;
+    this._hashes[hash] = id;
   }
 
   /**
@@ -93,14 +93,12 @@ class Police {
     * @memberof Police
     */
   pardon (id) {
-    var record = this.search(id);
-
-    if (record) {
-      record.arrested = false;
-      return true;
+    if (typeof this._hashes[id] !== 'undefined') {
+      id = this._hashes[id];
     }
-
-    return false;
+    
+    let record = this.search(id);
+    record.arrested = false;
   }
 }
 
