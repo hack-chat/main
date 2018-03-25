@@ -52,7 +52,7 @@ exports.run = async (core, server, socket, data) => {
   server.broadcast({
     cmd: 'info',
     text: `Kicked ${targetNick}`
-  }, { channel: socket.channel });
+  }, { channel: socket.channel, uType: 'user' });
 
   // inform mods with where they were sent
   server.broadcast({

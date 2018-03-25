@@ -36,6 +36,7 @@ exports.run = async (core, server, socket, data) => {
 
   let payload = {
     cmd: 'info',
+    invite: channel,
     text: `${socket.nick} invited you to ?${channel}`
   };
   let inviteSent = server.broadcast( payload, { channel: socket.channel, nick: data.nick });

@@ -19,14 +19,13 @@ var frontpage = [
 	"Whitespace is preserved, so source code can be pasted verbatim.",
 	"Surround LaTeX with a dollar sign for inline style $\\zeta(2) = \\pi^2/6$, and two dollars for display. $$\\int_0^1 \\int_0^1 \\frac{1}{1-xy} dx dy = \\frac{\\pi^2}{6}$$",
 	"",
-	"GitHub: https://github.com/AndrewBelt/hack.chat",
+	"Current Github: https://github.com/hack-chat includes server and client source along with other resources",
+	"",
+	"Legacy GitHub: https://github.com/AndrewBelt/hack.chat",
 	"Android apps: https://goo.gl/UkbKYy https://goo.gl/qasdSu https://goo.gl/fGQFQN",
 	"",
-	"Server and web client released under the MIT open source license.",
-	"No message history is retained on the hack.chat server.",
-	"",
-	"[03/03/2018] Please note that the server is currently undergoing changes, expect random downtime or disconnections!",
-	"[03/03/2018] Hack.chat is now under new management by the core community; @raf924 @bacon @wwandrew @Rut @_0x17 @M4GNV5 @MinusGix @nanotech",
+	"Server and web client released under the WTFPL and MIT open source license.",
+	"No message history is retained on the hack.chat server."
 ].join("\n")
 
 function $(query) {return document.querySelector(query)}
@@ -60,8 +59,13 @@ window.setInterval(function() {
 
 
 function join(channel) {
-
-		ws = new WebSocket('ws://127.0.0.1:6060')
+	if (document.domain == 'hack.chat') {
+		// For https://hack.chat/
+		ws = new WebSocket('wss://hack.chat/chat-ws')
+	} else {
+		// for local installs
+		ws = new WebSocket('ws://' + document.domain + ':6060')
+	}
 
 	var wasConnected = false
 

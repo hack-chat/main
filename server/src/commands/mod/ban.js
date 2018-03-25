@@ -37,7 +37,6 @@ exports.run = async (core, server, socket, data) => {
     return;
   }
 
-  // TODO unban by hash
   let clientHash = server.getSocketHash(badClient);
   server._police.arrest(badClient.remoteAddress, clientHash);
 
