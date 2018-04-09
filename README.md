@@ -17,17 +17,17 @@ The following versions are __required__:
     npm >= 5.7.1
 ```
 
-An installation guide for you operating system can be found at: [https://nodejs.org/en/download/package-manager/](https://nodejs.org/en/download/package-manager/)
+An installation guide for your operating system can be found at: [https://nodejs.org/en/download/package-manager/](https://nodejs.org/en/download/package-manager/)
 
 ### Installing
 
-First you will first need to clone this git, if you are unfamiliar with this processes read [https://help.github.com/articles/cloning-a-repository/](https://help.github.com/articles/cloning-a-repository/), or to clone with git:
+First you will first need to clone this git, if you are unfamiliar with this process read [https://help.github.com/articles/cloning-a-repository/](https://help.github.com/articles/cloning-a-repository/), or to clone with git:
 
 ```
 git clone https://github.com/hack-chat/main.git
 ```
 
-Once cloned, the server will need to be setup. Using your terminal:
+Once cloned, the server will need to be setup. Using your terminal run:
 
 ```
 cd main/server/
@@ -41,7 +41,7 @@ cd main/server/
 yarn install
 ```
 
-This will install the required packages to run hack.chat. Next it will need to be configured, again in your terminal:
+This will install the required packages to run hack.chat. Next the server will need to be configured, again in your terminal run:
 
 ```
 node main.js
@@ -69,7 +69,7 @@ Config generated! You may now start the server normally.
 
 ___Note:___ if you change the `websocketPort` option during the config setup then these changes will need to be reflected on line 64 of the [client.js](https://github.com/hack-chat/main/blob/master/client/client.js#L64).
 
-After the config script runs, the process will exit & will need to be relaunched. For a production environment we recommend using [PM2](https://github.com/Unitech/pm2) to start the server:
+After the config script runs, the process will exit & the server will need to be relaunched. For a production environment we recommend using [PM2](https://github.com/Unitech/pm2) to start the server:
 
 ```
 cd main/server/
