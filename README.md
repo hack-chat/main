@@ -2,6 +2,8 @@
 
 [https://hack.chat/](https://hack.chat/) is a minimal, distraction-free, account-less, log-less, disappearing chat service that is easily deployable as your own service. The client comes bundled with LaTeX rendering provided by [https://github.com/Khan/KaTeX](https://github.com/Khan/KaTeX).
 
+A list of software developed for the hack.chat framework can be found at: [https://github.com/hack-chat/3rd-party-software-list](https://github.com/hack-chat/3rd-party-software-list). This includes bots, clients, docker containers & more.
+
 This is a backwards compatible continuation of the work by Andrew Belt [https://github.com/AndrewBelt/hack.chat](https://github.com/AndrewBelt/hack.chat). The server code has been updated to ES6 along with several new features- including new commands and hot-reload of the commands/protocol.
 
 ## Getting Started
