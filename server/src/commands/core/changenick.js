@@ -45,7 +45,7 @@ exports.run = async (core, server, socket, data) => {
   }
 
   let userExists = server.findSockets({
-    channel: data.channel,
+    channel: socket.channel,
     nick: (targetNick) => targetNick.toLowerCase() === newNick.toLowerCase()
   });
 
