@@ -5,62 +5,70 @@
 'use strict';
 
 exports.run = async (core, server, socket, data) => {
-  if (socket.uType == 'user') {
+  if (socket.uType === 'user') {
     // ignore if not mod or admin
     return;
   }
 
   if (typeof data.nick !== 'string') {
-    return;
+    if (typeof data.nick !== 'object' && !Array.isArray(data.nick)) {
+      return;
+    }
   }
 
-  let targetNick = data.nick;
-  let badClient = server.findSockets({ channel: socket.channel, nick: targetNick });
+  let badClients = server.findSockets({ channel: socket.channel, nick: data.nick });
 
-  if (badClient.length === 0) {
+  if (badClients.length === 0) {
     server.reply({
       cmd: 'warn',
-      text: 'Could not find user in channel'
+      text: 'Could not find user(s) in channel'
     }, socket);
 
     return;
   }
 
-  badClient = badClient[0];
+  let newChannel = '';
+  let kicked = [];
+  for (let i = 0, j = badClients.length; i < j; i++) {
+    if (badClients[i].uType !== 'user') {
+      server.reply({
+        cmd: 'warn',
+        text: 'Cannot kick other mods, how rude'
+      }, socket);
+    } else {
+      newChannel = Math.random().toString(36).substr(2, 8);
+      badClients[i].channel = newChannel;
 
-  if (badClient.uType !== 'user') {
-    server.reply({
-      cmd: 'warn',
-      text: 'Cannot kick other mods, how rude'
-    }, socket);
+      // inform mods with where they were sent
+      server.broadcast({
+        cmd: 'info',
+        text: `${badClients[i].nick} was banished to ?${newChannel}`
+      }, { channel: socket.channel, uType: 'mod' });
 
+      kicked.push(badClients[i].nick);
+      console.log(`${socket.nick} [${socket.trip}] kicked ${badClients[i].nick} in ${socket.channel}`);
+    }
+  }
+
+  if (kicked.length === 0) {
     return;
   }
 
-  let newChannel = Math.random().toString(36).substr(2, 8);
-  badClient.channel = newChannel;
+  // broadcast client leave event
+  for (let i = 0, j = kicked.length; i < j; i++) {
+    server.broadcast({
+      cmd: 'onlineRemove',
+      nick: kicked[i]
+    }, { channel: socket.channel });
+  }
 
-  console.log(`${socket.nick} [${socket.trip}] kicked ${targetNick} in ${socket.channel}`);
-
-  // remove socket from same-channel client
-  server.broadcast({
-    cmd: 'onlineRemove',
-    nick: targetNick
-  }, { channel: socket.channel });
-
-  // publicly broadcast event
+  // publicly broadcast kick event
   server.broadcast({
     cmd: 'info',
-    text: `Kicked ${targetNick}`
+    text: `Kicked ${kicked.join(', ')}`
   }, { channel: socket.channel, uType: 'user' });
 
-  // inform mods with where they were sent
-  server.broadcast({
-    cmd: 'info',
-    text: `${targetNick} was banished to ?${newChannel}`
-  }, { channel: socket.channel, uType: 'mod' });
-
-  core.managers.stats.increment('users-banned');
+  core.managers.stats.increment('users-kicked', kicked.length);
 };
 
 exports.requiredData = ['nick'];
@@ -68,5 +76,5 @@ exports.requiredData = ['nick'];
 exports.info = {
   name: 'kick',
   usage: 'kick {nick}',
-  description: 'Forces target client into another channel without announcing change'
+  description: 'Silently forces target client(s) into another channel. `nick` may be string or array of strings'
 };

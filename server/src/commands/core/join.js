@@ -28,7 +28,6 @@ exports.run = async (core, server, socket, data) => {
 
   if (typeof socket.channel !== 'undefined') {
     // Calling socket already in a channel
-    // TODO: allow changing of channel without reconnection
     return;
   }
 
@@ -56,17 +55,19 @@ exports.run = async (core, server, socket, data) => {
     return;
   }
 
-  for (let client of server.clients) {
-    if (client.channel === channel) {
-      if (client.nick.toLowerCase() === nick.toLowerCase()) {
-        server.reply({
-          cmd: 'warn',
-          text: 'Nickname taken'
-        }, socket);
+  let userExists = server.findSockets({
+    channel: data.channel,
+    nick: (targetNick) => targetNick.toLowerCase() === nick.toLowerCase()
+  });
 
-        return;
-      }
-    }
+  if (userExists.length > 0) {
+    // That nickname is already in that channel
+    server.reply({
+      cmd: 'warn',
+      text: 'Nickname taken'
+    }, socket);
+
+    return;
   }
 
   // TODO: Should we check for mod status first to prevent overwriting of admin status somehow? Meh, w/e, cba.
@@ -75,6 +76,8 @@ exports.run = async (core, server, socket, data) => {
   let password = nickArray[1];
   if (nick.toLowerCase() == core.config.adminName.toLowerCase()) {
     if (password != core.config.adminPass) {
+      server._police.frisk(socket.remoteAddress, 4);
+
       server.reply({
         cmd: 'warn',
         text: 'Gtfo'
@@ -83,7 +86,7 @@ exports.run = async (core, server, socket, data) => {
       return;
     } else {
       uType = 'admin';
-      trip = hash(password + core.config.tripSalt);
+      trip = 'Admin';
     }
   } else if (password) {
     trip = hash(password + core.config.tripSalt);
@@ -91,30 +94,31 @@ exports.run = async (core, server, socket, data) => {
 
   // TODO: Disallow moderator impersonation
   for (let mod of core.config.mods) {
-    if (trip === mod.trip)
+    if (trip === mod.trip) {
       uType = 'mod';
+    }
   }
 
-  // Announce the new user
-  server.broadcast({
+  // Reply with online user list
+  let newPeerList = server.findSockets({ channel: data.channel });
+  let joinAnnouncement = {
     cmd: 'onlineAdd',
     nick: nick,
     trip: trip || 'null',
     hash: server.getSocketHash(socket)
-  }, { channel: channel });
+  };
+  let nicks = [];
+
+  for (let i = 0, l = newPeerList.length; i < l; i++) {
+    server.reply(joinAnnouncement, newPeerList[i]);
+    nicks.push(newPeerList[i].nick);
+  }
 
   socket.uType = uType;
   socket.nick = nick;
   socket.channel = channel;
   if (trip !== null) socket.trip = trip;
-
-  // Reply with online user list
-  let nicks = [];
-  for (let client of server.clients) {
-    if (client.channel === channel) {
-      nicks.push(client.nick);
-    }
-  }
+  nicks.push(socket.nick);
 
   server.reply({
     cmd: 'onlineSet',

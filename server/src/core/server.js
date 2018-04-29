@@ -14,6 +14,7 @@ const socketReady = require('ws').OPEN;
 const crypto = require('crypto');
 const ipSalt = (Math.random().toString(36).substring(2, 16) + Math.random().toString(36).substring(2, (Math.random() * 16))).repeat(16);
 const Police = require('./rateLimiter');
+const pulseSpeed = 16000; // ping all clients every X ms
 
 class server extends wsServer {
   /**
@@ -27,6 +28,9 @@ class server extends wsServer {
     this._core = core;
     this._police = new Police();
     this._cmdBlacklist = {};
+    this._heartBeat = setInterval(((data) => {
+      this.beatHeart();
+    }).bind(this), pulseSpeed);
 
     this.on('error', (err) => {
       this.handleError('server', err);
@@ -35,6 +39,26 @@ class server extends wsServer {
     this.on('connection', (socket, request) => {
       this.newConnection(socket, request);
     });
+  }
+
+  /**
+    * Send empty `ping` frame to each client
+    *
+    */
+  beatHeart () {
+    let targetSockets = this.findSockets({});
+
+    if (targetSockets.length === 0) {
+      return;
+    }
+
+    for (let i = 0, l = targetSockets.length; i < l; i++) {
+      try {
+        if (targetSockets[i].readyState === socketReady) {
+          targetSockets[i].ping();
+        }
+      } catch (e) { }
+    }
   }
 
   /**
@@ -120,16 +144,7 @@ class server extends wsServer {
     * @param {Object} socket Closing socket object
     */
   handleClose (socket) {
-    try {
-      if (socket.channel) {
-        this.broadcast({
-          cmd: 'onlineRemove',
-          nick: socket.nick
-        }, { channel: socket.channel });
-      }
-    } catch (err) {
-      console.log(`Server, handle close event error: ${err}`);
-    }
+    this._core.commands.handleCommand(this, socket, { cmd: 'disconnect' });
   }
 
   /**
@@ -206,9 +221,37 @@ class server extends wsServer {
     for ( let socket of this.clients ) {
       curMatch = 0;
 
-      for( let i = 0; i < reqCount; i++ ) {
-        if (typeof socket[filterAttribs[i]] !== 'undefined' && socket[filterAttribs[i]] === filter[filterAttribs[i]])
-          curMatch++;
+      for (let i = 0; i < reqCount; i++) {
+        if (typeof socket[filterAttribs[i]] !== 'undefined') {
+          switch(typeof filter[filterAttribs[i]]) {
+            case 'object': {
+              if (Array.isArray(filter[filterAttribs[i]])) {
+                if (filter[filterAttribs[i]].indexOf(socket[filterAttribs[i]]) !== -1) {
+                  curMatch++;
+                }
+              } else {
+                if (socket[filterAttribs[i]] === filter[filterAttribs[i]]) {
+                  curMatch++;
+                }
+              }
+            break;
+            }
+
+            case 'function': {
+              if (filter[filterAttribs[i]](socket[filterAttribs[i]])) {
+                curMatch++;
+              }
+            break;
+            }
+
+            default: {
+              if (socket[filterAttribs[i]] === filter[filterAttribs[i]]) {
+                curMatch++;
+              }
+            break;
+            }
+          }
+        }
       }
 
       if (curMatch === reqCount) {

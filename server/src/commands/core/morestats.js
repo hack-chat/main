@@ -41,6 +41,7 @@ exports.run = async (core, server, socket, data) => {
                        invites-sent: ${(core.managers.stats.get('invites-sent') || 0)}
                        messages-sent: ${(core.managers.stats.get('messages-sent') || 0)}
                        users-banned: ${(core.managers.stats.get('users-banned') || 0)}
+                       users-kicked: ${(core.managers.stats.get('users-kicked') || 0)}
                        stats-requested: ${(core.managers.stats.get('stats-requested') || 0)}
                        server-uptime: ${formatTime(process.hrtime(core.managers.stats.get('start-time')))}`
   }, socket);

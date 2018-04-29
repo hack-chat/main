@@ -3,7 +3,24 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-## [1.0.0] - 2018-04-12
+## [2.0.1] - 2018-04-18
+### Added
+- `users-kicked` tracking to `morestats` command
+- Server-side ping interval
+- `move` command to change channels without reconnecting
+- `disconnect` command module to free core server from protocol dependency
+- `changenick` command to change client nick without reconnecting
+
+### Changed
+- Filter object of the `findSockets` function now accepts more complex parameters, including functions and arrays
+- `kick` command now accepts an array as the `nick` argument allowing multiple simultaneous kicks
+- `join` command now takes advantage of the new filter object
+- Core server disconnect handler now calls the `disconnect` module instead of broadcasting hard coded `onlineRemove`
+
+### Removed
+- Client-side ping interval
+
+## [2.0.0] - 2018-04-12
 ### Added
 - CHANGELOG.md
 - `index.html` files to `katex` directories

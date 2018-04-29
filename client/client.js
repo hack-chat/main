@@ -50,11 +50,6 @@ var myChannel = window.location.search.replace(/^\?/, '');
 var lastSent = [""];
 var lastSentPos = 0;
 
-// Ping server every 50 seconds to retain WebSocket connection
-window.setInterval(function () {
-	send({ cmd: 'ping' });
-}, 50000);
-
 function join(channel) {
 	if (document.domain == 'hack.chat') {
 		// For https://hack.chat/

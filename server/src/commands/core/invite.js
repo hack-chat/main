@@ -9,6 +9,15 @@ const verifyNickname = (nick) => {
 };
 
 exports.run = async (core, server, socket, data) => {
+  if (server._police.frisk(socket.remoteAddress, 2)) {
+    server.reply({
+      cmd: 'warn',
+      text: 'You are sending invites too fast. Wait a moment before trying again.'
+    }, socket);
+
+    return;
+  }
+
   if (typeof data.nick !== 'string') {
     return;
   }
@@ -22,16 +31,7 @@ exports.run = async (core, server, socket, data) => {
     // They invited themself
     return;
   }
-
-  if (server._police.frisk(socket.remoteAddress, 2)) {
-    server.reply({
-      cmd: 'warn',
-      text: 'You are sending invites too fast. Wait a moment before trying again.'
-    }, socket);
-
-    return;
-  }
-
+  
   let channel = Math.random().toString(36).substr(2, 8);
 
   let payload = {
