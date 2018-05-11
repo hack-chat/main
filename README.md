@@ -81,7 +81,7 @@ See also the list of [contributors](https://github.com/hack-chat/main/graphs/con
 
 ## License
 
-This project is licensed under the [WTFPL License]((http://www.wtfpl.net/txt/copying/)).
+This project is licensed under the [WTFPL License](LICENSE).
 
 ## Acknowledgments
 
