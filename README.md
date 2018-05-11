@@ -1,10 +1,10 @@
 # Hack.Chat
 
-[https://hack.chat/](https://hack.chat/) is a minimal, distraction-free, account-less, log-less, disappearing chat service that is easily deployable as your own service. The client comes bundled with LaTeX rendering provided by [https://github.com/Khan/KaTeX](https://github.com/Khan/KaTeX).
+[hack.chat](https://hack.chat/) is a minimal, distraction-free, account-less, log-less, disappearing chat service that is easily deployable as your own service. The client comes bundled with LaTeX rendering provided by [KaTeX](https://github.com/Khan/KaTeX).
 
-A list of software developed for the hack.chat framework can be found at: [https://github.com/hack-chat/3rd-party-software-list](https://github.com/hack-chat/3rd-party-software-list). This includes bots, clients, docker containers & more.
+A list of software developed for the hack.chat framework can be found at the [3rd party software list](https://github.com/hack-chat/3rd-party-software-list) repository. This includes bots, clients, docker containers & more.
 
-This is a backwards compatible continuation of the work by Andrew Belt [https://github.com/AndrewBelt/hack.chat](https://github.com/AndrewBelt/hack.chat). The server code has been updated to ES6 along with several new features- including new commands and hot-reload of the commands/protocol.
+This is a backwards compatible continuation of the [work by Andrew Belt](https://github.com/AndrewBelt/hack.chat). The server code has been updated to ES6 along with several new features- including new commands and hot-reload of the commands/protocol.
 
 ## Getting Started
 
@@ -19,11 +19,11 @@ The following versions are __required__:
     npm >= 5.7.1
 ```
 
-An installation guide for your operating system can be found at: [https://nodejs.org/en/download/package-manager/](https://nodejs.org/en/download/package-manager/)
+An installation guide for your operating system can be found [here](https://nodejs.org/en/download/package-manager/).
 
 ### Installing
 
-First you will first need to clone this git, if you are unfamiliar with this process read [https://help.github.com/articles/cloning-a-repository/](https://help.github.com/articles/cloning-a-repository/), or to clone with git:
+First you will first need to clone this git, if you are unfamiliar with this process read [cloning a repository](https://help.github.com/articles/cloning-a-repository/), or to clone with git:
 
 ```
 git clone https://github.com/hack-chat/main.git
@@ -92,16 +92,16 @@ You can now run start the server software with a process manager like [PM2](http
 
 ## Authors
 
-* **Marzavec** - *Initial work* - [https://github.com/marzavec](https://github.com/marzavec)
-* **MinusGix** - *Base updates* - [https://github.com/MinusGix](https://github.com/MinusGix)
+* **Marzavec** - *Initial work* - [marzavec](https://github.com/marzavec)
+* **MinusGix** - *Base updates* - [MinusGix](https://github.com/MinusGix)
 
 See also the list of [contributors](https://github.com/hack-chat/main/graphs/contributors) who participated in this project.
 
 ## License
 
-This project is licensed under the WTFPL License - see the [http://www.wtfpl.net/txt/copying/](http://www.wtfpl.net/txt/copying/) file for details
+This project is licensed under the [WTFPL License]((http://www.wtfpl.net/txt/copying/)).
 
 ## Acknowledgments
 
-* Andrew Belt, [https://github.com/AndrewBelt/hack.chat](https://github.com/AndrewBelt/hack.chat), for original base work
-* wwandrew [https://github.com/wwandrew/](https://github.com/wwandrew/), for finding server flaws (including attack vectors) and submitting ~~___incredibly detailed___~~ bug reports
+* Andrew Belt, https://github.com/AndrewBelt/hack.chat, for original base work
+* [wwandrew](https://github.com/wwandrew/), for finding server flaws (including attack vectors) and submitting ~~___incredibly detailed___~~ bug reports
