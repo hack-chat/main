@@ -72,6 +72,10 @@ npm install
 
 You can now run start the server software with a process manager like [PM2](https://github.com/Unitech/pm2). The client code will need to be copied into your http server directory. If you plan on using SSL to serve the client; you will need to use a reverse proxy, as TLS is not natively supported by the hack.chat server software (this may change in future releases).
 
+# Changelog
+
+A list of changes since the legacy client can be viewed in the [changelog](CHANGELOG.md).
+
 ## Authors
 
 * **Marzavec** - *Initial work* - [marzavec](https://github.com/marzavec)
