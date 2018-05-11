@@ -49,27 +49,9 @@ This will install the required packages to run hack.chat. Next the server will n
 node main.js
 ```
 
-The configuration script will execute the initial server setup by requesting input. Follow the steps until it finishes:
+The configuration script will execute the initial server setup by requesting input. Follow the steps until it finishes.
 
-```
-Note: npm/yarn run config will re-run this utility.
-
-You will now be asked for the following:
--     Admin Name, the initial admin username
--     Admin Pass, the initial admin password
--           Port, the port for the websocket
--           Salt, the salt for username trip
-​
-prompt: adminName:  admin
-prompt: adminPass:  ****
-
-prompt: websocketPort:  (6060)
-prompt: tripSalt:  ************
-
-Config generated! You may now start the server normally.
-```
-
-___Note:___ if you change the `websocketPort` option during the config setup then these changes will need to be reflected on line 64 of the [client.js](https://github.com/hack-chat/main/blob/master/client/client.js#L64).
+___Note:___ if you change the `websocketPort` option during the config setup then these changes will need to be reflected on [client.js](https://github.com/hack-chat/main/blob/master/client/client.js#L59).
 
 After the config script runs, the process will exit & the server will need to be relaunched. For a production environment we recommend using [PM2](https://github.com/Unitech/pm2) to start the server:
 
