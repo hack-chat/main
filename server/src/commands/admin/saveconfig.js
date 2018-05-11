@@ -2,8 +2,6 @@
   Description: Writes any changes to the config to the disk
 */
 
-'use strict';
-
 exports.run = async (core, server, socket, data) => {
   if (socket.uType != 'admin') {
     // ignore if not admin

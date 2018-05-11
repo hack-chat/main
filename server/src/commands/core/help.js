@@ -2,8 +2,6 @@
   Description: Outputs the current command module list or command categories
 */
 
-'use strict';
-
 const stripIndents = require('common-tags').stripIndents;
 
 exports.run = async (core, server, socket, data) => {

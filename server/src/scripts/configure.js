@@ -7,8 +7,6 @@
   *
   */
 
-'use strict';
-
 // import required classes
 const path = require('path');
 const ImportsManager = require('../managers/imports-manager');

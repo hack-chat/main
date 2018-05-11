@@ -2,8 +2,6 @@
   Description: Outputs more info than the legacy stats command
 */
 
-'use strict';
-
 const stripIndents = require('common-tags').stripIndents;
 
 const formatTime = (time) => {

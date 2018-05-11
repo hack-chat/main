@@ -2,8 +2,6 @@
   Description: Clears and resets the command modules, outputting any errors
 */
 
-'use strict';
-
 exports.run = async (core, server, socket, data) => {
   if (socket.uType != 'admin') {
     // ignore if not admin

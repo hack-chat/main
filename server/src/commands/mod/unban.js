@@ -2,8 +2,6 @@
   Description: Removes a target ip from the ratelimiter
 */
 
-'use strict';
-
 exports.run = async (core, server, socket, data) => {
   if (socket.uType == 'user') {
     // ignore if not mod or admin

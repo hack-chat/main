@@ -7,8 +7,6 @@
   *
   */
 
-'use strict';
-
 const read = require('readdir-recursive');
 const path = require('path');
 

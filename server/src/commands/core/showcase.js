@@ -2,8 +2,6 @@
   Description: This is a template module that should not be on prod
 */
 
-'use strict';
-
 // you can require() modules here
 
 // this function will only be only in the scope of the module

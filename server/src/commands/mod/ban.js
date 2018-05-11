@@ -2,8 +2,6 @@
   Description: Adds the target socket's ip to the ratelimiter
 */
 
-'use strict';
-
 exports.run = async (core, server, socket, data) => {
   if (socket.uType == 'user') {
     // ignore if not mod or admin
