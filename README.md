@@ -76,6 +76,14 @@ You can now run start the server software with a process manager like [PM2](http
 
 A list of changes since the legacy client can be viewed in the [changelog](CHANGELOG.md).
 
+# Documentation
+
+The [documentation](DOCUMENTATION.md) can be useful for making bots etc.
+
+# Contributing
+
+If you are changing the commands, make sure it is backwards compatible with the legacy client and you update the [documentation doc](DOCUMENTATION.md) accordingly.
+
 ## Authors
 
 * **Marzavec** - *Initial work* - [marzavec](https://github.com/marzavec)
