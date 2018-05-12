@@ -1,103 +1,57 @@
-# Hack.Chat
+# hack.chat
 
-[hack.chat](https://hack.chat/) is a minimal, distraction-free, account-less, log-less, disappearing chat service that is easily deployable as your own service. The client comes bundled with LaTeX rendering provided by [KaTeX](https://github.com/Khan/KaTeX).
+[hack.chat](https://hack.chat/) is a minimal, distraction-free, accountless, logless, disappearing chat service which is easily deployable as your own service. The client comes bundled with LaTeX rendering provided by [KaTeX](https://github.com/Khan/KaTeX).
 
-A list of software developed for the hack.chat framework can be found at the [3rd party software list](https://github.com/hack-chat/3rd-party-software-list) repository. This includes bots, clients, docker containers & more.
+A list of software developed for the hack.chat framework can be found at the [3rd party software list](https://github.com/hack-chat/3rd-party-software-list) repository. This includes bots, clients, docker containers, etc.
 
-This is a backwards compatible continuation of the [work by Andrew Belt](https://github.com/AndrewBelt/hack.chat). The server code has been updated to ES6 along with several new features- including new commands and hot-reload of the commands/protocol.
+This is a backwards compatible continuation of the [work by Andrew Belt](https://github.com/AndrewBelt/hack.chat). The server code has been updated to ES6 along with several new features including new commands and hot-reload of the commands/protocol. There is also [documentation](DOCUMENTATION.md) and a [changelog](CHANGELOG.md).
 
-## Getting Started
+# Installation
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
+## Prerequisites
 
-### Prerequisites
+- [node.js 8.10.0](https://nodejs.org/en/download/package-manager/#windows) or higher
 
-The following versions are __required__:
+## Installing
 
-```
-    node >= 8.10.0
-    npm >= 5.7.1
-```
+1. [Clone](https://help.github.com/articles/cloning-a-repository/) the repository: `git clone https://github.com/hack-chat/main.git`
+1. Change the directory: `cd main/server`
+1. Install the dependencies using a package manager of your choice:
+    - npm: `npm install`
+    - yarn: `yarn install`
+1. Configure: `node main.js`
 
-An installation guide for your operating system can be found [here](https://nodejs.org/en/download/package-manager/).
+    If you change the `websocketPort` option during the config setup then these changes will need to be reflected on [client.js](https://github.com/hack-chat/main/blob/master/client/client.js#L59).
 
-### Installing
+# Usage
 
-First you will first need to clone this git, if you are unfamiliar with this process read [cloning a repository](https://help.github.com/articles/cloning-a-repository/), or to clone with git:
-
-```
-git clone https://github.com/hack-chat/main.git
-```
-
-Once cloned, the server will need to be setup. Using your terminal run:
-
-```
-cd main/server/
-npm install
-```
-
-Or on a Windows machine with Yarn installed:
-
-```
-cd main/server/
-yarn install
-```
-
-This will install the required packages to run hack.chat. Next the server will need to be configured, again in your terminal run:
-
-```
-node main.js
-```
-
-The configuration script will execute the initial server setup by requesting input. Follow the steps until it finishes.
-
-___Note:___ if you change the `websocketPort` option during the config setup then these changes will need to be reflected on [client.js](https://github.com/hack-chat/main/blob/master/client/client.js#L59).
-
-After the config script runs, the process will exit & the server will need to be relaunched. For a production environment we recommend using [PM2](https://github.com/Unitech/pm2) to start the server:
-
-```
-cd main/server/
-pm2 start main.js --name HackChat
-```
-
-Launch `main/client/index.html`, you may now begin development or deploy to production environment.
-
-## Deployment
-
-After the initial installation and configuration, push everything except the node_modules folder to the live server and re-run:
-
-```
-npm install
-```
-
-You can now run start the server software with a process manager like [PM2](https://github.com/Unitech/pm2). The client code will need to be copied into your http server directory. If you plan on using SSL to serve the client; you will need to use a reverse proxy, as TLS is not natively supported by the hack.chat server software (this may change in future releases).
-
-# Changelog
-
-A list of changes since the legacy client can be viewed in the [changelog](CHANGELOG.md).
-
-# Documentation
-
-The [documentation](DOCUMENTATION.md) can be useful for making bots etc.
+1. Start the server:
+    ```
+    cd main/server/
+    pm2 start main.js --name HackChat
+    ```
+1. Launch `main/client/index.html`, you may now begin development or deploy to production environment.
+1. (Optional) Deploy by pushing everything (except the `node_modules` directory) to the server and install the dependencies using the package manager of your choice: 
+    - npm: `npm install`
+    - yarn: `yarn install`
+  
+    You can now run start the server software with a process manager like [PM2](https://github.com/Unitech/pm2). The client code will need to be copied into your http server directory. If you plan on using SSL to serve the client; you will need to use a reverse proxy, as TLS is not natively supported by the hack.chat server software (this may change in future releases).
 
 # Contributing
 
-If you are changing the commands, make sure it is backwards compatible with the legacy client and you update the [documentation](DOCUMENTATION.md) accordingly.
+- If you are modifying commands, make sure it is backwards compatible with the legacy client and you update the documentation accordingly.
+- Use [the template](templateCommand.js) to learn how to create new commands.
+- Use two space indents.
+- Name files in camelCase.
 
-If you are making a command, see [the template](server/src/commands/core/showcase.js) for doing so.
-
-## Authors
+# Credits
 
 * [**Marzavec**](https://github.com/marzavec) - *Initial work*
 * [**MinusGix**](https://github.com/MinusGix) - *Base updates*
-
-See also the list of [contributors](https://github.com/hack-chat/main/graphs/contributors) who participated in this project.
-
-## License
-
-This project is licensed under the [WTFPL License](LICENSE).
-
-## Acknowledgments
-
 * Andrew Belt, https://github.com/AndrewBelt/hack.chat, for original base work
 * [wwandrew](https://github.com/wwandrew/), for finding server flaws (including attack vectors) and submitting ~~___incredibly detailed___~~ bug reports
+* [Everyone else](https://github.com/hack-chat/main/graphs/contributors) who participated in this project.
+
+# License
+
+This project is licensed under the [WTFPL License](LICENSE).
