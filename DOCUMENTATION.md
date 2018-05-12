@@ -11,7 +11,6 @@ The commands are to be sent through a websocket to the URL wss://hack.chat/chat-
 |`changenick`|`nick`|Changes the current connection's nickname.|
 |`chat`|`text`|This broadcasts `text` to the channel the user is connected to.|
 |`disconnect`||An event handler or forced disconnect.|
-|`help`|`category` or `command`|Gives documentation programmatically. If `category` (the permission level, such as `mod`) is sent, a list of commands available to that permission level will be sent back (as a `string` and not an `array`). This list only includes what is unique to that category and not every command a user with that permission level could perform. If `command` (e.g., `chat`), a description of the command will be sent back.|
 |`invite`|`nick`|Generates a pseudo-unique channel name and passes it to both the calling user and `nick`.|
 |`join`|`channel`, `nick`|Places the calling socket into the target channel with the target nick and broadcasts the event to the channel.|
 |`morestats`||Sends back the current server's stats to the calling client.|
