@@ -15,7 +15,6 @@ The commands are to be sent through a websocket to the URL wss://hack.chat/chat-
 |`join`|`channel`, `nick`|Places the calling socket into the target channel with the target nick and broadcasts the event to the channel.|
 |`morestats`||Sends back the current server's stats to the calling client.|
 |`move`|`channel`|This will change the current channel to `channel`.|
-|`showcases`|`echo`|Simple command module template & info|
 |`stats`||Sends back legacy server stats to the calling client. Use `morestats` when possible.|
 
 # `mod`

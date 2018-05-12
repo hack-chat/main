@@ -82,7 +82,9 @@ The [documentation](DOCUMENTATION.md) can be useful for making bots etc.
 
 # Contributing
 
-If you are changing the commands, make sure it is backwards compatible with the legacy client and you update the [documentation doc](DOCUMENTATION.md) accordingly.
+If you are changing the commands, make sure it is backwards compatible with the legacy client and you update the [documentation](DOCUMENTATION.md) accordingly.
+
+If you are making a command, see [the template](server/src/commands/core/showcase.js) for doing so.
 
 ## Authors
 

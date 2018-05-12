@@ -32,7 +32,4 @@ exports.run = async (core, server, socket, data) => {
   }, socket);
 };
 
-exports.info = {
-  name: 'listusers',
-  description: 'Outputs all current channels and sockets in those channels'
-};
+exports.info = { name: 'listusers' };

@@ -71,8 +71,4 @@ exports.run = async (core, server, socket, data) => {
 
 exports.requiredData = ['nick'];
 
-exports.info = {
-  name: 'kick',
-  usage: 'kick {nick}',
-  description: 'Silently forces target client(s) into another channel. `nick` may be string or array of strings'
-};
+exports.info = { name: 'kick' };

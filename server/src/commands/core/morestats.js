@@ -47,7 +47,4 @@ exports.run = async (core, server, socket, data) => {
   core.managers.stats.increment('stats-requested');
 };
 
-exports.info = {
-  name: 'morestats',
-  description: 'Sends back current server stats to the calling client'
-};
+exports.info = { name: 'morestats' };

@@ -16,8 +16,4 @@ exports.run = async (core, server, socket, data) => {
 
 exports.requiredData = ['text'];
 
-exports.info = {
-  name: 'shout',
-  usage: 'shout {text}',
-  description: 'Displays passed text to every client connected'
-};
+exports.info = { name: 'shout' };

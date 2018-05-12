@@ -48,8 +48,4 @@ exports.run = async (core, server, socket, data) => {
   core.managers.stats.decrement('users-banned');
 };
 
-exports.info = {
-  name: 'unban',
-  usage: 'unban {[ip || hash]}',
-  description: 'Removes target ip from the ratelimiter'
-};
+exports.info = { name: 'unban' };

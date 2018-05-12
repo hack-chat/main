@@ -55,8 +55,4 @@ exports.run = async (core, server, socket, data) => {
 
 exports.requiredData = ['text'];
 
-exports.info = {
-  name: 'chat',
-  usage: 'chat {text}',
-  description: 'Broadcasts passed `text` field to the calling users channel'
-};
+exports.info = { name: 'chat' };

@@ -43,9 +43,7 @@ exports.init = (core) => {
 exports.requiredData = ['echo'];
 
 // optional parameters are marked, all others are required
-exports.info = {
+exports.info = { 
   name: 'showcase', // actual command name
-  aliases: ['templateModule'], // optional, an array of other names this module can be executed by
-  usage: 'showcase {echo}', // used for help output, can be ommited if no parameters are required
-  description: 'Simple command module template & info' // used for help output
+  aliases: ['templateModule']
 };

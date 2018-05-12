@@ -30,7 +30,4 @@ exports.run = async (core, server, socket, data) => {
   }, { uType: 'mod' });
 };
 
-exports.info = {
-  name: 'saveconfig',
-  description: 'Saves current config'
-};
+exports.info = { name: 'saveconfig' };

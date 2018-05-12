@@ -128,8 +128,4 @@ exports.run = async (core, server, socket, data) => {
 
 exports.requiredData = ['channel', 'nick'];
 
-exports.info = {
-  name: 'join',
-  usage: 'join {channel} {nick}',
-  description: 'Place calling socket into target channel with target nick & broadcast event to channel'
-};
+exports.info = { name: 'join' };

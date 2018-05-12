@@ -28,7 +28,4 @@ exports.run = async (core, server, socket, data) => {
   }, { uType: 'mod' });
 };
 
-exports.info = {
-  name: 'reload',
-  description: '(Re)loads any new commands into memory, outputs errors if any'
-};
+exports.info = { name: 'reload' };

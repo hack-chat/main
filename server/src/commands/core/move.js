@@ -76,8 +76,4 @@ exports.run = async (core, server, socket, data) => {
 
 exports.requiredData = ['channel'];
 
-exports.info = {
-  name: 'move',
-  usage: 'move {channel}',
-  description: 'This will change the current channel to the new one provided'
-};
+exports.info = { name: 'move' };
