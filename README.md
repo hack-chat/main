@@ -86,8 +86,8 @@ If you are changing the commands, make sure it is backwards compatible with the 
 
 ## Authors
 
-* **Marzavec** - *Initial work* - [marzavec](https://github.com/marzavec)
-* **MinusGix** - *Base updates* - [MinusGix](https://github.com/MinusGix)
+* [**Marzavec**](https://github.com/marzavec) - *Initial work*
+* [**MinusGix**](https://github.com/MinusGix) - *Base updates*
 
 See also the list of [contributors](https://github.com/hack-chat/main/graphs/contributors) who participated in this project.
 
