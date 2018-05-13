@@ -15,17 +15,19 @@ This is a backwards compatible continuation of the [work by Andrew Belt](https:/
 ## Installing
 
 1. [Clone](https://help.github.com/articles/cloning-a-repository/) the repository: `git clone https://github.com/hack-chat/main.git`
+1. Change the directory: `cd main`
 1. Install the dependencies using a package manager of your choice:
     - npm: `npm install`
     - yarn: `yarn install`
-1. Configure: `node main/server/main.js`
+1. Configure: `node server/main.js`
 
     If you change the `websocketPort` option during the config setup then these changes will need to be reflected on [line 59 of client.js](https://github.com/hack-chat/main/blob/master/client/client.js#L59).
 
 # Usage
 
-1. Start the server with a process manager. For example, with [PM2](https://github.com/Unitech/pm2): `pm2 start main/server/main.js --name HackChat` 
-1. Launch: `main/client/index.html`
+1. `cd` into the repository: `cd main`
+1. Start the server with a process manager. For example, with [PM2](https://github.com/Unitech/pm2): `pm2 start server/main.js --name HackChat` 
+1. Launch: `client/index.html`
 1. (OPTIONAL) If you want to deploy your hack.chat instance to a server, push everything except the `node_modules` directory and install the dependencies using a package manager of your choice: 
     - npm: `npm install`
     - yarn: `yarn install`
