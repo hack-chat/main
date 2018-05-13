@@ -30,8 +30,5 @@
     "prompt": "^1.0.0",
     "readdir-recursive": "0.0.4",
     "ws": "^5.0.0"
-  },
-  "devDependencies": {
-    "pm2": "^2.10.3"
   }
 }

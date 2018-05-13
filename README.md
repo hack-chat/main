@@ -25,17 +25,14 @@ This is a backwards compatible continuation of the [work by Andrew Belt](https:/
 
 # Usage
 
-1. Start the server:
-    ```
-    cd main/server/
-    pm2 start main.js --name HackChat
-    ```
-1. Launch `main/client/index.html`, you may now begin development or deploy to production environment.
-1. (Optional) Deploy by pushing everything (except the `node_modules` directory) to the server and install the dependencies using the package manager of your choice: 
+1. Change the directory: `cd main/server/`
+1. Start the server with a process manager. For example, with [PM2](https://github.com/Unitech/pm2): `pm2 start main.js --name HackChat` 
+1. Launch: `main/client/index.html`
+1. (OPTIONAL) If you want to deploy your hack.chat instance to a server, push everything except the `node_modules` directory and install the dependencies using a package manager of your choice: 
     - npm: `npm install`
     - yarn: `yarn install`
   
-    You can now run start the server software with a process manager like [PM2](https://github.com/Unitech/pm2). The client code will need to be copied into your http server directory. If you plan on using SSL to serve the client; you will need to use a reverse proxy, as TLS is not natively supported by the hack.chat server software (this may change in future releases).
+    You can now run start the server software with a process manager. The client code will need to be copied into your http server directory. If you plan on using SSL to serve the client; you will need to use a reverse proxy, as TLS is not natively supported by the hack.chat server software (this may change in future releases).
 
 # Contributing
 
