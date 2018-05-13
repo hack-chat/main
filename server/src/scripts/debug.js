@@ -7,6 +7,8 @@
   *
   */
 
+'use strict';
+
 // import required classes
 const path = require('path');
 const ConfigManager = require('../managers/config');

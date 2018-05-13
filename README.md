@@ -40,6 +40,7 @@ This is a backwards compatible continuation of the [work by Andrew Belt](https:/
 - Use [the template](templateCommand.js) to learn how to create new commands.
 - Use two space indents.
 - Name files in camelCase.
+- Scripts that do not default to strict mode (such as modules) must use the `'use strict'` directive.
 
 # Credits
 

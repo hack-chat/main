@@ -7,6 +7,8 @@
   *
   */
 
+'use strict';
+
 // import required classes
 
 
