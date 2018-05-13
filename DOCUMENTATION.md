@@ -16,6 +16,7 @@ The commands are to be sent through a websocket to the URL wss://hack.chat/chat-
 |`morestats`||Sends back the current server's stats to the calling client.|
 |`move`|`channel`|This will change the current channel to `channel`.|
 |`stats`||Sends back legacy server stats to the calling client. Use `morestats` when possible.|
+|`help`|`category` or `command`|Gives documentation programmatically. If `category` (the permission level, such as `mod`) is sent, a list of commands available to that permission level will be sent back (as a `string` and not an `array`). This list only includes what is unique to that category and not every command a user with that permission level could perform. If `command` (e.g., `chat`) is sent, a description of the command will be sent back.|
 
 # `mod`
 

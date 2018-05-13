@@ -57,4 +57,8 @@ exports.run = async (core, server, socket, data) => {
 
 exports.requiredData = ['nick'];
 
-exports.info = { name: 'ban' };
+exports.info = {
+  name: 'ban',
+  usage: 'ban {nick}',
+  description: 'Disconnects the target nickname in the same channel as calling socket & adds to ratelimiter'
+};

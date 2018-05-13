@@ -58,4 +58,8 @@ exports.run = async (core, server, socket, data) => {
 
 exports.requiredData = ['nick'];
 
-exports.info = { name: 'invite' };
+exports.info = {
+  name: 'invite',
+  usage: 'invite {nick}',
+  description: 'Generates a unique (more or less) room name and passes it to two clients'
+};

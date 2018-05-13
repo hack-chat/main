@@ -81,4 +81,8 @@ exports.run = async (core, server, socket, data) => {
 
 exports.requiredData = ['nick'];
 
-exports.info = { name: 'changenick' };
+exports.info = {
+  name: 'changenick',
+  usage: 'changenick {nick}',
+  description: 'This will change your current connections nickname'
+};

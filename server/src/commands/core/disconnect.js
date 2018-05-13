@@ -15,4 +15,7 @@ exports.run = async (core, server, socket, data) => {
   socket.terminate();
 };
 
-exports.info = { name: 'disconnect' };
+exports.info = {
+  name: 'disconnect',
+  description: 'Event handler or force disconnect (if your into that kind of thing)'
+};

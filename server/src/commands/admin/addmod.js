@@ -40,4 +40,8 @@ exports.run = async (core, server, socket, data) => {
 
 exports.requiredData = ['trip'];
 
-exports.info = { name: 'addmod' };
+exports.info = {
+  name: 'addmod',
+  usage: 'addmod {trip}',
+  description: 'Adds target trip to the config as a mod and upgrades the socket type'
+};
