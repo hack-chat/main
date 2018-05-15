@@ -78,7 +78,7 @@ cd main/server/
 pm2 start main.js --name HackChat
 ```
 
-Launch `main/client/index.html`, you may now begin development or deploy to production environment.
+[Launch the client](./client/README.md) `main/client/index.html`, you may now begin development or deploy to production environment.
 
 ## Deployment
 

@@ -18,6 +18,7 @@ var frontpage = [
 	"Formatting:",
 	"Whitespace is preserved, so source code can be pasted verbatim.",
 	"Surround LaTeX with a dollar sign for inline style $\\zeta(2) = \\pi^2/6$, and two dollars for display. $$\\int_0^1 \\int_0^1 \\frac{1}{1-xy} dx dy = \\frac{\\pi^2}{6}$$",
+	"For syntax highlight, the first line of the code block should start with @<format> where <format> can be html, js or any known format",
 	"",
 	"Current Github: https://github.com/hack-chat includes server and client source along with other resources",
 	"",
@@ -210,6 +211,18 @@ function pushMessage(args) {
 			]})
 		}	catch (e) {
 			console.warn(e);
+		}
+	}
+
+	if ($('#syntax-highlight').checked) {
+		if (textEl.textContent.indexOf('@') == 0) {
+			var lang = textEl.textContent.split('\n', 1)[0].replace('@', '');
+			var codeEl = document.createElement('code');
+			codeEl.classList.add(lang);
+			codeEl.textContent = textEl.textContent.replace('@' + lang + '\n', '');
+			hljs.highlightBlock(codeEl);
+			textEl.innerHTML = '';
+			textEl.appendChild(codeEl);
 		}
 	}
 
@@ -522,12 +535,30 @@ var schemes = [
 	'tomorrow'
 ];
 
+var highlights = [
+	'agate',
+	'androidstudio',
+	'darcula',
+	'github',
+	'rainbow',
+	'tomorrow',
+	'xcode',
+	'zenburn'
+]
+
 var currentScheme = 'atelier-dune';
+var currentHighlight = 'darcula';
 
 function setScheme(scheme) {
 	currentScheme = scheme;
 	$('#scheme-link').href = "schemes/" + scheme + ".css";
 	localStorageSet('scheme', scheme);
+}
+
+function setHighlight(scheme) {
+	currentHighlight = scheme;
+	$('#highlight-link').href = "//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/" + scheme + ".min.css";
+	localStorageSet('highlight', scheme);
 }
 
 // Add scheme options to dropdown selector
@@ -538,8 +569,19 @@ schemes.forEach(function (scheme) {
 	$('#scheme-selector').appendChild(option);
 });
 
+highlights.forEach(function (scheme) {
+	var option = document.createElement('option');
+	option.textContent = scheme;
+	option.value = scheme;
+	$('#highlight-selector').appendChild(option);
+});
+
 $('#scheme-selector').onchange = function (e) {
 	setScheme(e.target.value);
+}
+
+$('#highlight-selector').onchange = function (e) {
+	setHighlight(e.target.value);
 }
 
 // Load sidebar configaration values from local storage if available
@@ -547,7 +589,12 @@ if (localStorageGet('scheme')) {
 	setScheme(localStorageGet('scheme'));
 }
 
+if (localStorageGet('highlight')) {
+	setHighlight(localStorageGet('highlight'));
+}
+
 $('#scheme-selector').value = currentScheme;
+$('#highlight-selector').value = currentHighlight;
 
 /* main */
 
