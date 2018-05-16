@@ -18,7 +18,7 @@ var frontpage = [
 	"Formatting:",
 	"Whitespace is preserved, so source code can be pasted verbatim.",
 	"Surround LaTeX with a dollar sign for inline style $\\zeta(2) = \\pi^2/6$, and two dollars for display. $$\\int_0^1 \\int_0^1 \\frac{1}{1-xy} dx dy = \\frac{\\pi^2}{6}$$",
-	"For syntax highlight, the first line of the code block should start with @<format> where <format> can be html, js or any known format",
+	"For syntax highlight, the first line of the code block must begin with #<format> where <format> can be html, js or any known format",
 	"",
 	"Current Github: https://github.com/hack-chat includes server and client source along with other resources",
 	"",
@@ -201,7 +201,18 @@ function pushMessage(args) {
 	textEl.textContent = args.text || '';
 	textEl.innerHTML = textEl.innerHTML.replace(/(\?|https?:\/\/)\S+?(?=[,.!?:)]?\s|$)/g, parseLinks);
 
-	if ($('#parse-latex').checked) {
+	if ($('#syntax-highlight').checked) {
+		if (textEl.textContent.indexOf('#') == 0) {
+			var lang = textEl.textContent.split(/\s+/g)[0].replace('#', '');
+			var codeEl = document.createElement('code');
+			codeEl.classList.add(lang);
+			var content = textEl.textContent.replace('#' + lang, '');
+			codeEl.textContent = content.trim();
+			hljs.highlightBlock(codeEl);
+			textEl.innerHTML = '';
+			textEl.appendChild(codeEl);
+		}
+	} else if ($('#parse-latex').checked) {
 		// Temporary hotfix for \rule spamming, see https://github.com/Khan/KaTeX/issues/109
 		textEl.innerHTML = textEl.innerHTML.replace(/\\rule|\\\\\s*\[.*?\]/g, '');
 		try {
@@ -211,18 +222,6 @@ function pushMessage(args) {
 			]})
 		}	catch (e) {
 			console.warn(e);
-		}
-	}
-
-	if ($('#syntax-highlight').checked) {
-		if (textEl.textContent.indexOf('@') == 0) {
-			var lang = textEl.textContent.split('\n', 1)[0].replace('@', '');
-			var codeEl = document.createElement('code');
-			codeEl.classList.add(lang);
-			codeEl.textContent = textEl.textContent.replace('@' + lang + '\n', '');
-			hljs.highlightBlock(codeEl);
-			textEl.innerHTML = '';
-			textEl.appendChild(codeEl);
 		}
 	}
 
