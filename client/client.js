@@ -36,13 +36,13 @@ function $(query) {
 function localStorageGet(key) {
 	try {
 		return window.localStorage[key]
-	}	catch(e) {}
+	} catch(e) { }
 }
 
 function localStorageSet(key, val) {
 	try {
 		window.localStorage[key] = val
-	} catch(e) {}
+	} catch(e) { }
 }
 
 var ws;
@@ -158,13 +158,13 @@ function pushMessage(args) {
 
 	if (args.nick == myNick) {
 		messageEl.classList.add('me');
-	}	else if (args.nick == '!') {
+	} else if (args.nick == '!') {
 		messageEl.classList.add('warn');
-	}	else if (args.nick == '*') {
+	} else if (args.nick == '*') {
 		messageEl.classList.add('info');
-	}	else if (args.admin) {
+	} else if (args.admin) {
 		messageEl.classList.add('admin');
-	}	else if (args.mod) {
+	} else if (args.mod) {
 		messageEl.classList.add('mod');
 	}
 
@@ -201,17 +201,15 @@ function pushMessage(args) {
 	textEl.textContent = args.text || '';
 	textEl.innerHTML = textEl.innerHTML.replace(/(\?|https?:\/\/)\S+?(?=[,.!?:)]?\s|$)/g, parseLinks);
 
-	if ($('#syntax-highlight').checked) {
-		if (textEl.textContent.indexOf('#') == 0) {
-			var lang = textEl.textContent.split(/\s+/g)[0].replace('#', '');
-			var codeEl = document.createElement('code');
-			codeEl.classList.add(lang);
-			var content = textEl.textContent.replace('#' + lang, '');
-			codeEl.textContent = content.trim();
-			hljs.highlightBlock(codeEl);
-			textEl.innerHTML = '';
-			textEl.appendChild(codeEl);
-		}
+	if ($('#syntax-highlight').checked && textEl.textContent.indexOf('#') == 0) {
+		var lang = textEl.textContent.split(/\s+/g)[0].replace('#', '');
+		var codeEl = document.createElement('code');
+		codeEl.classList.add(lang);
+		var content = textEl.textContent.replace('#' + lang, '');
+		codeEl.textContent = content.trim();
+		hljs.highlightBlock(codeEl);
+		textEl.innerHTML = '';
+		textEl.appendChild(codeEl);
 	} else if ($('#parse-latex').checked) {
 		// Temporary hotfix for \rule spamming, see https://github.com/Khan/KaTeX/issues/109
 		textEl.innerHTML = textEl.innerHTML.replace(/\\rule|\\\\\s*\[.*?\]/g, '');
@@ -220,7 +218,7 @@ function pushMessage(args) {
 				{ left: "$$", right: "$$", display: true },
 				{ left: "$", right: "$", display: false },
 			]})
-		}	catch (e) {
+		} catch (e) {
 			console.warn(e);
 		}
 	}
@@ -301,7 +299,7 @@ function updateTitle() {
 	var title;
 	if (myChannel) {
 		title = "?" + myChannel;
-	}	else {
+	} else {
 		title = "hack.chat";
 	}
 
@@ -333,7 +331,7 @@ $('#chatinput').onkeydown = function (e) {
 
 			updateInputSize();
 		}
-	}	else if (e.keyCode == 38 /* UP */) {
+	} else if (e.keyCode == 38 /* UP */) {
 		// Restore previous sent messages
 		if (e.target.selectionStart === 0 && lastSentPos < lastSent.length - 1) {
 			e.preventDefault();
@@ -367,7 +365,7 @@ $('#chatinput').onkeydown = function (e) {
 		lastSent[lastSentPos] = "";
 
 		updateInputSize();
-	}	else if (e.keyCode == 9 /* TAB */) {
+	} else if (e.keyCode == 9 /* TAB */) {
 		// Tab complete nicknames starting with @
 		e.preventDefault();
 
