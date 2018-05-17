@@ -18,6 +18,7 @@ var frontpage = [
 	"Formatting:",
 	"Whitespace is preserved, so source code can be pasted verbatim.",
 	"Surround LaTeX with a dollar sign for inline style $\\zeta(2) = \\pi^2/6$, and two dollars for display. $$\\int_0^1 \\int_0^1 \\frac{1}{1-xy} dx dy = \\frac{\\pi^2}{6}$$",
+	"For syntax highlight, the first line of the code block must begin with #<format> where <format> can be html, js or any known format",
 	"",
 	"Current Github: https://github.com/hack-chat includes server and client source along with other resources",
 	"",
@@ -35,13 +36,13 @@ function $(query) {
 function localStorageGet(key) {
 	try {
 		return window.localStorage[key]
-	}	catch(e) {}
+	} catch (e) { }
 }
 
 function localStorageSet(key, val) {
 	try {
 		window.localStorage[key] = val
-	} catch(e) {}
+	} catch (e) { }
 }
 
 var ws;
@@ -157,13 +158,13 @@ function pushMessage(args) {
 
 	if (args.nick == myNick) {
 		messageEl.classList.add('me');
-	}	else if (args.nick == '!') {
+	} else if (args.nick == '!') {
 		messageEl.classList.add('warn');
-	}	else if (args.nick == '*') {
+	} else if (args.nick == '*') {
 		messageEl.classList.add('info');
-	}	else if (args.admin) {
+	} else if (args.admin) {
 		messageEl.classList.add('admin');
-	}	else if (args.mod) {
+	} else if (args.mod) {
 		messageEl.classList.add('mod');
 	}
 
@@ -200,15 +201,28 @@ function pushMessage(args) {
 	textEl.textContent = args.text || '';
 	textEl.innerHTML = textEl.innerHTML.replace(/(\?|https?:\/\/)\S+?(?=[,.!?:)]?\s|$)/g, parseLinks);
 
-	if ($('#parse-latex').checked) {
+	if ($('#syntax-highlight').checked) {
+		if (textEl.textContent.indexOf('#') == 0) {
+			var lang = textEl.textContent.split(/\s+/g)[0].replace('#', '');
+			var codeEl = document.createElement('code');
+			codeEl.classList.add(lang);
+			var content = textEl.textContent.replace('#' + lang, '');
+			codeEl.textContent = content.trim();
+			hljs.highlightBlock(codeEl);
+			textEl.innerHTML = '';
+			textEl.appendChild(codeEl);
+		}
+	} else if ($('#parse-latex').checked) {
 		// Temporary hotfix for \rule spamming, see https://github.com/Khan/KaTeX/issues/109
 		textEl.innerHTML = textEl.innerHTML.replace(/\\rule|\\\\\s*\[.*?\]/g, '');
 		try {
-			renderMathInElement(textEl, {delimiters: [
-				{ left: "$$", right: "$$", display: true },
-				{ left: "$", right: "$", display: false },
-			]})
-		}	catch (e) {
+			renderMathInElement(textEl, {
+				delimiters: [
+					{ left: "$$", right: "$$", display: true },
+					{ left: "$", right: "$", display: false },
+				]
+			})
+		} catch (e) {
 			console.warn(e);
 		}
 	}
@@ -289,7 +303,7 @@ function updateTitle() {
 	var title;
 	if (myChannel) {
 		title = "?" + myChannel;
-	}	else {
+	} else {
 		title = "hack.chat";
 	}
 
@@ -321,7 +335,7 @@ $('#chatinput').onkeydown = function (e) {
 
 			updateInputSize();
 		}
-	}	else if (e.keyCode == 38 /* UP */) {
+	} else if (e.keyCode == 38 /* UP */) {
 		// Restore previous sent messages
 		if (e.target.selectionStart === 0 && lastSentPos < lastSent.length - 1) {
 			e.preventDefault();
@@ -355,7 +369,7 @@ $('#chatinput').onkeydown = function (e) {
 		lastSent[lastSentPos] = "";
 
 		updateInputSize();
-	}	else if (e.keyCode == 9 /* TAB */) {
+	} else if (e.keyCode == 9 /* TAB */) {
 		// Tab complete nicknames starting with @
 		e.preventDefault();
 
@@ -522,12 +536,30 @@ var schemes = [
 	'tomorrow'
 ];
 
+var highlights = [
+	'agate',
+	'androidstudio',
+	'darcula',
+	'github',
+	'rainbow',
+	'tomorrow',
+	'xcode',
+	'zenburn'
+]
+
 var currentScheme = 'atelier-dune';
+var currentHighlight = 'darcula';
 
 function setScheme(scheme) {
 	currentScheme = scheme;
 	$('#scheme-link').href = "schemes/" + scheme + ".css";
 	localStorageSet('scheme', scheme);
+}
+
+function setHighlight(scheme) {
+	currentHighlight = scheme;
+	$('#highlight-link').href = "//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/" + scheme + ".min.css";
+	localStorageSet('highlight', scheme);
 }
 
 // Add scheme options to dropdown selector
@@ -538,8 +570,19 @@ schemes.forEach(function (scheme) {
 	$('#scheme-selector').appendChild(option);
 });
 
+highlights.forEach(function (scheme) {
+	var option = document.createElement('option');
+	option.textContent = scheme;
+	option.value = scheme;
+	$('#highlight-selector').appendChild(option);
+});
+
 $('#scheme-selector').onchange = function (e) {
 	setScheme(e.target.value);
+}
+
+$('#highlight-selector').onchange = function (e) {
+	setHighlight(e.target.value);
 }
 
 // Load sidebar configaration values from local storage if available
@@ -547,7 +590,12 @@ if (localStorageGet('scheme')) {
 	setScheme(localStorageGet('scheme'));
 }
 
+if (localStorageGet('highlight')) {
+	setHighlight(localStorageGet('highlight'));
+}
+
 $('#scheme-selector').value = currentScheme;
+$('#highlight-selector').value = currentHighlight;
 
 /* main */
 
