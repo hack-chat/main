@@ -201,17 +201,15 @@ function pushMessage(args) {
 	textEl.textContent = args.text || '';
 	textEl.innerHTML = textEl.innerHTML.replace(/(\?|https?:\/\/)\S+?(?=[,.!?:)]?\s|$)/g, parseLinks);
 
-	if ($('#syntax-highlight').checked) {
-		if (textEl.textContent.indexOf('#') == 0) {
-			var lang = textEl.textContent.split(/\s+/g)[0].replace('#', '');
-			var codeEl = document.createElement('code');
-			codeEl.classList.add(lang);
-			var content = textEl.textContent.replace('#' + lang, '');
-			codeEl.textContent = content.trim();
-			hljs.highlightBlock(codeEl);
-			textEl.innerHTML = '';
-			textEl.appendChild(codeEl);
-		}
+	if ($('#syntax-highlight').checked && textEl.textContent.indexOf('#') == 0) {
+		var lang = textEl.textContent.split(/\s+/g)[0].replace('#', '');
+		var codeEl = document.createElement('code');
+		codeEl.classList.add(lang);
+		var content = textEl.textContent.replace('#' + lang, '');
+		codeEl.textContent = content.trim();
+		hljs.highlightBlock(codeEl);
+		textEl.innerHTML = '';
+		textEl.appendChild(codeEl);
 	} else if ($('#parse-latex').checked) {
 		// Temporary hotfix for \rule spamming, see https://github.com/Khan/KaTeX/issues/109
 		textEl.innerHTML = textEl.innerHTML.replace(/\\rule|\\\\\s*\[.*?\]/g, '');
