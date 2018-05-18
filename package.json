@@ -2,7 +2,7 @@
   "name": "hack.chat-v2",
   "version": "2.0.1",
   "description": "a minimal distraction free chat application",
-  "main": "main.js",
+  "main": "server/main.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/hack-chat/main.git"
@@ -12,11 +12,10 @@
     "npm": ">= 5.7.1"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js",
-    "config": "node src/scripts/configure.js",
-    "debug": "node src/scripts/debug.js",
-    "dev": "node src/scripts/debug.js"
+    "start": "node server/main.js",
+    "config": "node server/src/scripts/configure.js",
+    "debug": "node server/src/scripts/debug.js",
+    "dev": "node server/src/scripts/debug.js"
   },
   "author": "Marzavec",
   "license": "WTFPL",
