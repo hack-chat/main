@@ -2,8 +2,6 @@
   Description: Adds the target trip to the mod list then elevates the uType
 */
 
-'use strict';
-
 exports.run = async (core, server, socket, data) => {
   if (socket.uType != 'admin') {
     // ignore if not admin

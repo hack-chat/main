@@ -8,8 +8,6 @@
   *
   */
 
-'use strict';
-
 const stripIndents = require('common-tags').stripIndents;
 const dateFormat = require('dateformat');
 const chalk = require('chalk');

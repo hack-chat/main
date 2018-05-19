@@ -4,8 +4,6 @@
                by a client to have the connection severed.
 */
 
-'use strict';
-
 exports.run = async (core, server, socket, data) => {
   if (socket.channel) {
     server.broadcast({

@@ -36,13 +36,13 @@ function $(query) {
 function localStorageGet(key) {
 	try {
 		return window.localStorage[key]
-	} catch(e) { }
+	} catch (e) { }
 }
 
 function localStorageSet(key, val) {
 	try {
 		window.localStorage[key] = val
-	} catch(e) { }
+	} catch (e) { }
 }
 
 var ws;
@@ -214,10 +214,12 @@ function pushMessage(args) {
 		// Temporary hotfix for \rule spamming, see https://github.com/Khan/KaTeX/issues/109
 		textEl.innerHTML = textEl.innerHTML.replace(/\\rule|\\\\\s*\[.*?\]/g, '');
 		try {
-			renderMathInElement(textEl, {delimiters: [
-				{ left: "$$", right: "$$", display: true },
-				{ left: "$", right: "$", display: false },
-			]})
+			renderMathInElement(textEl, {
+				delimiters: [
+					{ left: "$$", right: "$$", display: true },
+					{ left: "$", right: "$", display: false },
+				]
+			})
 		} catch (e) {
 			console.warn(e);
 		}

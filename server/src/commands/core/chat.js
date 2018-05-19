@@ -2,8 +2,6 @@
   Description: Rebroadcasts any `text` to all clients in a `channel`
 */
 
-'use strict';
-
 const parseText = (text) => {
   if (typeof text !== 'string') {
     return false;

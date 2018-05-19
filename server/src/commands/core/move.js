@@ -2,8 +2,6 @@
   Description: Generates a semi-unique channel name then broadcasts it to each client
 */
 
-'use strict';
-
 exports.run = async (core, server, socket, data) => {
   if (server._police.frisk(socket.remoteAddress, 6)) {
     server.reply({

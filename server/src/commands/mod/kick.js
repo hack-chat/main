@@ -2,8 +2,6 @@
   Description: Forces a change on the target socket's channel, then broadcasts event
 */
 
-'use strict';
-
 exports.run = async (core, server, socket, data) => {
   if (socket.uType === 'user') {
     // ignore if not mod or admin

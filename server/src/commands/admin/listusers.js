@@ -2,8 +2,6 @@
   Description: Outputs all current channels and their user nicks
 */
 
-'use strict';
-
 exports.run = async (core, server, socket, data) => {
   if (socket.uType != 'admin') {
     // ignore if not admin

@@ -7,8 +7,6 @@
   *
   */
 
-'use strict';
-
 const wsServer = require('ws').Server;
 const socketReady = require('ws').OPEN;
 const crypto = require('crypto');

@@ -2,8 +2,6 @@
   Description: Initial entry point, applies `channel` and `nick` to the calling socket
 */
 
-'use strict';
-
 const crypto = require('crypto');
 
 const hash = (password) => {

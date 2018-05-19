@@ -2,8 +2,6 @@
   Description: Emmits a server-wide message as `info`
 */
 
-'use strict';
-
 exports.run = async (core, server, socket, data) => {
   if (socket.uType != 'admin') {
     // ignore if not admin

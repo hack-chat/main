@@ -7,8 +7,6 @@
   *
   */
 
-'use strict';
-
 class Stats {
   /**
     * Create a stats instance.

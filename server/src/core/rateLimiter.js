@@ -8,15 +8,13 @@
   *
   */
 
-'use strict';
-
 class Police {
   /**
    * Create a ratelimiter instance.
    */
   constructor () {
     this._records = {};
-    this._halflife = 30000; // ms
+    this._halflife = 30 * 1000; // milliseconds
     this._threshold = 25;
     this._hashes = [];
   }

@@ -2,8 +2,6 @@
   Description: Legacy stats output, kept for compatibility, outputs user and channel count
 */
 
-'use strict';
-
 exports.run = async (core, server, socket, data) => {
   let ips = {};
   let channels = {};
