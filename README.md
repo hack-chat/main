@@ -22,7 +22,7 @@ This is a backwards compatible continuation of the [work by Andrew Belt](https:/
 
     If you change the `websocketPort` option during the config setup then these changes will need to be reflected on [line 60 of client.js](https://github.com/hack-chat/main/blob/master/client/client.js#L60).
 
-# Live Deployment Installation
+## Live Deployment Installation
 
 See [DEPLOY.md](documentation/DEPLOY.md)
 
