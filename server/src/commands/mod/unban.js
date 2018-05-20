@@ -2,6 +2,8 @@
   Description: Removes a target ip from the ratelimiter
 */
 
+const name = 'unban';
+
 exports.run = async (core, server, socket, data) => {
   if (socket.uType == 'user') {
     // ignore if not mod or admin
@@ -11,6 +13,7 @@ exports.run = async (core, server, socket, data) => {
   if (typeof data.ip !== 'string' && typeof data.hash !== 'string') {
     server.reply({
       cmd: 'warn',
+      name,
       text: "hash:'targethash' or ip:'1.2.3.4' is required"
     }, socket);
 
@@ -37,11 +40,13 @@ exports.run = async (core, server, socket, data) => {
 
   server.reply({
     cmd: 'info',
+    name,
     text: `Unbanned ${target}`
   }, socket);
 
   server.broadcast({
     cmd: 'info',
+    name,
     text: `${socket.nick} unbanned: ${target}`
   }, { uType: 'mod' });
 
@@ -49,7 +54,7 @@ exports.run = async (core, server, socket, data) => {
 };
 
 exports.info = {
-  name: 'unban',
-  usage: 'unban {[ip || hash]}',
+  name,
+  usage: `${name} {[ip || hash]}`,
   description: 'Removes target ip from the ratelimiter'
 };

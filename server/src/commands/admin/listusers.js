@@ -2,6 +2,8 @@
   Description: Outputs all current channels and their user nicks
 */
 
+const name = 'listusers';
+
 exports.run = async (core, server, socket, data) => {
   if (socket.uType != 'admin') {
     // ignore if not admin
@@ -28,11 +30,12 @@ exports.run = async (core, server, socket, data) => {
 
   server.reply({
     cmd: 'info',
-    text: text
+    name,
+    text
   }, socket);
 };
 
 exports.info = {
-  name: 'listusers',
+  name,
   description: 'Outputs all current channels and sockets in those channels'
 };

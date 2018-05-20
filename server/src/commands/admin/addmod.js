@@ -2,6 +2,8 @@
   Description: Adds the target trip to the mod list then elevates the uType
 */
 
+const name = 'addmod';
+
 exports.run = async (core, server, socket, data) => {
   if (socket.uType != 'admin') {
     // ignore if not admin
@@ -16,32 +18,30 @@ exports.run = async (core, server, socket, data) => {
 
   let newMod = server.findSockets({ trip: data.trip });
 
+  var obj = {
+    cmd: 'info',
+    name
+  };
+
   if (newMod.length !== 0) {
+    obj.text = 'You are now a mod.';
+
     for (let i = 0, l = newMod.length; i < l; i++) {
       newMod[i].uType = 'mod';
 
-      server.send({
-        cmd: 'info',
-        text: 'You are now a mod.'
-      }, newMod[i]);
+      server.send(obj, newMod[i]);
     }
   }
 
-  server.reply({
-    cmd: 'info',
-    text: `Added mod trip: ${data.trip}`
-  }, socket);
-
-  server.broadcast({
-    cmd: 'info',
-    text: `Added mod trip: ${data.trip}`
-  }, { uType: 'mod' });
+  obj.text = `Added mod trip: ${data.trip}`;
+  server.reply(obj, socket);
+  server.broadcast(obj, { uType: 'mod' });
 };
 
 exports.requiredData = ['trip'];
 
 exports.info = {
-  name: 'addmod',
-  usage: 'addmod {trip}',
+  name,
+  usage: `${name} {trip}`,
   description: 'Adds target trip to the config as a mod and upgrades the socket type'
 };

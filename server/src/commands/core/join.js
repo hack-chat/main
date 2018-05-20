@@ -2,6 +2,8 @@
   Description: Initial entry point, applies `channel` and `nick` to the calling socket
 */
 
+const name = 'join';
+
 const crypto = require('crypto');
 
 const hash = (password) => {
@@ -15,11 +17,14 @@ const verifyNickname = (nick) => {
 };
 
 exports.run = async (core, server, socket, data) => {
+  let warnObj = {
+    cmd: 'warn',
+    name
+  };
+
   if (server._police.frisk(socket.remoteAddress, 3)) {
-    server.reply({
-      cmd: 'warn',
-      text: 'You are joining channels too fast. Wait a moment and try again.'
-    }, socket);
+    warnObj.text = 'You are joining channels too fast. Wait a moment and try again.';
+    server.reply(warnObj, socket);
 
     return;
   }
@@ -45,10 +50,8 @@ exports.run = async (core, server, socket, data) => {
   nick = nickArray[0].trim();
 
   if (!verifyNickname(nick)) {
-    server.reply({
-      cmd: 'warn',
-      text: 'Nickname must consist of up to 24 letters, numbers, and underscores'
-    }, socket);
+    warnObj.text = 'Nickname must consist of up to 24 letters, numbers, and underscores';
+    server.reply(warnObj, socket);
 
     return;
   }
@@ -60,10 +63,8 @@ exports.run = async (core, server, socket, data) => {
 
   if (userExists.length > 0) {
     // That nickname is already in that channel
-    server.reply({
-      cmd: 'warn',
-      text: 'Nickname taken'
-    }, socket);
+    warnObj.text = 'Nickname taken';
+    server.reply(warnObj, socket);
 
     return;
   }
@@ -76,10 +77,8 @@ exports.run = async (core, server, socket, data) => {
     if (password != core.config.adminPass) {
       server._police.frisk(socket.remoteAddress, 4);
 
-      server.reply({
-        cmd: 'warn',
-        text: 'Gtfo'
-      }, socket);
+      warnObj.text = 'Gtfo';
+      server.reply(warnObj, socket);
 
       return;
     } else {
@@ -101,7 +100,8 @@ exports.run = async (core, server, socket, data) => {
   let newPeerList = server.findSockets({ channel: data.channel });
   let joinAnnouncement = {
     cmd: 'onlineAdd',
-    nick: nick,
+    name,
+    nick,
     trip: trip || 'null',
     hash: server.getSocketHash(socket)
   };
@@ -120,7 +120,8 @@ exports.run = async (core, server, socket, data) => {
 
   server.reply({
     cmd: 'onlineSet',
-    nicks: nicks
+    name,
+    nicks
   }, socket);
 
   core.managers.stats.increment('users-joined');
@@ -129,7 +130,7 @@ exports.run = async (core, server, socket, data) => {
 exports.requiredData = ['channel', 'nick'];
 
 exports.info = {
-  name: 'join',
-  usage: 'join {channel} {nick}',
+  name,
+  usage: `${name} {channel} {nick}`,
   description: 'Place calling socket into target channel with target nick & broadcast event to channel'
 };

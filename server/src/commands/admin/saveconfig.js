@@ -2,6 +2,8 @@
   Description: Writes any changes to the config to the disk
 */
 
+const name = 'saveconfig';
+
 exports.run = async (core, server, socket, data) => {
   if (socket.uType != 'admin') {
     // ignore if not admin
@@ -13,24 +15,25 @@ exports.run = async (core, server, socket, data) => {
   if (!saveResult) {
     server.reply({
       cmd: 'warn',
+      name,
       text: 'Failed to save config, check logs.'
     }, client);
 
     return;
   }
 
-  server.reply({
+  var obj = {
     cmd: 'info',
+    name,
     text: 'Config saved!'
-  }, socket);
+  };
 
-  server.broadcast({
-    cmd: 'info',
-    text: 'Config saved!'
-  }, { uType: 'mod' });
+  server.reply(obj, socket);
+
+  server.broadcast(obj, { uType: 'mod' });
 };
 
 exports.info = {
-  name: 'saveconfig',
+  name,
   description: 'Saves current config'
 };

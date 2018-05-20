@@ -1,5 +1,7 @@
 # Live Deployment Installation
 
+If you're running your own instance of hack.chat, you can retain backwards-compatibility in order to ensure that software created for the main server will work on yours too.
+
 1. [Clone](https://help.github.com/articles/cloning-a-repository/) the repository: `git clone https://github.com/hack-chat/main.git`
 1. Change the directory: `cd main/server`
 1. Install server dependencies: `npm install`
