@@ -1,19 +1,19 @@
-You can programmatically access hack.chat using the following commands via a websocket. To prevent getting disconnected, ping the server every 50 seconds. A list of wrappers written for accessing hack.chat can be found [here](https://github.com/hack-chat/3rd-party-software-list#libraries).
+You can programmatically access hack.chat using the following commands via a websocket. A list of wrappers written for accessing hack.chat can be found [here](https://github.com/hack-chat/3rd-party-software-list#libraries).
 
-The commands are to be sent through a websocket to the URL `wss://hack.chat/chat-ws` (everything sent and received are `string`s). If you are sending messages locally or to another domain, replace 'hack.chat' with the respective domain. If you're running your own instance of hack.chat, you can retain backwards-compatibility in order to ensure that software created for the main server will work on yours too.
+The commands are to be sent through a websocket to the URL `wss://hack.chat/chat-ws` (everything sent and received are JSON). If you are sending messages locally or to another domain, replace 'hack.chat' with the respective domain. If you're running your own instance of hack.chat, you can retain backwards-compatibility in order to ensure that software created for the main server will work on yours too.
 
 All commands sent must be JSON objects with the command specified in the `"cmd"` key. For example:
 ```json
 {
     "cmd": "join",
     "channel": "programming",
-    "nick": "johndoe#fag"
+    "nick": "john#doe"
 }
 ```
 
-hack.chat has three permission levels. When you access a command, hack.chat automatically knows your permission level from your trip code. The lowest permission level is `core`. `mod` is above `core`, so it can access `core` commands in addition to `mod` commands. `admin` is similarly above `mod`.
+hack.chat has three permission levels. When you access a command, hack.chat automatically knows your permission level from your trip code. The lowest permission level is `user`. `mod` is above `user`, so it can access `user` commands in addition to `mod` commands. `admin` is similarly above `mod`.
 
-# `core`
+# `user`
 
 |Command|Parameters|Explanation|
 |-------|----------|-----------|

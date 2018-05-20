@@ -3,6 +3,19 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.0.2] - 2018-05-19
+### Added
+- `./documentation/DOCUMENTATION.md` document which gives overview of the applications protocol
+- `./documentation/DEPLOY.md` document which gives overview of deploying the server live
+- `./LICENSE` License file
+- Code highlighting, triggered with #
+
+### Changed
+- `README.md` wording and layout
+
+### Removed
+- Unneeded `use strict`
+
 ## [2.0.1] - 2018-04-18
 ### Added
 - `users-kicked` tracking to `morestats` command

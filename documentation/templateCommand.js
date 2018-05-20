@@ -1,5 +1,6 @@
 /*
-  Description: This is a template module that should not be on prod
+  Description: This is a template module that should not be user in a production
+               enviroment
 */
 
 // you can require() modules here

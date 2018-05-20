@@ -1,0 +1,31 @@
+{
+  "name": "hack.chat-v2",
+  "version": "2.0.1",
+  "description": "a minimal distraction free chat application",
+  "main": "main.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hack-chat/main.git"
+  },
+  "engines": {
+    "node": ">= 8.10.0",
+    "npm": ">= 5.7.1"
+  },
+  "scripts": {
+    "start": "node main.js",
+    "config": "node src/scripts/configure.js"
+  },
+  "author": "Marzavec",
+  "license": "WTFPL",
+  "dependencies": {
+    "chalk": "^2.3.2",
+    "common-tags": "^1.7.2",
+    "dateformat": "^3.0.3",
+    "deasync": "^0.1.12",
+    "didyoumean2": "^1.3.0",
+    "fs-extra": "^5.0.0",
+    "prompt": "^1.0.0",
+    "readdir-recursive": "0.0.4",
+    "ws": "^5.0.0"
+  }
+}
