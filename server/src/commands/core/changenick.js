@@ -2,16 +2,21 @@
   Description: Generates a semi-unique channel name then broadcasts it to each client
 */
 
+const name = 'changenick';
+
 const verifyNickname = (nick) => {
   return /^[a-zA-Z0-9_]{1,24}$/.test(nick);
 };
 
 exports.run = async (core, server, socket, data) => {
+  let warnObj = {
+    cmd: 'warn',
+    name
+  };
+
   if (server._police.frisk(socket.remoteAddress, 6)) {
-    server.reply({
-      cmd: 'warn',
-      text: 'You are changing nicknames too fast. Wait a moment before trying again.'
-    }, socket);
+    warnObj.text = 'You are changing nicknames too fast. Wait a moment before trying again.';
+    server.reply(warnObj, socket);
 
     return;
   }
@@ -23,10 +28,8 @@ exports.run = async (core, server, socket, data) => {
   let newNick = data.nick.trim();
 
   if (!verifyNickname(newNick)) {
-    server.reply({
-      cmd: 'warn',
-      text: 'Nickname must consist of up to 24 letters, numbers, and underscores'
-    }, socket);
+    warnObj.text = 'Nickname must consist of up to 24 letters, numbers, and underscores';
+    server.reply(warnObj, socket);
 
     return;
   }
@@ -34,10 +37,8 @@ exports.run = async (core, server, socket, data) => {
   if (newNick.toLowerCase() == core.config.adminName.toLowerCase()) {
     server._police.frisk(socket.remoteAddress, 4);
 
-    server.reply({
-      cmd: 'warn',
-      text: 'Gtfo'
-    }, socket);
+    warnObj.text = 'Gtfo';
+    server.reply(warnObj, socket);
 
     return;
   }
@@ -49,10 +50,8 @@ exports.run = async (core, server, socket, data) => {
 
   if (userExists.length > 0) {
     // That nickname is already in that channel
-    server.reply({
-      cmd: 'warn',
-      text: 'Nickname taken'
-    }, socket);
+    warnObj.text = 'Nickname taken';
+    server.reply(warnObj, socket);
 
     return;
   }
@@ -60,19 +59,22 @@ exports.run = async (core, server, socket, data) => {
   let peerList = server.findSockets({ channel: socket.channel });
   let leaveNotice = {
     cmd: 'onlineRemove',
+    name,
     nick: socket.nick
   };
   let joinNotice = {
     cmd: 'onlineAdd',
+    name,
     nick: newNick,
     trip: socket.trip || 'null',
     hash: server.getSocketHash(socket)
   };
 
-  server.broadcast( leaveNotice, { channel: socket.channel });
-  server.broadcast( joinNotice, { channel: socket.channel });
-  server.broadcast( {
+  server.broadcast(leaveNotice, { channel: socket.channel });
+  server.broadcast(joinNotice, { channel: socket.channel });
+  server.broadcast({
     cmd: 'info',
+    name,
     text: `${socket.nick} is now ${newNick}`
   }, { channel: socket.channel });
 
@@ -82,7 +84,7 @@ exports.run = async (core, server, socket, data) => {
 exports.requiredData = ['nick'];
 
 exports.info = {
-  name: 'changenick',
-  usage: 'changenick {nick}',
+  name,
+  usage: `${name} {nick}`,
   description: 'This will change your current connections nickname'
 };

@@ -4,10 +4,13 @@
                by a client to have the connection severed.
 */
 
+const name = 'disconnect';
+
 exports.run = async (core, server, socket, data) => {
   if (socket.channel) {
     server.broadcast({
       cmd: 'onlineRemove',
+      name,
       nick: socket.nick
     }, { channel: socket.channel });
   }
@@ -16,6 +19,6 @@ exports.run = async (core, server, socket, data) => {
 };
 
 exports.info = {
-  name: 'disconnect',
+  name,
   description: 'Event handler or force disconnect (if your into that kind of thing)'
 };

@@ -2,6 +2,8 @@
   Description: Clears and resets the command modules, outputting any errors
 */
 
+const name = 'reload';
+
 exports.run = async (core, server, socket, data) => {
   if (socket.uType != 'admin') {
     // ignore if not admin
@@ -17,19 +19,19 @@ exports.run = async (core, server, socket, data) => {
     loadResult = `Loaded ${core.commands._commands.length} commands, error(s): ${loadResult}`;
   }
 
-  server.reply({
+  var obj = {
     cmd: 'info',
+    name,
     text: loadResult
-  }, socket);
+  };
 
-  server.broadcast({
-    cmd: 'info',
-    text: loadResult
-  }, { uType: 'mod' });
+  server.reply(obj, socket);
+
+  server.broadcast(obj, { uType: 'mod' });
 };
 
 exports.info = {
-  name: 'reload',
+  name,
   description: '(Re)loads any new commands into memory, outputs errors if any'
 };
 

@@ -2,6 +2,8 @@
   Description: Outputs more info than the legacy stats command
 */
 
+const name = 'morestats';
+
 const stripIndents = require('common-tags').stripIndents;
 
 const formatTime = (time) => {
@@ -33,6 +35,7 @@ exports.run = async (core, server, socket, data) => {
 
   server.reply({
     cmd: 'info',
+    name,
     text: stripIndents`current-connections: ${uniqueClientCount}
                        current-channels: ${uniqueChannels}
                        users-joined: ${(core.managers.stats.get('users-joined') || 0)}
@@ -48,6 +51,6 @@ exports.run = async (core, server, socket, data) => {
 };
 
 exports.info = {
-  name: 'morestats',
+  name,
   description: 'Sends back current server stats to the calling client'
 };

@@ -2,10 +2,13 @@
   Description: Generates a semi-unique channel name then broadcasts it to each client
 */
 
+const name = 'move';
+
 exports.run = async (core, server, socket, data) => {
   if (server._police.frisk(socket.remoteAddress, 6)) {
     server.reply({
       cmd: 'warn',
+      name,
       text: 'You are changing channels too fast. Wait a moment before trying again.'
     }, socket);
 
@@ -35,17 +38,18 @@ exports.run = async (core, server, socket, data) => {
   let peerList = server.findSockets({ channel: socket.channel });
 
   if (peerList.length > 1) {
-    for (let i = 0, l = peerList.length; i < l; i++) {
-      server.reply({
-        cmd: 'onlineRemove',
-        nick: peerList[i].nick
-      }, socket);
+    var rmObj = {
+      cmd: 'onlineRemove',
+      name
+    };
 
-      if (socket.nick !== peerList[i].nick){
-        server.reply({
-          cmd: 'onlineRemove',
-          nick: socket.nick
-        }, peerList[i]);
+    for (let i = 0, l = peerList.length; i < l; i++) {
+      rmObj.nick = peerList[i].nick;
+      server.reply(rmObj, socket);
+
+      if (socket.nick !== peerList[i].nick) {
+        rmObj.nick = socket.nick;
+        server.reply(rmObj, peerList[i]);
       }
     }
   }
@@ -53,6 +57,7 @@ exports.run = async (core, server, socket, data) => {
   let newPeerList = server.findSockets({ channel: data.channel });
   let moveAnnouncement = {
     cmd: 'onlineAdd',
+    name,
     nick: socket.nick,
     trip: socket.trip || 'null',
     hash: server.getSocketHash(socket)
@@ -68,7 +73,8 @@ exports.run = async (core, server, socket, data) => {
 
   server.reply({
     cmd: 'onlineSet',
-    nicks: nicks
+    name,
+    nicks
   }, socket);
 
   socket.channel = data.channel;
@@ -77,7 +83,7 @@ exports.run = async (core, server, socket, data) => {
 exports.requiredData = ['channel'];
 
 exports.info = {
-  name: 'move',
-  usage: 'move {channel}',
+  name,
+  usage: `${name} {channel}`,
   description: 'This will change the current channel to the new one provided'
 };

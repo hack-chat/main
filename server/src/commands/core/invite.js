@@ -2,6 +2,8 @@
   Description: Generates a semi-unique channel name then broadcasts it to each client
 */
 
+const name = 'invite';
+
 const verifyNickname = (nick) => {
   return /^[a-zA-Z0-9_]{1,24}$/.test(nick);
 };
@@ -10,6 +12,7 @@ exports.run = async (core, server, socket, data) => {
   if (server._police.frisk(socket.remoteAddress, 2)) {
     server.reply({
       cmd: 'warn',
+      name,
       text: 'You are sending invites too fast. Wait a moment before trying again.'
     }, socket);
 
@@ -29,19 +32,21 @@ exports.run = async (core, server, socket, data) => {
     // They invited themself
     return;
   }
-  
+
   let channel = Math.random().toString(36).substr(2, 8);
 
   let payload = {
     cmd: 'info',
+    name,
     invite: channel,
     text: `${socket.nick} invited you to ?${channel}`
   };
-  let inviteSent = server.broadcast( payload, { channel: socket.channel, nick: data.nick });
+  let inviteSent = server.broadcast(payload, { channel: socket.channel, nick: data.nick });
 
   if (!inviteSent) {
     server.reply({
       cmd: 'warn',
+      name,
       text: 'Could not find user in channel'
     }, socket);
 
@@ -50,6 +55,7 @@ exports.run = async (core, server, socket, data) => {
 
   server.reply({
     cmd: 'info',
+    name,
     text: `You invited ${data.nick} to ?${channel}`
   }, socket);
 
@@ -59,7 +65,7 @@ exports.run = async (core, server, socket, data) => {
 exports.requiredData = ['nick'];
 
 exports.info = {
-  name: 'invite',
-  usage: 'invite {nick}',
+  name,
+  usage: `${name} {nick}`,
   description: 'Generates a unique (more or less) room name and passes it to two clients'
 };

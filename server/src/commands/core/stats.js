@@ -2,6 +2,8 @@
   Description: Legacy stats output, kept for compatibility, outputs user and channel count
 */
 
+const name = 'stats';
+
 exports.run = async (core, server, socket, data) => {
   let ips = {};
   let channels = {};
@@ -20,6 +22,7 @@ exports.run = async (core, server, socket, data) => {
 
   server.reply({
     cmd: 'info',
+    name,
     text: `${uniqueClientCount} unique IPs in ${uniqueChannels} channels`
   }, socket);
 
@@ -27,6 +30,6 @@ exports.run = async (core, server, socket, data) => {
 };
 
 exports.info = {
-  name: 'stats',
+  name,
   description: 'Sends back legacy server stats to the calling client'
 };

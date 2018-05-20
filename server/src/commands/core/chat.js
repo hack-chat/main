@@ -2,6 +2,8 @@
   Description: Rebroadcasts any `text` to all clients in a `channel`
 */
 
+const name = 'chat';
+
 const parseText = (text) => {
   if (typeof text !== 'string') {
     return false;
@@ -26,6 +28,7 @@ exports.run = async (core, server, socket, data) => {
   if (server._police.frisk(socket.remoteAddress, score)) {
     server.reply({
       cmd: 'warn',
+      name,
       text: 'You are sending too much text. Wait a moment and try again.\nPress the up arrow key to restore your last message.'
     }, socket);
 
@@ -34,8 +37,9 @@ exports.run = async (core, server, socket, data) => {
 
   let payload = {
     cmd: 'chat',
+    name,
     nick: socket.nick,
-    text: text
+    text
   };
 
   if (socket.uType == 'admin') {
@@ -48,7 +52,7 @@ exports.run = async (core, server, socket, data) => {
     payload.trip = socket.trip;
   }
 
-  server.broadcast( payload, { channel: socket.channel });
+  server.broadcast(payload, { channel: socket.channel });
 
   core.managers.stats.increment('messages-sent');
 };
@@ -56,7 +60,7 @@ exports.run = async (core, server, socket, data) => {
 exports.requiredData = ['text'];
 
 exports.info = {
-  name: 'chat',
-  usage: 'chat {text}',
+  name,
+  usage: `${name} {text}`,
   description: 'Broadcasts passed `text` field to the calling users channel'
 };

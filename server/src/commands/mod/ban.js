@@ -2,6 +2,8 @@
   Description: Adds the target socket's ip to the ratelimiter
 */
 
+const name = 'ban';
+
 exports.run = async (core, server, socket, data) => {
   if (socket.uType == 'user') {
     // ignore if not mod or admin
@@ -18,6 +20,7 @@ exports.run = async (core, server, socket, data) => {
   if (badClient.length === 0) {
     server.reply({
       cmd: 'warn',
+      name,
       text: 'Could not find user in channel'
     }, socket);
 
@@ -29,6 +32,7 @@ exports.run = async (core, server, socket, data) => {
   if (badClient.uType !== 'user') {
     server.reply({
       cmd: 'warn',
+      name,
       text: 'Cannot ban other mods, how rude'
     }, socket);
 
@@ -42,11 +46,13 @@ exports.run = async (core, server, socket, data) => {
 
   server.broadcast({
     cmd: 'info',
+    name,
     text: `Banned ${targetNick}`
   }, { channel: socket.channel, uType: 'user' });
 
   server.broadcast({
     cmd: 'info',
+    name,
     text: `${socket.nick} banned ${targetNick} in ${socket.channel}, userhash: ${clientHash}`
   }, { uType: 'mod' });
 
@@ -58,7 +64,7 @@ exports.run = async (core, server, socket, data) => {
 exports.requiredData = ['nick'];
 
 exports.info = {
-  name: 'ban',
-  usage: 'ban {nick}',
+  name,
+  usage: `${name} {nick}`,
   description: 'Disconnects the target nickname in the same channel as calling socket & adds to ratelimiter'
 };

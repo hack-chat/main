@@ -2,6 +2,8 @@
   Description: Forces a change on the target socket's channel, then broadcasts event
 */
 
+const name = 'kick';
+
 exports.run = async (core, server, socket, data) => {
   if (socket.uType === 'user') {
     // ignore if not mod or admin
@@ -19,6 +21,7 @@ exports.run = async (core, server, socket, data) => {
   if (badClients.length === 0) {
     server.reply({
       cmd: 'warn',
+      name,
       text: 'Could not find user(s) in channel'
     }, socket);
 
@@ -31,6 +34,7 @@ exports.run = async (core, server, socket, data) => {
     if (badClients[i].uType !== 'user') {
       server.reply({
         cmd: 'warn',
+        name,
         text: 'Cannot kick other mods, how rude'
       }, socket);
     } else {
@@ -40,6 +44,7 @@ exports.run = async (core, server, socket, data) => {
       // inform mods with where they were sent
       server.broadcast({
         cmd: 'info',
+        name,
         text: `${badClients[i].nick} was banished to ?${newChannel}`
       }, { channel: socket.channel, uType: 'mod' });
 
@@ -56,6 +61,7 @@ exports.run = async (core, server, socket, data) => {
   for (let i = 0, j = kicked.length; i < j; i++) {
     server.broadcast({
       cmd: 'onlineRemove',
+      name,
       nick: kicked[i]
     }, { channel: socket.channel });
   }
@@ -63,6 +69,7 @@ exports.run = async (core, server, socket, data) => {
   // publicly broadcast kick event
   server.broadcast({
     cmd: 'info',
+    name,
     text: `Kicked ${kicked.join(', ')}`
   }, { channel: socket.channel, uType: 'user' });
 
@@ -72,7 +79,7 @@ exports.run = async (core, server, socket, data) => {
 exports.requiredData = ['nick'];
 
 exports.info = {
-  name: 'kick',
-  usage: 'kick {nick}',
+  name,
+  usage: `${name} {nick}`,
   description: 'Silently forces target client(s) into another channel. `nick` may be string or array of strings'
 };

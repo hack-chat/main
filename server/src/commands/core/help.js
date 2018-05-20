@@ -2,6 +2,8 @@
   Description: Outputs the current command module list or command categories
 */
 
+const name = 'help';
+
 const stripIndents = require('common-tags').stripIndents;
 
 exports.run = async (core, server, socket, data) => {
@@ -9,11 +11,11 @@ exports.run = async (core, server, socket, data) => {
   let typeDt = typeof data.type;
   let catDt = typeof data.category;
   let cmdDt = typeof data.command;
-  if (typeDt !== 'undefined' && typeDt !== 'string' ) {
+  if (typeDt !== 'undefined' && typeDt !== 'string') {
     return;
-  } else if (catDt !== 'undefined' && catDt !== 'string' ) {
+  } else if (catDt !== 'undefined' && catDt !== 'string') {
     return;
-  } else if (cmdDt !== 'undefined' && cmdDt !== 'string' ) {
+  } else if (cmdDt !== 'undefined' && cmdDt !== 'string') {
     return;
   }
 
@@ -38,12 +40,13 @@ exports.run = async (core, server, socket, data) => {
 
   server.reply({
     cmd: 'info',
+    name,
     text: reply
   }, socket);
 };
 
 exports.info = {
-  name: 'help',
-  usage: 'help ([ type:categories] | [category:<category name> | command:<command name> ])',
+  name,
+  usage: `${name} ([ type:categories] | [category:<category name> | command:<command name> ])`,
   description: 'Outputs information about the servers current protocol'
 };

@@ -13,18 +13,18 @@ This is a backwards compatible continuation of the [work by Andrew Belt](https:/
 - [node.js 8.10.0](https://nodejs.org/en/download/package-manager/#windows) or higher
 - [npm 5.7.1](https://nodejs.org/en/download/package-manager/#windows) or higher
 
-## Developer Installation
+## Local Installation
 
-1. [Clone](https://help.github.com/articles/cloning-a-repository/) the repository: `git clone https://github.com/hack-chat/main.git`
-1. Change the directory: `cd main`
-1. Install the dependencies: `npm install`
-1. Launch: `npm start`
+```
+git clone https://github.com/hack-chat/main.git
+cd main
+npm install
+npm start
+```
 
-    If you change the `websocketPort` option during the config setup then these changes will need to be reflected on [line 60 of client.js](https://github.com/hack-chat/main/blob/master/client/client.js#L60).
+If you change the `websocketPort` option during the config setup then these changes will need to be reflected on [line 60 of client.js](https://github.com/hack-chat/main/blob/master/client/client.js#L60).
 
-## Live Deployment Installation
-
-See [DEPLOY.md](documentation/DEPLOY.md)
+## [Server Installation](documentation/DEPLOY.md)
 
 # Contributing
 
