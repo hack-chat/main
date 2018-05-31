@@ -48,7 +48,12 @@ exports.run = async (core, server, socket, data) => {
     payload.trip = socket.trip;
   }
 
-  server.broadcast( payload, { channel: socket.channel });
+  if(core.muzzledHashes[socket.hash]){
+      server.broadcast( payload, { channel: socket.channel, hash: socket.hash });
+  } else {
+      //else send it to everyone
+      server.broadcast( payload, { channel: socket.channel});
+  }
 
   core.managers.stats.increment('messages-sent');
 };
