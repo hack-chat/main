@@ -40,7 +40,13 @@ exports.run = async (core, server, socket, data) => {
     return;
   }
   
-  core.muzzledHashes[badClient.hash] = true;
+  let record = core.muzzledHashes[badClient.hash] = {
+      dumb:true
+  }
+  
+  if(data.allies && data.allies.constructor === Array){
+      record.allies = data.allies;
+  }
   
   server.broadcast({
     cmd: 'info',
@@ -53,6 +59,6 @@ exports.requiredData = ['nick'];
 
 exports.info = {
   name: 'dumb',
-  usage: 'dumb {nick}',
+  usage: 'dumb {nick} [allies...]',
   description: 'Cleanly disable a user messages and make him dumb'
 };
