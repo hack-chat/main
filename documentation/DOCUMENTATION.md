@@ -34,7 +34,7 @@ hack.chat has three permission levels. When you access a command, hack.chat auto
 |`ban`|`nick`|Disconnects the target nickname in the same channel as the calling socket and adds it to the rate limiter.|
 |`kick`|`nick`|Silently forces target client(s) into another channel. `nick` may be `string` or `array` of `string`s.|
 |`unban`|`ip` or `hash`|Removes the target ip from the rate limiter.|
-|`dumb`|`nick`|Mutes a user's (spammer's) texts such that it is only displayable to the user only.|
+|`dumb`|`nick`|Mutes a user's (spammer's) texts such that it is displayable to the user only.|
 |`speak`|`ip` or `hash`|Unmutes the user's (spammer's) texts and makes it displayable to everyone again.|
 
 # `admin`
