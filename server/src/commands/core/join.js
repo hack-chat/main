@@ -115,6 +115,7 @@ exports.run = async (core, server, socket, data) => {
   socket.uType = uType;
   socket.nick = nick;
   socket.channel = channel;
+  socket.hash = server.getSocketHash(socket);
   if (trip !== null) socket.trip = trip;
   nicks.push(socket.nick);
 
