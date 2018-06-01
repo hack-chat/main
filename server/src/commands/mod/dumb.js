@@ -17,8 +17,7 @@ exports.run = async (core, server, socket, data) => {
     return;
   }
   
-  let targetNick = data.nick;
-  let badClient = server.findSockets({ channel: socket.channel, nick: targetNick });
+  let badClient = server.findSockets({ channel: socket.channel, nick: data.nick });
 
   if (badClient.length === 0) {
     server.reply({
@@ -50,7 +49,7 @@ exports.run = async (core, server, socket, data) => {
   
   server.broadcast({
     cmd: 'info',
-    text: `${socket.nick} muzzled ${targetNick} in ${socket.channel}, userhash: ${badClient.hash}`
+    text: `${socket.nick} muzzled ${data.nick} in ${socket.channel}, userhash: ${badClient.hash}`
   }, { uType: 'mod' });
   
 }
