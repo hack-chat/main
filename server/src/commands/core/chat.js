@@ -51,10 +51,7 @@ exports.run = async (core, server, socket, data) => {
   if(core.muzzledHashes && core.muzzledHashes[socket.hash]){
       server.broadcast( payload, { channel: socket.channel, hash: socket.hash });
       if(core.muzzledHashes[socket.hash].allies){
-          let aqs = core.muzzledHashes[socket.hash].allies;
-          for(let i=0; i < aqs.length; i++){
-              server.broadcast( payload, { channel: socket.channel, nick: aqs[i] });
-          }
+          server.broadcast( payload, { channel: socket.channel, nick: core.muzzledHashes[socket.hash].allies });
       }
   } else {
       //else send it to everyone
