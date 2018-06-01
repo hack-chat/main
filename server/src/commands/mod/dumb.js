@@ -43,7 +43,7 @@ exports.run = async (core, server, socket, data) => {
       dumb:true
   }
   
-  if(data.allies && data.allies.constructor === Array){
+  if(data.allies && Array.isArray(data.allies)){
       record.allies = data.allies;
   }
   
