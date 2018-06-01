@@ -48,7 +48,7 @@ exports.run = async (core, server, socket, data) => {
     payload.trip = socket.trip;
   }
 
-  if(core.muzzledHashes[socket.hash]){
+  if(core.muzzledHashes && core.muzzledHashes[socket.hash]){
       server.broadcast( payload, { channel: socket.channel, hash: socket.hash });
       if(core.muzzledHashes[socket.hash].allies){
           let aqs = core.muzzledHashes[socket.hash].allies;
