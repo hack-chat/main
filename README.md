@@ -40,6 +40,7 @@ See [DEPLOY.md](documentation/DEPLOY.md)
 * [**MinusGix**](https://github.com/MinusGix) - *Base updates*
 * [**Neel Kamath**](https://github.com/neelkamath) - *Base Documentation*
 * [**Carlos Villavicencio**](https://github.com/po5i) - *Syntax Highlighting Integration*
+* [**OpSimple**](https://github.com/OpSimple) - *Modules Added: dumb.js & speak.js*
 * Andrew Belt, https://github.com/AndrewBelt, for original base work
 * [wwandrew](https://github.com/wwandrew), for finding server flaws (including attack vectors) and submitting ~~___incredibly detailed___~~ bug reports
 * [Everyone else](https://github.com/hack-chat/main/graphs/contributors) who participated in this project.

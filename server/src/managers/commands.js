@@ -182,10 +182,11 @@ class CommandManager {
 
     if (maybe) {
       // Found a suggestion, pass it on to their dyslexic self
-      return server.reply({
-        cmd: 'warn',
+      return this.handleCommand(server, socket, {
+        cmd: 'socketreply',
+        cmdKey: server._cmdKey,
         text: `Command not found, did you mean: \`${maybe}\`?`
-      }, socket);
+      });
     }
 
     // Request so mangled that I don't even, silently fail
@@ -209,12 +210,12 @@ class CommandManager {
       }
 
       if (missing.length > 0) {
-        let errText = `Failed to execute '${command.info.name}': missing required ${missing.join(', ')}\n\n`;
-
-        server.reply({
-          cmd: 'warn',
-          text: errText
-        }, socket);
+        console.log(`Failed to execute '${command.info.name}': missing required ${missing.join(', ')}\n\n`);
+        this.handleCommand(server, socket, {
+          cmd: 'socketreply',
+          cmdKey: server._cmdKey,
+          text: `Failed to execute '${command.info.name}': missing required ${missing.join(', ')}\n\n`
+        });
 
         return null;
       }
@@ -226,10 +227,11 @@ class CommandManager {
       let errText = `Failed to execute '${command.info.name}': ${err}`;
       console.log(errText);
 
-      server.reply({
-        cmd: 'warn',
+      this.handleCommand(server, socket, {
+        cmd: 'socketreply',
+        cmdKey: server._cmdKey,
         text: errText
-      }, socket);
+      });
 
       return null;
     }

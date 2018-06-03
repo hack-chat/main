@@ -11,6 +11,7 @@ const wsServer = require('ws').Server;
 const socketReady = require('ws').OPEN;
 const crypto = require('crypto');
 const ipSalt = (Math.random().toString(36).substring(2, 16) + Math.random().toString(36).substring(2, (Math.random() * 16))).repeat(16);
+const internalCmdKey = (Math.random().toString(36).substring(2, 16) + Math.random().toString(36).substring(2, (Math.random() * 16))).repeat(16);
 const Police = require('./rateLimiter');
 const pulseSpeed = 16000; // ping all clients every X ms
 
@@ -26,6 +27,8 @@ class server extends wsServer {
     this._core = core;
     this._police = new Police();
     this._cmdBlacklist = {};
+    this._cmdKey = internalCmdKey;
+
     this._heartBeat = setInterval(((data) => {
       this.beatHeart();
     }).bind(this), pulseSpeed);
@@ -90,7 +93,11 @@ class server extends wsServer {
   handleData (socket, data) {
     // Don't penalize yet, but check whether IP is rate-limited
     if (this._police.frisk(socket.remoteAddress, 0)) {
-      this.reply({ cmd: 'warn', text: "Your IP is being rate-limited or blocked." }, socket);
+      this._core.commands.handleCommand(this, socket, {
+        cmd: 'socketreply',
+        cmdKey: this._cmdKey,
+        text: 'Your IP is being rate-limited or blocked.'
+      });
 
       return;
     }
@@ -116,7 +123,7 @@ class server extends wsServer {
       return;
     }
 
-    if (typeof args.cmd === 'undefined' || args.cmd == 'ping') {
+    if (typeof args.cmd === 'undefined') {
       return;
     }
 
@@ -142,7 +149,10 @@ class server extends wsServer {
     * @param {Object} socket Closing socket object
     */
   handleClose (socket) {
-    this._core.commands.handleCommand(this, socket, { cmd: 'disconnect' });
+    this._core.commands.handleCommand(this, socket, {
+      cmd: 'disconnect',
+      cmdKey: this._cmdKey
+    });
   }
 
   /**

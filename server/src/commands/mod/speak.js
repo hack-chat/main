@@ -1,8 +1,7 @@
-/* 
+/*
  * Description: Pardon a dumb user to be able to speak again
  * Author: simple
  */
-
 
 exports.run = async (core, server, socket, data) => {
   if (socket.uType == 'user') {
@@ -18,7 +17,7 @@ exports.run = async (core, server, socket, data) => {
 
     return;
   }
-  
+
   let target;
 
   if (typeof data.ip === 'string') {
@@ -26,14 +25,14 @@ exports.run = async (core, server, socket, data) => {
   } else {
     target = data.hash;
   }
-  
+
   delete core.muzzledHashes[target];
-  
+
   server.broadcast({
     cmd: 'info',
     text: `${socket.nick} unmuzzled : ${target}`
   }, { uType: 'mod' });
-  
+
 }
 
 exports.info = {

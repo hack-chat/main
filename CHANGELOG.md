@@ -3,6 +3,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.0.3] - 2018-06-03
+### Added
+- `./server/src/commands/mod/dumb.js` module for server-wide shadow muting
+- `./server/src/commands/mod/speak.js` module unmuting
+- `./server/src/commands/internal/socketreply.js` module to route warning to clients
+- `./server/src/commands/core/ping.js` module to prevent `didYouMean` errors on legacy sources
+
+### Changed
+- Moved `disconnect.js` into servers internal modules directory
+- Restructured `server.js` and `commands.js`, removing hardcoded protocol use
+
 ## [2.0.2] - 2018-05-19
 ### Added
 - `./documentation/DOCUMENTATION.md` document which gives overview of the applications protocol

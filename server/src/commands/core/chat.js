@@ -48,6 +48,7 @@ exports.run = async (core, server, socket, data) => {
     payload.trip = socket.trip;
   }
 
+  // TODO: Add a more contained way for modules to interact, event hooks or something?
   if(core.muzzledHashes && core.muzzledHashes[socket.hash]){
       server.broadcast( payload, { channel: socket.channel, hash: socket.hash });
       if(core.muzzledHashes[socket.hash].allies){
