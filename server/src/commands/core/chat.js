@@ -3,6 +3,7 @@
 */
 
 const parseText = (text) => {
+  // verifies user input is text
   if (typeof text !== 'string') {
     return false;
   }
@@ -16,12 +17,16 @@ const parseText = (text) => {
 };
 
 exports.run = async (core, server, socket, data) => {
+  // check user input
   let text = parseText(data.text);
   if (!text) {
     // lets not send objects or empty text, yea?
+    server._police.frisk(socket.remoteAddress, 6);
+
     return;
   }
 
+  // check for spam
   let score = text.length / 83 / 4;
   if (server._police.frisk(socket.remoteAddress, score)) {
     server.reply({
@@ -32,6 +37,7 @@ exports.run = async (core, server, socket, data) => {
     return;
   }
 
+  // build chat payload
   let payload = {
     cmd: 'chat',
     nick: socket.nick,
@@ -48,6 +54,7 @@ exports.run = async (core, server, socket, data) => {
     payload.trip = socket.trip;
   }
 
+  // check if the users connection is muted
   // TODO: Add a more contained way for modules to interact, event hooks or something?
   if(core.muzzledHashes && core.muzzledHashes[socket.hash]){
       server.broadcast( payload, { channel: socket.channel, hash: socket.hash });
@@ -59,6 +66,7 @@ exports.run = async (core, server, socket, data) => {
       server.broadcast( payload, { channel: socket.channel});
   }
 
+  // stats are fun
   core.managers.stats.increment('messages-sent');
 };
 

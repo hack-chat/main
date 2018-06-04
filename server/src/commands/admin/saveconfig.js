@@ -1,16 +1,17 @@
 /*
-  Description: Writes any changes to the config to the disk
+  Description: Writes the current config to disk
 */
 
 exports.run = async (core, server, socket, data) => {
+  // increase rate limit chance and ignore if not admin
   if (socket.uType != 'admin') {
-    // ignore if not admin
+    server._police.frisk(socket.remoteAddress, 20);
+
     return;
   }
 
-  let saveResult = core.managers.config.save();
-
-  if (!saveResult) {
+  // attempt save, notify of failure
+  if (!core.managers.config.save()) {
     server.reply({
       cmd: 'warn',
       text: 'Failed to save config, check logs.'
@@ -19,11 +20,13 @@ exports.run = async (core, server, socket, data) => {
     return;
   }
 
+  // return success message
   server.reply({
     cmd: 'info',
     text: 'Config saved!'
   }, socket);
 
+  // notify mods #transparency
   server.broadcast({
     cmd: 'info',
     text: 'Config saved!'
@@ -32,5 +35,5 @@ exports.run = async (core, server, socket, data) => {
 
 exports.info = {
   name: 'saveconfig',
-  description: 'Saves current config'
+  description: 'Writes the current config to disk'
 };

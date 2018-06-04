@@ -3,11 +3,14 @@
 */
 
 exports.run = async (core, server, socket, data) => {
+  // increase rate limit chance and ignore if not admin or mod
   if (socket.uType == 'user') {
-    // ignore if not mod or admin
+    server._police.frisk(socket.remoteAddress, 10);
+
     return;
   }
 
+  // check user input
   if (typeof data.ip !== 'string' && typeof data.hash !== 'string') {
     server.reply({
       cmd: 'warn',
@@ -17,8 +20,8 @@ exports.run = async (core, server, socket, data) => {
     return;
   }
 
+  // find target
   let mode, target;
-
   if (typeof data.ip === 'string') {
     mode = 'ip';
     target = data.ip;
@@ -27,24 +30,28 @@ exports.run = async (core, server, socket, data) => {
     target = data.hash;
   }
 
+  // remove arrest record
   server._police.pardon(target);
 
+  // mask ip if used
   if (mode === 'ip') {
     target = server.getSocketHash(target);
   }
-
   console.log(`${socket.nick} [${socket.trip}] unbanned ${target} in ${socket.channel}`);
 
+  // reply with success
   server.reply({
     cmd: 'info',
     text: `Unbanned ${target}`
   }, socket);
 
+  // notify mods
   server.broadcast({
     cmd: 'info',
     text: `${socket.nick} unbanned: ${target}`
   }, { uType: 'mod' });
 
+  // stats are fun
   core.managers.stats.decrement('users-banned');
 };
 

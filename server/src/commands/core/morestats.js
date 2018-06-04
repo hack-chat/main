@@ -12,10 +12,15 @@ const formatTime = (time) => {
 
   let hours = Math.floor(minutes / 60);
   minutes = minutes % 60;
-  return `${hours.toFixed(0)}h ${minutes.toFixed(0)}m ${seconds.toFixed(0)}s`;
+
+  let days = Math.floor(hours / 24);
+  hours = hours % 24;
+
+  return `${days.toFixed(0)}d ${hours.toFixed(0)}h ${minutes.toFixed(0)}m ${seconds.toFixed(0)}s`;
 };
 
 exports.run = async (core, server, socket, data) => {
+  // gather connection and channel count
   let ips = {};
   let channels = {};
   for (let client of server.clients) {
@@ -31,6 +36,7 @@ exports.run = async (core, server, socket, data) => {
   ips = null;
   channels = null;
 
+  // dispatch info
   server.reply({
     cmd: 'info',
     text: stripIndents`current-connections: ${uniqueClientCount}
@@ -44,6 +50,7 @@ exports.run = async (core, server, socket, data) => {
                        server-uptime: ${formatTime(process.hrtime(core.managers.stats.get('start-time')))}`
   }, socket);
 
+  // stats are fun
   core.managers.stats.increment('stats-requested');
 };
 

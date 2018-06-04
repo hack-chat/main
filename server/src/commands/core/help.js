@@ -5,6 +5,8 @@
 const stripIndents = require('common-tags').stripIndents;
 
 exports.run = async (core, server, socket, data) => {
+  // TODO: this module needs to be clean up badly :(
+
   // verify passed arguments
   let typeDt = typeof data.type;
   let catDt = typeof data.category;
@@ -23,6 +25,7 @@ exports.run = async (core, server, socket, data) => {
     Show all commands in category -> { cmd: 'help', category: '<category name>' }
     Show specific command -> { cmd: 'help', command: '<command name>' }`;
 
+  // change reply based on query
   if (typeDt !== 'undefined') {
     let categories = core.commands.categories().sort();
     reply = `Command Categories:\n${categories.map(c => `- ${c.replace('../src/commands/', '')}`).join('\n')}`;
@@ -36,6 +39,7 @@ exports.run = async (core, server, socket, data) => {
       Description: ${command.info.description || '¯\_(ツ)_/¯'}`;
   }
 
+  // output reply
   server.reply({
     cmd: 'info',
     text: reply

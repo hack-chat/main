@@ -10,11 +10,10 @@ const hash = (password) => {
   return sha.digest('base64').substr(0, 6);
 };
 
-const verifyNickname = (nick) => {
-  return /^[a-zA-Z0-9_]{1,24}$/.test(nick);
-};
+const verifyNickname = (nick) => /^[a-zA-Z0-9_]{1,24}$/.test(nick);
 
 exports.run = async (core, server, socket, data) => {
+  // check for spam
   if (server._police.frisk(socket.remoteAddress, 3)) {
     server.reply({
       cmd: 'warn',
@@ -24,22 +23,23 @@ exports.run = async (core, server, socket, data) => {
     return;
   }
 
+  // calling socket already in a channel
   if (typeof socket.channel !== 'undefined') {
-    // Calling socket already in a channel
     return;
   }
 
+  // check user input
   if (typeof data.channel !== 'string' || typeof data.nick !== 'string') {
     return;
   }
 
   let channel = data.channel.trim();
   if (!channel) {
-    // Must join a non-blank channel
+    // must join a non-blank channel
     return;
   }
 
-  // Process nickname
+  // process nickname
   let nick = data.nick;
   let nickArray = nick.split('#', 2);
   nick = nickArray[0].trim();
@@ -53,13 +53,14 @@ exports.run = async (core, server, socket, data) => {
     return;
   }
 
+  // check if the nickname already exists in the channel
   let userExists = server.findSockets({
     channel: data.channel,
     nick: (targetNick) => targetNick.toLowerCase() === nick.toLowerCase()
   });
 
   if (userExists.length > 0) {
-    // That nickname is already in that channel
+    // that nickname is already in that channel
     server.reply({
       cmd: 'warn',
       text: 'Nickname taken'
@@ -68,7 +69,7 @@ exports.run = async (core, server, socket, data) => {
     return;
   }
 
-  // TODO: Should we check for mod status first to prevent overwriting of admin status somehow? Meh, w/e, cba.
+  // TODO: should we check for mod status first to prevent overwriting of admin status somehow? Meh, w/e, cba.
   let uType = 'user';
   let trip = null;
   let password = nickArray[1];
@@ -90,40 +91,47 @@ exports.run = async (core, server, socket, data) => {
     trip = hash(password + core.config.tripSalt);
   }
 
-  // TODO: Disallow moderator impersonation
+  // TODO: disallow moderator impersonation
   for (let mod of core.config.mods) {
     if (trip === mod.trip) {
       uType = 'mod';
     }
   }
 
-  // Reply with online user list
+  // prepare to notify channel peers
   let newPeerList = server.findSockets({ channel: data.channel });
+  let userHash = server.getSocketHash(socket);
+  let nicks = [];
+
   let joinAnnouncement = {
     cmd: 'onlineAdd',
     nick: nick,
     trip: trip || 'null',
-    hash: server.getSocketHash(socket)
+    hash: userHash
   };
-  let nicks = [];
 
+  // send join announcement and prep online set
   for (let i = 0, l = newPeerList.length; i < l; i++) {
     server.reply(joinAnnouncement, newPeerList[i]);
     nicks.push(newPeerList[i].nick);
   }
 
+  // store user info
   socket.uType = uType;
   socket.nick = nick;
   socket.channel = channel;
-  socket.hash = server.getSocketHash(socket);
+  socket.hash = userHash;
   if (trip !== null) socket.trip = trip;
+
   nicks.push(socket.nick);
 
+  // reply with channel peer list
   server.reply({
     cmd: 'onlineSet',
     nicks: nicks
   }, socket);
 
+  // stats are fun
   core.managers.stats.increment('users-joined');
 };
 

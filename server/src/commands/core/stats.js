@@ -3,6 +3,7 @@
 */
 
 exports.run = async (core, server, socket, data) => {
+  // gather connection and channel count
   let ips = {};
   let channels = {};
   for (let client of server.clients) {
@@ -18,11 +19,13 @@ exports.run = async (core, server, socket, data) => {
   ips = null;
   channels = null;
 
+  // dispatch info
   server.reply({
     cmd: 'info',
     text: `${uniqueClientCount} unique IPs in ${uniqueChannels} channels`
   }, socket);
 
+  // stats are fun
   core.managers.stats.increment('stats-requested');
 };
 

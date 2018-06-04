@@ -3,32 +3,37 @@
 */
 
 exports.run = async (core, server, socket, data) => {
+  // increase rate limit chance and ignore if not admin
   if (socket.uType != 'admin') {
-    // ignore if not admin
+    server._police.frisk(socket.remoteAddress, 20);
+
     return;
   }
 
+  // find all users currently in a channel
+  let currentUsers = server.findSockets({
+    channel: (channel) => true
+  });
+
+  // compile channel and user list
   let channels = {};
-  for (var client of server.clients) {
-    if (client.channel) {
-      if (!channels[client.channel]) {
-        channels[client.channel] = [];
-      }
-      channels[client.channel].push(client.nick);
+  for (let i = 0, j = currentUsers.length; i < j; i++) {
+    if (typeof channels[currentUsers[i].channel] === 'undefined') {
+      channels[currentUsers[i].channel] = [];
     }
+    channels[currentUsers[i].channel].push(currentUsers[i].nick);
   }
 
+  // build output
   let lines = [];
   for (let channel in channels) {
     lines.push(`?${channel} ${channels[channel].join(", ")}`);
   }
 
-  let text = '';
-  text += lines.join("\n");
-
+  // send reply
   server.reply({
     cmd: 'info',
-    text: text
+    text: lines.join("\n")
   }, socket);
 };
 

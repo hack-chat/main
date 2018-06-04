@@ -8,15 +8,19 @@ exports.init = (core) => {
 }
 
 exports.run = async (core, server, socket, data) => {
+  // increase rate limit chance and ignore if not admin or mod
   if (socket.uType == 'user') {
-    // ignore if not mod or admin
+    server._police.frisk(socket.remoteAddress, 10);
+
     return;
   }
 
+  // check user input
   if (typeof data.nick !== 'string') {
     return;
   }
 
+  // find target user
   let badClient = server.findSockets({ channel: socket.channel, nick: data.nick });
 
   if (badClient.length === 0) {
@@ -30,6 +34,7 @@ exports.run = async (core, server, socket, data) => {
 
   badClient = badClient[0];
 
+  // likely dont need this, muting mods and admins is fine
   if (badClient.uType !== 'user') {
     server.reply({
       cmd: 'warn',
@@ -39,19 +44,21 @@ exports.run = async (core, server, socket, data) => {
     return;
   }
 
+  // store hash in mute list
   let record = core.muzzledHashes[badClient.hash] = {
       dumb:true
   }
 
+  // store allies if needed
   if(data.allies && Array.isArray(data.allies)){
       record.allies = data.allies;
   }
 
+  // notify mods
   server.broadcast({
     cmd: 'info',
     text: `${socket.nick} muzzled ${data.nick} in ${socket.channel}, userhash: ${badClient.hash}`
   }, { uType: 'mod' });
-
 }
 
 exports.requiredData = ['nick'];

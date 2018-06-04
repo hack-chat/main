@@ -3,19 +3,18 @@
 */
 
 exports.run = async (core, server, socket, data) => {
+  // increase rate limit chance and ignore if not admin
   if (socket.uType != 'admin') {
-    // ignore if not admin
+    server._police.frisk(socket.remoteAddress, 20);
+
     return;
   }
 
-  let mod = {
-    trip: data.trip
-  }
+  // add new trip to config
+  core.config.mods.push({ trip: data.trip }); // purposely not using `config.set()` to avoid auto-save
 
-  core.config.mods.push(mod); // purposely not using `config.set()` to avoid auto-save
-
+  // upgarde existing connections & notify user
   let newMod = server.findSockets({ trip: data.trip });
-
   if (newMod.length !== 0) {
     for (let i = 0, l = newMod.length; i < l; i++) {
       newMod[i].uType = 'mod';
@@ -27,11 +26,13 @@ exports.run = async (core, server, socket, data) => {
     }
   }
 
+  // return success message
   server.reply({
     cmd: 'info',
     text: `Added mod trip: ${data.trip}`
   }, socket);
 
+  // notify all mods
   server.broadcast({
     cmd: 'info',
     text: `Added mod trip: ${data.trip}`

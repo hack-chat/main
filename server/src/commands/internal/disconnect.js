@@ -11,6 +11,7 @@ exports.run = async (core, server, socket, data) => {
     return;
   }
 
+  // send leave notice to client peers
   if (socket.channel) {
     server.broadcast({
       cmd: 'onlineRemove',
@@ -18,6 +19,7 @@ exports.run = async (core, server, socket, data) => {
     }, { channel: socket.channel });
   }
 
+  // commit close just in case
   socket.terminate();
 };
 

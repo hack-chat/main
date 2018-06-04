@@ -3,12 +3,15 @@
 */
 
 exports.run = async (core, server, socket, data) => {
+  // increase rate limit chance and ignore if not admin
   if (socket.uType != 'admin') {
-    // ignore if not admin
+    server._police.frisk(socket.remoteAddress, 20);
+
     return;
   }
 
-  server.broadcast( {
+  // send text to all channels
+  server.broadcast({
     cmd: 'info',
     text: `Server Notice: ${data.text}`
   }, {});

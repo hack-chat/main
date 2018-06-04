@@ -1,19 +1,23 @@
 /*
-  Description: Forces a change on the target socket's channel, then broadcasts event
+  Description: Forces a change on the target(s) socket's channel, then broadcasts event
 */
 
 exports.run = async (core, server, socket, data) => {
-  if (socket.uType === 'user') {
-    // ignore if not mod or admin
+  // increase rate limit chance and ignore if not admin or mod
+  if (socket.uType == 'user') {
+    server._police.frisk(socket.remoteAddress, 10);
+
     return;
   }
 
+  // check user input
   if (typeof data.nick !== 'string') {
     if (typeof data.nick !== 'object' && !Array.isArray(data.nick)) {
       return;
     }
   }
 
+  // find target user(s)
   let badClients = server.findSockets({ channel: socket.channel, nick: data.nick });
 
   if (badClients.length === 0) {
@@ -25,6 +29,7 @@ exports.run = async (core, server, socket, data) => {
     return;
   }
 
+  // check if found targets are kickable, commit kick
   let newChannel = '';
   let kicked = [];
   for (let i = 0, j = badClients.length; i < j; i++) {
@@ -66,6 +71,7 @@ exports.run = async (core, server, socket, data) => {
     text: `Kicked ${kicked.join(', ')}`
   }, { channel: socket.channel, uType: 'user' });
 
+  // stats are fun
   core.managers.stats.increment('users-kicked', kicked.length);
 };
 

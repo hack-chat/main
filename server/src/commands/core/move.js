@@ -1,8 +1,9 @@
 /*
-  Description: Generates a semi-unique channel name then broadcasts it to each client
+  Description: Changes the current channel of the calling socket
 */
 
 exports.run = async (core, server, socket, data) => {
+  // check for spam
   if (server._police.frisk(socket.remoteAddress, 6)) {
     server.reply({
       cmd: 'warn',
@@ -12,15 +13,17 @@ exports.run = async (core, server, socket, data) => {
     return;
   }
 
+  // check user input
   if (typeof data.channel !== 'string') {
     return;
   }
 
   if (data.channel === socket.channel) {
-    // They are trying to rejoin the channel
+    // they are trying to rejoin the channel
     return;
   }
 
+  // check that the nickname isn't already in target channel
   const currentNick = socket.nick.toLowerCase();
   let userExists = server.findSockets({
     channel: data.channel,
@@ -32,6 +35,7 @@ exports.run = async (core, server, socket, data) => {
     return;
   }
 
+  // broadcast leave notice to peers
   let peerList = server.findSockets({ channel: socket.channel });
 
   if (peerList.length > 1) {
@@ -50,12 +54,13 @@ exports.run = async (core, server, socket, data) => {
     }
   }
 
+  // broadcast join notice to new peers
   let newPeerList = server.findSockets({ channel: data.channel });
   let moveAnnouncement = {
     cmd: 'onlineAdd',
     nick: socket.nick,
     trip: socket.trip || 'null',
-    hash: server.getSocketHash(socket)
+    hash: socket.hash
   };
   let nicks = [];
 
@@ -66,11 +71,13 @@ exports.run = async (core, server, socket, data) => {
 
   nicks.push(socket.nick);
 
+  // reply with new user list
   server.reply({
     cmd: 'onlineSet',
     nicks: nicks
   }, socket);
 
+  // commit change
   socket.channel = data.channel;
 };
 

@@ -10,6 +10,7 @@ exports.run = async (core, server, socket, data) => {
     return;
   }
 
+  // send warning to target socket
   server.reply({ cmd: 'warn', text: data.text }, socket);
 };
 

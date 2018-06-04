@@ -4,11 +4,14 @@
  */
 
 exports.run = async (core, server, socket, data) => {
+  // increase rate limit chance and ignore if not admin or mod
   if (socket.uType == 'user') {
-    // ignore if not mod or admin
+    server._police.frisk(socket.remoteAddress, 10);
+
     return;
   }
 
+  // check user input
   if (typeof data.ip !== 'string' && typeof data.hash !== 'string') {
     server.reply({
       cmd: 'warn',
@@ -18,8 +21,8 @@ exports.run = async (core, server, socket, data) => {
     return;
   }
 
+  // find target & remove mute status
   let target;
-
   if (typeof data.ip === 'string') {
     target = getSocketHash(data.ip);
   } else {
@@ -28,11 +31,11 @@ exports.run = async (core, server, socket, data) => {
 
   delete core.muzzledHashes[target];
 
+  // notify mods
   server.broadcast({
     cmd: 'info',
     text: `${socket.nick} unmuzzled : ${target}`
   }, { uType: 'mod' });
-
 }
 
 exports.info = {
