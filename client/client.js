@@ -24,6 +24,7 @@ var frontpage = [
 	"",
 	"Legacy GitHub: https://github.com/AndrewBelt/hack.chat",
 	"Android apps: https://goo.gl/UkbKYy https://goo.gl/qasdSu https://goo.gl/fGQFQN",
+	"Other Softwares: https://github.com/hack-chat/3rd-party-software-list"
 	"",
 	"Server and web client released under the WTFPL and MIT open source license.",
 	"No message history is retained on the hack.chat server."
