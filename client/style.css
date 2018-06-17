@@ -52,6 +52,9 @@ ul li {
 .hidden {
   display: none;
 }
+.expand {
+    height: 90%;
+}
 .container {
   max-width: 600px;
   margin: 0 auto;
