@@ -53,7 +53,7 @@ ul li {
   display: none;
 }
 .expand {
-    height: 90%;
+    height: 100%;
 }
 .container {
   max-width: 600px;
@@ -111,6 +111,7 @@ ul li {
 }
 #sidebar-content {
   width: 180px;
+  padding-bottom: 10%;
 }
 @media only screen and (max-width: 600px) {
   .messages {
