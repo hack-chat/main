@@ -1,3 +1,4 @@
+const verifyNickname = (nick) => /^[a-zA-Z0-9_]{1,24}$/.test(nick);
 var frontpage = [
 	"                            _           _         _       _   ",
 	"                           | |_ ___ ___| |_   ___| |_ ___| |_ ",
@@ -157,7 +158,7 @@ function pushMessage(args) {
 	var messageEl = document.createElement('div');
 	messageEl.classList.add('message');
 
-	if (args.nick == myNick) {
+	if (verifyNickname(myNick) && args.nick == myNick) {
 		messageEl.classList.add('me');
 	} else if (args.nick == '!') {
 		messageEl.classList.add('warn');
