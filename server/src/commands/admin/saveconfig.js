@@ -2,22 +2,19 @@
   Description: Writes the current config to disk
 */
 
+// module main
 exports.run = async (core, server, socket, data) => {
   // increase rate limit chance and ignore if not admin
   if (socket.uType != 'admin') {
-    server._police.frisk(socket.remoteAddress, 20);
-
-    return;
+    return server._police.frisk(socket.remoteAddress, 20);
   }
 
   // attempt save, notify of failure
   if (!core.managers.config.save()) {
-    server.reply({
+    return server.reply({
       cmd: 'warn',
       text: 'Failed to save config, check logs.'
     }, client);
-
-    return;
   }
 
   // return success message
@@ -33,7 +30,10 @@ exports.run = async (core, server, socket, data) => {
   }, { uType: 'mod' });
 };
 
+// module meta
 exports.info = {
   name: 'saveconfig',
-  description: 'Writes the current config to disk'
+  description: 'Writes the current config to disk',
+  usage: `
+    API: { cmd: 'saveconfig' }`
 };

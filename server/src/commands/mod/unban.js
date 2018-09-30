@@ -2,22 +2,19 @@
   Description: Removes a target ip from the ratelimiter
 */
 
+// module main
 exports.run = async (core, server, socket, data) => {
   // increase rate limit chance and ignore if not admin or mod
-  if (socket.uType == 'user') {
-    server._police.frisk(socket.remoteAddress, 10);
-
-    return;
+  if (socket.uType === 'user') {
+    return server._police.frisk(socket.remoteAddress, 10);
   }
 
   // check user input
   if (typeof data.ip !== 'string' && typeof data.hash !== 'string') {
-    server.reply({
+    return server.reply({
       cmd: 'warn',
       text: "hash:'targethash' or ip:'1.2.3.4' is required"
     }, socket);
-
-    return;
   }
 
   // find target
@@ -55,8 +52,10 @@ exports.run = async (core, server, socket, data) => {
   core.managers.stats.decrement('users-banned');
 };
 
+// module meta
 exports.info = {
   name: 'unban',
-  usage: 'unban {[ip || hash]}',
-  description: 'Removes target ip from the ratelimiter'
+  description: 'Removes target ip from the ratelimiter',
+  usage: `
+    API: { cmd: 'unban', ip/hash: '<target ip or hash>' }`
 };

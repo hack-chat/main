@@ -2,6 +2,7 @@
   Description: Legacy stats output, kept for compatibility, outputs user and channel count
 */
 
+// module main
 exports.run = async (core, server, socket, data) => {
   // gather connection and channel count
   let ips = {};
@@ -29,7 +30,10 @@ exports.run = async (core, server, socket, data) => {
   core.managers.stats.increment('stats-requested');
 };
 
+// module meta
 exports.info = {
   name: 'stats',
-  description: 'Sends back legacy server stats to the calling client'
+  description: 'Sends back legacy server stats to the calling client',
+  usage: `
+    API: { cmd: 'stats' }`
 };

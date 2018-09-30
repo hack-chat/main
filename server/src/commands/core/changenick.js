@@ -1,17 +1,17 @@
 /*
-  Description: Generates a semi-unique channel name then broadcasts it to each client
+  Description: Allows calling client to change their current nickname
 */
 
+// module support functions
 const verifyNickname = (nick) => /^[a-zA-Z0-9_]{1,24}$/.test(nick);
 
+// module main
 exports.run = async (core, server, socket, data) => {
   if (server._police.frisk(socket.remoteAddress, 6)) {
-    server.reply({
+    return server.reply({
       cmd: 'warn',
       text: 'You are changing nicknames too fast. Wait a moment before trying again.'
     }, socket);
-
-    return;
   }
 
   // verify user data is string
@@ -22,12 +22,10 @@ exports.run = async (core, server, socket, data) => {
   // make sure requested nickname meets standards
   let newNick = data.nick.trim();
   if (!verifyNickname(newNick)) {
-    server.reply({
+    return server.reply({
       cmd: 'warn',
       text: 'Nickname must consist of up to 24 letters, numbers, and underscores'
     }, socket);
-
-    return;
   }
 
   // prevent admin impersonation
@@ -35,12 +33,10 @@ exports.run = async (core, server, socket, data) => {
   if (newNick.toLowerCase() == core.config.adminName.toLowerCase()) {
     server._police.frisk(socket.remoteAddress, 4);
 
-    server.reply({
+    return server.reply({
       cmd: 'warn',
-      text: 'Gtfo'
+      text: 'You are not the admin, liar!'
     }, socket);
-
-    return;
   }
 
   // find any sockets that have the same nickname
@@ -52,12 +48,10 @@ exports.run = async (core, server, socket, data) => {
   // return error if found
   if (userExists.length > 0) {
     // That nickname is already in that channel
-    server.reply({
+    return server.reply({
       cmd: 'warn',
       text: 'Nickname taken'
     }, socket);
-
-    return;
   }
 
   // build join and leave notices
@@ -65,6 +59,7 @@ exports.run = async (core, server, socket, data) => {
     cmd: 'onlineRemove',
     nick: socket.nick
   };
+
   let joinNotice = {
     cmd: 'onlineAdd',
     nick: newNick,
@@ -86,10 +81,11 @@ exports.run = async (core, server, socket, data) => {
   socket.nick = newNick;
 };
 
+// module meta
 exports.requiredData = ['nick'];
-
 exports.info = {
   name: 'changenick',
-  usage: 'changenick {nick}',
-  description: 'This will change your current connections nickname'
+  description: 'This will change your current connections nickname',
+  usage: `
+    API: { cmd: 'changenick', nick: '<new nickname>' }`
 };

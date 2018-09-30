@@ -10,8 +10,8 @@
 const wsServer = require('ws').Server;
 const socketReady = require('ws').OPEN;
 const crypto = require('crypto');
-const ipSalt = (Math.random().toString(36).substring(2, 16) + Math.random().toString(36).substring(2, (Math.random() * 16))).repeat(16);
-const internalCmdKey = (Math.random().toString(36).substring(2, 16) + Math.random().toString(36).substring(2, (Math.random() * 16))).repeat(16);
+const ipSalt = [...Array(Math.floor(Math.random()*128)+128)].map(i=>(~~(Math.random()*36)).toString(36)).join('');
+const internalCmdKey = [...Array(Math.floor(Math.random()*128)+128)].map(i=>(~~(Math.random()*36)).toString(36)).join('');
 const Police = require('./rateLimiter');
 const pulseSpeed = 16000; // ping all clients every X ms
 
@@ -25,6 +25,7 @@ class server extends wsServer {
     super({ port: core.config.websocketPort });
 
     this._core = core;
+    this._hooks = {};
     this._police = new Police();
     this._cmdBlacklist = {};
     this._cmdKey = internalCmdKey;
@@ -40,6 +41,8 @@ class server extends wsServer {
     this.on('connection', (socket, request) => {
       this.newConnection(socket, request);
     });
+
+    this._core.commands.initCommandHooks(this);
   }
 
   /**
@@ -105,42 +108,59 @@ class server extends wsServer {
     // Penalize here, but don't do anything about it
     this._police.frisk(socket.remoteAddress, 1);
 
-    // ignore ridiculously large packets
+    // Ignore ridiculously large packets
     if (data.length > 65536) {
       return;
     }
 
     // Start sent data verification
-    var args = null;
+    var payload = null;
     try {
-      args = JSON.parse(data);
+      payload = JSON.parse(data);
     } catch (e) {
       // Client sent malformed json, gtfo
       socket.close();
     }
 
-    if (args === null) {
+    if (payload === null) {
       return;
     }
 
-    if (typeof args.cmd === 'undefined') {
+    if (typeof payload.cmd === 'undefined') {
       return;
     }
 
-    if (typeof args.cmd !== 'string') {
+    if (typeof payload.cmd !== 'string') {
       return;
     }
 
-    if (typeof socket.channel === 'undefined' && args.cmd !== 'join') {
+    if (typeof socket.channel === 'undefined' && (payload.cmd !== 'join' && payload.cmd !== 'chat')) {
       return;
     }
 
-    if (typeof this._cmdBlacklist[args.cmd] === 'function') {
+    if (typeof this._cmdBlacklist[payload.cmd] === 'function') {
       return;
     }
 
-    // Finished verification, pass to command modules
-    this._core.commands.handleCommand(this, socket, args);
+    // Execute `in` (incoming data) hooks and process results
+    payload = this.executeHooks('in', socket, payload);
+
+    if (typeof payload === 'string') {
+      // A hook malfunctioned, reply with error
+      this._core.commands.handleCommand(this, socket, {
+        cmd: 'socketreply',
+        cmdKey: this._cmdKey,
+        text: payload
+      });
+
+      return;
+    } else if (payload === false) {
+      // A hook requested this data be dropped
+      return;
+    }
+
+    // Finished verification & hooks, pass to command modules
+    this._core.commands.handleCommand(this, socket, payload);
   }
 
   /**
@@ -168,16 +188,33 @@ class server extends wsServer {
   /**
     * Send data payload to specific socket/client
     *
-    * @param {Object} data Object to convert to json for transmission
+    * @param {Object} payload Object to convert to json for transmission
     * @param {Object} socket The target client
     */
-  send (data, socket) {
+  send (payload, socket) {
     // Add timestamp to command
-    data.time = Date.now();
+    payload.time = Date.now();
+
+    // Execute `in` (incoming data) hooks and process results
+    payload = this.executeHooks('out', socket, payload);
+
+    if (typeof payload === 'string') {
+      // A hook malfunctioned, reply with error
+      this._core.commands.handleCommand(this, socket, {
+        cmd: 'socketreply',
+        cmdKey: this._cmdKey,
+        text: payload
+      });
+
+      return;
+    } else if (payload === false) {
+      // A hook requested this data be dropped
+      return;
+    }
 
     try {
       if (socket.readyState === socketReady) {
-        socket.send(JSON.stringify(data));
+        socket.send(JSON.stringify(payload));
       }
     } catch (e) { }
   }
@@ -185,20 +222,20 @@ class server extends wsServer {
   /**
     * Overload function for `this.send()`
     *
-    * @param {Object} data Object to convert to json for transmission
+    * @param {Object} payload Object to convert to json for transmission
     * @param {Object} socket The target client
     */
-  reply (data, socket) {
-    this.send(data, socket);
+  reply (payload, socket) {
+    this.send(payload, socket);
   }
 
   /**
     * Finds sockets/clients that meet the filter requirements, then passes the data to them
     *
-    * @param {Object} data Object to convert to json for transmission
+    * @param {Object} payload Object to convert to json for transmission
     * @param {Object} filter see `this.findSockets()`
     */
-  broadcast (data, filter) {
+  broadcast (payload, filter) {
     let targetSockets = this.findSockets(filter);
 
     if (targetSockets.length === 0) {
@@ -206,7 +243,7 @@ class server extends wsServer {
     }
 
     for (let i = 0, l = targetSockets.length; i < l; i++) {
-      this.send(data, targetSockets[i]);
+      this.send(payload, targetSockets[i]);
     }
 
     return true;
@@ -271,7 +308,7 @@ class server extends wsServer {
   }
 
   /**
-    * Encrypts target socket's remote address using non-static variable length salt
+    * Hashes target socket's remote address using non-static variable length salt
     * encodes and shortens the output, returns that value
     *
     * @param {Object||String} target Either the target socket or ip as string
@@ -286,6 +323,73 @@ class server extends wsServer {
     }
 
     return sha.digest('base64').substr(0, 15);
+  }
+
+  /**
+    * Adds a target function to an array of hooks. Hooks are executed either before
+    * processing user input (`in`) or before sending data back to the client (`out`)
+    * and allows a module to modify each payload before moving forward
+    *
+    * @param {String} type The type of event, typically `in` (incoming) or `out` (outgoing)
+    * @param {String} command Should match the desired `cmd` attrib of the payload
+    * @param {Function} hookFunction Target function to execute, should accept `server`, `socket` and `payload` as parameters
+    */
+    // TODO: add hook priority levels
+  registerHook (type, command, hookFunction) {
+    if (typeof this._hooks[type] === 'undefined') {
+      this._hooks[type] = new Map();
+    }
+
+    if (!this._hooks[type].has(command)) {
+      this._hooks[type].set(command, []);
+    }
+
+    this._hooks[type].get(command).push(hookFunction);
+  }
+
+  /**
+    * Loops through registered hooks & processes the results. Returned data will
+    * be one of three possiblities:
+    * A payload (modified or not) that will continue through the data flow
+    * A boolean false to indicate halting the data through flow
+    * A string which indicates an error occured in executing the hook
+    *
+    * @param {String} type The type of event, typically `in` (incoming) or `out` (outgoing)
+    * @param {Object} socket Either the target client or the client triggering the hook (depending on `type`)
+    * @param {Object} payload Either incoming data from client or outgoing data (depending on `type`)
+    */
+  executeHooks (type, socket, payload) {
+    let command = payload.cmd;
+
+    if (typeof this._hooks[type] !== 'undefined') {
+      if (this._hooks[type].has(command)) {
+        let hooks = this._hooks[type].get(command);
+
+        for (let i = 0, j = hooks.length; i < j; i++) {
+          try {
+            payload = hooks[i](this._core, this, socket, payload);
+          } catch (err) {
+            let errText = `Hook failure, '${type}', '${command}': ${err}`;
+            console.log(errText);
+            return errText;
+          }
+
+          // A payload may choose to return false to prevent all further processing
+          if (payload === false) {
+            return false;
+          }
+        }
+      }
+    }
+
+    return payload;
+  }
+
+  /**
+    * Wipe server hooks to make ready for module reload calls
+    */
+  clearHooks () {
+    this._hooks = {};
   }
 }
 

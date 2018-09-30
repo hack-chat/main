@@ -2,41 +2,50 @@
   Description: Outputs the current command module list or command categories
 */
 
+// module support functions
 const stripIndents = require('common-tags').stripIndents;
 
-exports.run = async (core, server, socket, data) => {
-  // TODO: this module needs to be clean up badly :(
+// module main
+exports.run = async (core, server, socket, payload) => {
+  // check for spam
+  if (server._police.frisk(socket.remoteAddress, 2)) {
+    return server.reply({
+      cmd: 'warn',
+      text: 'You are sending too much text. Wait a moment and try again.\nPress the up arrow key to restore your last message.'
+    }, socket);
+  }
 
-  // verify passed arguments
-  let typeDt = typeof data.type;
-  let catDt = typeof data.category;
-  let cmdDt = typeof data.command;
-  if (typeDt !== 'undefined' && typeDt !== 'string' ) {
-    return;
-  } else if (catDt !== 'undefined' && catDt !== 'string' ) {
-    return;
-  } else if (cmdDt !== 'undefined' && cmdDt !== 'string' ) {
+  // verify user input
+  if (typeof payload.command !== 'undefined' && typeof payload.command !== 'string') {
     return;
   }
 
-  // set default reply
-  let reply = stripIndents`Help usage:
-    Show all categories -> { cmd: 'help', type: 'categories' }
-    Show all commands in category -> { cmd: 'help', category: '<category name>' }
-    Show specific command -> { cmd: 'help', command: '<command name>' }`;
+  let reply = '';
+  if (typeof payload.command === 'undefined') {
+    reply = stripIndents`Listing all current commands. For specific help on certain commands, use either:
+      Text: /help <command name>
+      API:  {cmd: 'help', command: '<command name>'}`;
+    reply += '\n\n-------------------------------------\n\n';
 
-  // change reply based on query
-  if (typeDt !== 'undefined') {
     let categories = core.commands.categories().sort();
-    reply = `Command Categories:\n${categories.map(c => `- ${c.replace('../src/commands/', '')}`).join('\n')}`;
-  } else if (catDt !== 'undefined') {
-    let catCommands = core.commands.all('../src/commands/' + data.category).sort((a, b) => a.info.name.localeCompare(b.info.name));
-    reply = `${data.category} commands:\n${catCommands.map(c => `- ${c.info.name}`).join('\n')}`;
-  } else if (cmdDt !== 'undefined') {
-    let command = core.commands.get(data.command);
-    reply = stripIndents`
-      Usage: ${command.info.usage || command.info.name}
-      Description: ${command.info.description || '¯\_(ツ)_/¯'}`;
+    for (let i = 0, j = categories.length; i < j; i++) {
+      reply += `${categories[i].replace('../src/commands/', '').replace(/^\w/, c => c.toUpperCase())} Commands:\n`;
+      let catCommands = core.commands.all(categories[i]).sort((a, b) => a.info.name.localeCompare(b.info.name));
+      reply += `  ${catCommands.map(c => `${c.info.name}`).join(', ')}\n\n`;
+    }
+  } else {
+    let command = core.commands.get(payload.command);
+
+    if (typeof command === 'undefined') {
+      reply = 'Unknown command';
+    } else {
+      reply = stripIndents`Name: ${command.info.name}
+        Aliases: ${typeof command.info.aliases !== 'undefined' ? command.info.aliases.join(', ') : 'None'}
+        Category: ${command.info.category.replace('../src/commands/', '').replace(/^\w/, c => c.toUpperCase())}
+        Required Parameters: ${command.requiredData || 'None'}\n
+        Description: ${command.info.description || '¯\_(ツ)_/¯'}\n
+        Usage: ${command.info.usage || command.info.name}`;
+    }
   }
 
   // output reply
@@ -46,8 +55,36 @@ exports.run = async (core, server, socket, data) => {
   }, socket);
 };
 
+// module hook functions
+exports.initHooks = (server) => {
+  server.registerHook('in', 'chat', this.helpCheck);
+};
+
+// hooks chat commands checking for /whisper
+exports.helpCheck = (core, server, socket, payload) => {
+  if (typeof payload.text !== 'string') {
+    return false;
+  }
+
+  if (payload.text.startsWith('/help')) {
+    let input = payload.text.substr(1, payload.text.length).split(' ', 2);
+
+    this.run(core, server, socket, {
+      cmd: input[0],
+      command: input[1]
+    });
+
+    return false;
+  }
+
+  return payload;
+};
+
+// module meta
 exports.info = {
   name: 'help',
-  usage: 'help ([ type:categories] | [category:<category name> | command:<command name> ])',
-  description: 'Outputs information about the servers current protocol'
+  description: 'Outputs information about the servers current protocol',
+  usage: `
+    API: { cmd: 'help', command: '<optional command name>' }
+    Text: /help <optional command name>`
 };

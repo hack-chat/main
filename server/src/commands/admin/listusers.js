@@ -2,12 +2,11 @@
   Description: Outputs all current channels and their user nicks
 */
 
+// module main
 exports.run = async (core, server, socket, data) => {
   // increase rate limit chance and ignore if not admin
   if (socket.uType != 'admin') {
-    server._police.frisk(socket.remoteAddress, 20);
-
-    return;
+    return server._police.frisk(socket.remoteAddress, 20);
   }
 
   // find all users currently in a channel
@@ -37,7 +36,10 @@ exports.run = async (core, server, socket, data) => {
   }, socket);
 };
 
+// module meta
 exports.info = {
   name: 'listusers',
-  description: 'Outputs all current channels and sockets in those channels'
+  description: 'Outputs all current channels and sockets in those channels',
+  usage: `
+    API: { cmd: 'listusers' }`
 };

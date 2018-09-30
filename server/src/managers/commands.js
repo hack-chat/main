@@ -71,8 +71,9 @@ class CommandManager {
 
       command.info.category = category;
 
-      if (this._categories.indexOf(category) === -1)
+      if (this._categories.indexOf(category) === -1) {
         this._categories.push(category);
+      }
     }
 
     if (typeof command.init === 'function') {
@@ -114,7 +115,7 @@ class CommandManager {
   /**
     * Pulls all command names from a passed `category`
     *
-    * @param {String} category reference to the newly loaded object
+    * @param {String} category [Optional] filter return results by this category
     */
   all (category) {
     return !category ? this._commands : this._commands.filter(c => c.info.category.toLowerCase() === category.toLowerCase());
@@ -146,6 +147,15 @@ class CommandManager {
     */
   findBy (key, value) {
     return this._commands.find(c => c.info[key] === value);
+  }
+
+  /**
+    * Runs `initHooks` function on any modules that utilize the event
+    *
+    * @param {Object} server main server object
+    */
+  initCommandHooks (server) {
+    this._commands.filter(c => typeof c.initHooks !== 'undefined').forEach(c => c.initHooks(server));
   }
 
   /**

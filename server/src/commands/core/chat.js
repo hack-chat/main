@@ -2,6 +2,7 @@
   Description: Rebroadcasts any `text` to all clients in a `channel`
 */
 
+// module support functions
 const parseText = (text) => {
   // verifies user input is text
   if (typeof text !== 'string') {
@@ -16,25 +17,23 @@ const parseText = (text) => {
   return text;
 };
 
+// module main
 exports.run = async (core, server, socket, data) => {
   // check user input
   let text = parseText(data.text);
+
   if (!text) {
     // lets not send objects or empty text, yea?
-    server._police.frisk(socket.remoteAddress, 6);
-
-    return;
+    return server._police.frisk(socket.remoteAddress, 13);
   }
 
   // check for spam
   let score = text.length / 83 / 4;
   if (server._police.frisk(socket.remoteAddress, score)) {
-    server.reply({
+    return server.reply({
       cmd: 'warn',
       text: 'You are sending too much text. Wait a moment and try again.\nPress the up arrow key to restore your last message.'
     }, socket);
-
-    return;
   }
 
   // build chat payload
@@ -54,26 +53,77 @@ exports.run = async (core, server, socket, data) => {
     payload.trip = socket.trip;
   }
 
-  // check if the users connection is muted
-  // TODO: Add a more contained way for modules to interact, event hooks or something?
-  if(core.muzzledHashes && core.muzzledHashes[socket.hash]){
-      server.broadcast( payload, { channel: socket.channel, hash: socket.hash });
-      if(core.muzzledHashes[socket.hash].allies){
-          server.broadcast( payload, { channel: socket.channel, nick: core.muzzledHashes[socket.hash].allies });
-      }
-  } else {
-      //else send it to everyone
-      server.broadcast( payload, { channel: socket.channel});
-  }
+  // broadcast to channel peers
+  server.broadcast( payload, { channel: socket.channel});
 
   // stats are fun
   core.managers.stats.increment('messages-sent');
 };
 
-exports.requiredData = ['text'];
+// module hook functions
+exports.initHooks = (server) => {
+  server.registerHook('in', 'chat', this.commandCheckIn);
+  server.registerHook('out', 'chat', this.commandCheckOut);
+};
 
+// checks for miscellaneous '/' based commands
+exports.commandCheckIn = (core, server, socket, payload) => {
+  if (typeof payload.text !== 'string') {
+    return false;
+  }
+
+  if (payload.text.startsWith('/myhash')) {
+    server.reply({
+      cmd: 'info',
+      text: `Your hash: ${socket.hash}`
+    }, socket);
+
+    return false;
+  }
+
+  return payload;
+};
+
+// checks for miscellaneous '/' based commands
+exports.commandCheckOut = (core, server, socket, payload) => {
+  if (!payload.text.startsWith('/')) {
+    return payload;
+  }
+
+  if (payload.text.startsWith('//me ')) {
+    payload.text = payload.text.substr(1, payload.text.length);
+
+    return payload;
+  }
+
+  // TODO: make emotes their own module #lazydev
+  if (payload.text.startsWith('/me ')) {
+    let emote = payload.text.substr(4);
+    if (emote.trim() === '') {
+      emote = 'fails at life';
+    }
+
+    let newPayload = {
+      cmd: 'info',
+      type: 'emote',
+      text: `@${payload.nick} ${emote}`
+    };
+
+    return newPayload;
+  }
+
+  return payload;
+};
+
+// module meta
+exports.requiredData = ['text'];
 exports.info = {
   name: 'chat',
-  usage: 'chat {text}',
-  description: 'Broadcasts passed `text` field to the calling users channel'
+  description: 'Broadcasts passed `text` field to the calling users channel',
+  usage: `
+    API: { cmd: 'chat', text: '<text to send>' }
+    Text: Uuuuhm. Just kind type in that little box at the bottom and hit enter.\n
+    Bonus super secret hidden commands:
+    /me <emote>
+    /myhash`
 };

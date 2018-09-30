@@ -2,17 +2,17 @@
   Description: Generates a semi-unique channel name then broadcasts it to each client
 */
 
+// module support functions
 const verifyNickname = (nick) => /^[a-zA-Z0-9_]{1,24}$/.test(nick);
 
+// module main
 exports.run = async (core, server, socket, data) => {
   // check for spam
   if (server._police.frisk(socket.remoteAddress, 2)) {
-    server.reply({
+    return server.reply({
       cmd: 'warn',
       text: 'You are sending invites too fast. Wait a moment before trying again.'
     }, socket);
-
-    return;
   }
 
   // verify user input
@@ -34,16 +34,15 @@ exports.run = async (core, server, socket, data) => {
     invite: channel,
     text: `${socket.nick} invited you to ?${channel}`
   };
+
   let inviteSent = server.broadcast( payload, { channel: socket.channel, nick: data.nick });
 
   // server indicates the user was not found
   if (!inviteSent) {
-    server.reply({
+    return server.reply({
       cmd: 'warn',
       text: 'Could not find user in channel'
     }, socket);
-
-    return;
   }
 
   // reply with common channel
@@ -56,10 +55,11 @@ exports.run = async (core, server, socket, data) => {
   core.managers.stats.increment('invites-sent');
 };
 
+// module meta
 exports.requiredData = ['nick'];
-
 exports.info = {
   name: 'invite',
-  usage: 'invite {nick}',
-  description: 'Generates a unique (more or less) room name and passes it to two clients'
+  description: 'Generates a unique (more or less) room name and passes it to two clients',
+  usage: `
+    API: { cmd: 'invite', nick: '<target nickname>' }`
 };

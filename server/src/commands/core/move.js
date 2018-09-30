@@ -2,15 +2,14 @@
   Description: Changes the current channel of the calling socket
 */
 
+// module main
 exports.run = async (core, server, socket, data) => {
   // check for spam
   if (server._police.frisk(socket.remoteAddress, 6)) {
-    server.reply({
+    return server.reply({
       cmd: 'warn',
       text: 'You are changing channels too fast. Wait a moment before trying again.'
     }, socket);
-
-    return;
   }
 
   // check user input
@@ -81,10 +80,11 @@ exports.run = async (core, server, socket, data) => {
   socket.channel = data.channel;
 };
 
+// module meta
 exports.requiredData = ['channel'];
-
 exports.info = {
   name: 'move',
-  usage: 'move {channel}',
-  description: 'This will change the current channel to the new one provided'
+  description: 'This will change your current channel to the new one provided',
+  usage: `
+    API: { cmd: 'move', channel: '<target channel>' }`
 };

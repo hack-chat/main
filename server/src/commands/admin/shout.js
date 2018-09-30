@@ -2,12 +2,11 @@
   Description: Emmits a server-wide message as `info`
 */
 
+// module main
 exports.run = async (core, server, socket, data) => {
   // increase rate limit chance and ignore if not admin
   if (socket.uType != 'admin') {
-    server._police.frisk(socket.remoteAddress, 20);
-
-    return;
+    return server._police.frisk(socket.remoteAddress, 20);
   }
 
   // send text to all channels
@@ -17,10 +16,11 @@ exports.run = async (core, server, socket, data) => {
   }, {});
 };
 
+// module meta
 exports.requiredData = ['text'];
-
 exports.info = {
   name: 'shout',
-  usage: 'shout {text}',
-  description: 'Displays passed text to every client connected'
+  description: 'Displays passed text to every client connected',
+  usage: `
+    API: { cmd: 'shout', text: '<shout text>' }`
 };

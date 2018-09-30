@@ -2,6 +2,7 @@
   Description: Outputs more info than the legacy stats command
 */
 
+// module support functions
 const stripIndents = require('common-tags').stripIndents;
 
 const formatTime = (time) => {
@@ -19,6 +20,7 @@ const formatTime = (time) => {
   return `${days.toFixed(0)}d ${hours.toFixed(0)}h ${minutes.toFixed(0)}m ${seconds.toFixed(0)}s`;
 };
 
+// module main
 exports.run = async (core, server, socket, data) => {
   // gather connection and channel count
   let ips = {};
@@ -54,7 +56,33 @@ exports.run = async (core, server, socket, data) => {
   core.managers.stats.increment('stats-requested');
 };
 
+// module hook functions
+exports.initHooks = (server) => {
+  server.registerHook('in', 'chat', this.statsCheck);
+};
+
+// hooks chat commands checking for /stats
+exports.statsCheck = (core, server, socket, payload) => {
+  if (typeof payload.text !== 'string') {
+    return false;
+  }
+
+  if (payload.text.startsWith('/stats')) {
+    this.run(core, server, socket, {
+      cmd: 'morestats'
+    });
+
+    return false;
+  }
+
+  return payload;
+};
+
+// module meta
 exports.info = {
   name: 'morestats',
-  description: 'Sends back current server stats to the calling client'
+  description: 'Sends back current server stats to the calling client',
+  usage: `
+    API: { cmd: 'morestats' }
+    Text: /stats`
 };

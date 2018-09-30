@@ -2,12 +2,11 @@
   Description: Forces a change on the target(s) socket's channel, then broadcasts event
 */
 
+// module main
 exports.run = async (core, server, socket, data) => {
   // increase rate limit chance and ignore if not admin or mod
-  if (socket.uType == 'user') {
-    server._police.frisk(socket.remoteAddress, 10);
-
-    return;
+  if (socket.uType === 'user') {
+    return server._police.frisk(socket.remoteAddress, 10);
   }
 
   // check user input
@@ -21,12 +20,10 @@ exports.run = async (core, server, socket, data) => {
   let badClients = server.findSockets({ channel: socket.channel, nick: data.nick });
 
   if (badClients.length === 0) {
-    server.reply({
+    return server.reply({
       cmd: 'warn',
       text: 'Could not find user(s) in channel'
     }, socket);
-
-    return;
   }
 
   // check if found targets are kickable, commit kick
@@ -75,10 +72,11 @@ exports.run = async (core, server, socket, data) => {
   core.managers.stats.increment('users-kicked', kicked.length);
 };
 
+// module meta
 exports.requiredData = ['nick'];
-
 exports.info = {
   name: 'kick',
-  usage: 'kick {nick}',
-  description: 'Silently forces target client(s) into another channel. `nick` may be string or array of strings'
+  description: 'Silently forces target client(s) into another channel. `nick` may be string or array of strings',
+  usage: `
+    API: { cmd: 'kick', nick: '<target nick>' }`
 };

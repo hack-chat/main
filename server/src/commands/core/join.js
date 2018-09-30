@@ -2,6 +2,7 @@
   Description: Initial entry point, applies `channel` and `nick` to the calling socket
 */
 
+// module support functions
 const crypto = require('crypto');
 
 const hash = (password) => {
@@ -12,15 +13,54 @@ const hash = (password) => {
 
 const verifyNickname = (nick) => /^[a-zA-Z0-9_]{1,24}$/.test(nick);
 
+// exposed "login" function to allow hooks to verify user join events
+// returns object containing user info or string if error
+exports.parseNickname = (core, data) => {
+  let userInfo = {
+    nick: '',
+    uType: 'user',
+    trip: null,
+  };
+
+  // seperate nick from password
+  let nickArray = data.nick.split('#', 2);
+  userInfo.nick = nickArray[0].trim();
+
+  if (!verifyNickname(userInfo.nick)) {
+    // return error as string
+    return 'Nickname must consist of up to 24 letters, numbers, and underscores';
+  }
+
+  let password = nickArray[1];
+  if (userInfo.nick.toLowerCase() == core.config.adminName.toLowerCase()) {
+    if (password !== core.config.adminPass) {
+      return 'You are not the admin, liar!';
+    } else {
+      userInfo.uType = 'admin';
+      userInfo.trip = 'Admin';
+    }
+  } else if (password) {
+    userInfo.trip = hash(password + core.config.tripSalt);
+  }
+
+  // TODO: disallow moderator impersonation
+  for (let mod of core.config.mods) {
+    if (userInfo.trip === mod.trip) {
+      userInfo.uType = 'mod';
+    }
+  }
+
+  return userInfo;
+};
+
+// module main
 exports.run = async (core, server, socket, data) => {
   // check for spam
   if (server._police.frisk(socket.remoteAddress, 3)) {
-    server.reply({
+    return server.reply({
       cmd: 'warn',
       text: 'You are joining channels too fast. Wait a moment and try again.'
     }, socket);
-
-    return;
   }
 
   // calling socket already in a channel
@@ -39,75 +79,39 @@ exports.run = async (core, server, socket, data) => {
     return;
   }
 
-  // process nickname
-  let nick = data.nick;
-  let nickArray = nick.split('#', 2);
-  nick = nickArray[0].trim();
-
-  if (!verifyNickname(nick)) {
-    server.reply({
+  let userInfo = this.parseNickname(core, data);
+  if (typeof userInfo === 'string') {
+    return server.reply({
       cmd: 'warn',
-      text: 'Nickname must consist of up to 24 letters, numbers, and underscores'
+      text: userInfo
     }, socket);
-
-    return;
   }
 
   // check if the nickname already exists in the channel
   let userExists = server.findSockets({
     channel: data.channel,
-    nick: (targetNick) => targetNick.toLowerCase() === nick.toLowerCase()
+    nick: (targetNick) => targetNick.toLowerCase() === userInfo.nick.toLowerCase()
   });
 
   if (userExists.length > 0) {
     // that nickname is already in that channel
-    server.reply({
+    return server.reply({
       cmd: 'warn',
       text: 'Nickname taken'
     }, socket);
-
-    return;
   }
 
-  // TODO: should we check for mod status first to prevent overwriting of admin status somehow? Meh, w/e, cba.
-  let uType = 'user';
-  let trip = null;
-  let password = nickArray[1];
-  if (nick.toLowerCase() == core.config.adminName.toLowerCase()) {
-    if (password != core.config.adminPass) {
-      server._police.frisk(socket.remoteAddress, 4);
-
-      server.reply({
-        cmd: 'warn',
-        text: 'Gtfo'
-      }, socket);
-
-      return;
-    } else {
-      uType = 'admin';
-      trip = 'Admin';
-    }
-  } else if (password) {
-    trip = hash(password + core.config.tripSalt);
-  }
-
-  // TODO: disallow moderator impersonation
-  for (let mod of core.config.mods) {
-    if (trip === mod.trip) {
-      uType = 'mod';
-    }
-  }
+  userInfo.userHash = server.getSocketHash(socket);
 
   // prepare to notify channel peers
   let newPeerList = server.findSockets({ channel: data.channel });
-  let userHash = server.getSocketHash(socket);
   let nicks = [];
 
   let joinAnnouncement = {
     cmd: 'onlineAdd',
-    nick: nick,
-    trip: trip || 'null',
-    hash: userHash
+    nick: userInfo.nick,
+    trip: userInfo.trip || 'null',
+    hash: userInfo.userHash
   };
 
   // send join announcement and prep online set
@@ -117,11 +121,11 @@ exports.run = async (core, server, socket, data) => {
   }
 
   // store user info
-  socket.uType = uType;
-  socket.nick = nick;
-  socket.channel = channel;
-  socket.hash = userHash;
-  if (trip !== null) socket.trip = trip;
+  socket.uType = userInfo.uType;
+  socket.nick = userInfo.nick;
+  socket.channel = data.channel;
+  socket.hash = userInfo.userHash;
+  if (userInfo.trip !== null) socket.trip = userInfo.trip;
 
   nicks.push(socket.nick);
 
@@ -135,10 +139,11 @@ exports.run = async (core, server, socket, data) => {
   core.managers.stats.increment('users-joined');
 };
 
+// module meta
 exports.requiredData = ['channel', 'nick'];
-
 exports.info = {
   name: 'join',
-  usage: 'join {channel} {nick}',
-  description: 'Place calling socket into target channel with target nick & broadcast event to channel'
+  description: 'Place calling socket into target channel with target nick & broadcast event to channel',
+  usage: `
+    API: { cmd: 'join', nick: '<your nickname>', channel: '<target channel>' }`
 };

@@ -2,17 +2,20 @@
   Description: Clears and resets the command modules, outputting any errors
 */
 
+// module main
 exports.run = async (core, server, socket, data) => {
   // increase rate limit chance and ignore if not admin
   if (socket.uType != 'admin') {
-    server._police.frisk(socket.remoteAddress, 20);
-
-    return;
+    return server._police.frisk(socket.remoteAddress, 20);
   }
 
   // do command reloads and store results
   let loadResult = core.managers.dynamicImports.reloadDirCache('src/commands');
   loadResult += core.commands.loadCommands();
+
+  // clear and rebuild all module hooks
+  server.clearHooks();
+  core.commands.initCommandHooks(server);
 
   // build reply based on reload results
   if (loadResult == '') {
@@ -34,7 +37,10 @@ exports.run = async (core, server, socket, data) => {
   }, { uType: 'mod' });
 };
 
+// module meta
 exports.info = {
   name: 'reload',
-  description: '(Re)loads any new commands into memory, outputs errors if any'
+  description: '(Re)loads any new commands into memory, outputs errors if any',
+  usage: `
+    API: { cmd: 'reload' }`
 };

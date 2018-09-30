@@ -2,12 +2,11 @@
   Description: Adds the target socket's ip to the ratelimiter
 */
 
+// module main
 exports.run = async (core, server, socket, data) => {
   // increase rate limit chance and ignore if not admin or mod
-  if (socket.uType == 'user') {
-    server._police.frisk(socket.remoteAddress, 10);
-
-    return;
+  if (socket.uType === 'user') {
+    return server._police.frisk(socket.remoteAddress, 10);
   }
 
   // check user input
@@ -20,24 +19,20 @@ exports.run = async (core, server, socket, data) => {
   let badClient = server.findSockets({ channel: socket.channel, nick: targetNick });
 
   if (badClient.length === 0) {
-    server.reply({
+    return server.reply({
       cmd: 'warn',
       text: 'Could not find user in channel'
     }, socket);
-
-    return;
   }
 
   badClient = badClient[0];
 
   // i guess banning mods or admins isn't the best idea?
   if (badClient.uType !== 'user') {
-    server.reply({
+    return server.reply({
       cmd: 'warn',
       text: 'Cannot ban other mods, how rude'
     }, socket);
-
-    return;
   }
 
   // commit arrest record
@@ -64,10 +59,11 @@ exports.run = async (core, server, socket, data) => {
   core.managers.stats.increment('users-banned');
 };
 
+// module meta
 exports.requiredData = ['nick'];
-
 exports.info = {
   name: 'ban',
-  usage: 'ban {nick}',
-  description: 'Disconnects the target nickname in the same channel as calling socket & adds to ratelimiter'
+  description: 'Disconnects the target nickname in the same channel as calling socket & adds to ratelimiter',
+  usage: `
+    API: { cmd: 'ban', nick: '<target nickname>' }`
 };

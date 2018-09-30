@@ -3,6 +3,22 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.1.0] - 2018-09-29
+### Added
+- Module hook framework, isolating modules and making them truly drop-to-install
+- `./server/src/commands/core/whisper.js` module to send in-channel private messages, `/whisper` hook
+- `muzzle` and `mute` aliases to `./server/src/commands/mod/dumb.js`
+- `unmuzzle` and `unmute` aliases to `./server/src/commands/mod/speak.js`
+- `./server/src/commands/admin/removemod.js` module to remove mods
+- `./server/src/commands/mod/unbanall.js` module to clear all bans and ratelimiting
+
+### Changed
+- Further code cleanup on all modules
+- Adjusted `ipSalt` entropy
+- `./server/src/commands/core/help.js` output is now helpful, added `/help` hook
+- `./server/src/commands/core/chat.js` added `/myhash` and `/me` hooks
+- `./server/src/commands/core/morestats.js` added `/stats` hook
+
 ## [2.0.3] - 2018-06-03
 ### Added
 - `./server/src/commands/mod/dumb.js` module for server-wide shadow muting

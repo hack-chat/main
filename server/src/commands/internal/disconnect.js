@@ -3,12 +3,11 @@
                when a socket connection is closed or lost.
 */
 
+// module main
 exports.run = async (core, server, socket, data) => {
   if (data.cmdKey !== server._cmdKey) {
     // internal command attempt by client, increase rate limit chance and ignore
-    server._police.frisk(socket.remoteAddress, 20);
-
-    return;
+    return server._police.frisk(socket.remoteAddress, 20);
   }
 
   // send leave notice to client peers
@@ -23,8 +22,8 @@ exports.run = async (core, server, socket, data) => {
   socket.terminate();
 };
 
+// module meta
 exports.requiredData = ['cmdKey'];
-
 exports.info = {
   name: 'disconnect',
   usage: 'Internal Use Only',
