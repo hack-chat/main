@@ -44,6 +44,13 @@ class ConfigManager {
     // core server setup questions
     const questions = {
       properties: {
+        tripSalt: {
+          type: 'string',
+          required: !currentConfig.tripSalt,
+          default: currentConfig.tripSalt,
+          hidden: true,
+          replace: '*',
+        },
         adminName: {
           pattern: /^"?[a-zA-Z0-9_]+"?$/,
           type: 'string',
@@ -63,13 +70,6 @@ class ConfigManager {
           type: 'number',
           required: !currentConfig.websocketPort,
           default: currentConfig.websocketPort || 6060
-        },
-        tripSalt: {
-          type: 'string',
-          required: !currentConfig.tripSalt,
-          default: currentConfig.tripSalt,
-          hidden: true,
-          replace: '*',
         }
       }
     };
@@ -100,7 +100,7 @@ class ConfigManager {
 
     // trip salt is the last core config question, wait until it's been populated
     // TODO: update this to work with new plugin support
-    while(conf === null || typeof conf.tripSalt === 'undefined') {
+    while(conf === null || typeof conf.websocketPort === 'undefined') {
       deSync.sleep(100);
     }
 
@@ -127,10 +127,10 @@ class ConfigManager {
         ${chalk.white('Note:')} ${chalk.green('npm/yarn run config')} will re-run this utility.
 
         You will now be asked for the following:
+        -     ${chalk.magenta('      Salt')}, the salt for username trip
         -     ${chalk.magenta('Admin Name')}, the initial admin username
         -     ${chalk.magenta('Admin Pass')}, the initial admin password
         -     ${chalk.magenta('      Port')}, the port for the websocket
-        -     ${chalk.magenta('      Salt')}, the salt for username trip
         \u200b
       `);
 
