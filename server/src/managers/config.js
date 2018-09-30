@@ -50,6 +50,8 @@ class ConfigManager {
     * @param {Object} optionalConfigs optional (non-core) module config
     */
   getQuestions (currentConfig, optionalConfigs) {
+    let salt = null; // this is so it can be accessed from adminTrip.
+
     // core server setup questions
     const questions = {
       properties: {
@@ -59,6 +61,10 @@ class ConfigManager {
           default: currentConfig.tripSalt,
           hidden: true,
           replace: '*',
+          before: value => {
+            salt = value;
+            return salt;
+          }
         },
         adminName: {
           pattern: /^"?[a-zA-Z0-9_]+"?$/,
@@ -68,13 +74,14 @@ class ConfigManager {
           default: currentConfig.adminName,
           before: value => value.replace(/"/g, '')
         },
-        adminPass: {
+        adminTrip: {
           type: 'string',
-          required: !currentConfig.adminPass,
-          default: currentConfig.adminPass,
+          required: !currentConfig.adminTrip,
+          default: currentConfig.adminTrip,
           hidden: true,
           replace: '*',
-          before: value => hash(value)
+          description: 'adminPass',
+          before: value => hash(value + salt)
         },
         websocketPort: {
           type: 'number',

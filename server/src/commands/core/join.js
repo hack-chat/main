@@ -32,13 +32,12 @@ exports.parseNickname = (core, data) => {
   }
 
   let password = nickArray[1];
-  if (userInfo.nick.toLowerCase() == core.config.adminName.toLowerCase()) {
-    if (password !== core.config.adminPass) {
-      return 'You are not the admin, liar!';
-    } else {
-      userInfo.uType = 'admin';
-      userInfo.trip = 'Admin';
-    }
+  
+  if (hash(password + core.config.tripSalt) === core.config.adminTrip) {
+    userInfo.uType = 'admin';
+    userInfo.trip = 'Admin';
+  } else if (userInfo.nick.toLowerCase() == core.config.adminName.toLowerCase()) { // they've got the main-admin name while not being an admin
+    return 'You are not the admin, liar!';
   } else if (password) {
     userInfo.trip = hash(password + core.config.tripSalt);
   }
