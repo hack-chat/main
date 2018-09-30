@@ -16,6 +16,15 @@ const prompt = require('prompt');
 const path = require('path');
 const deSync = require('deasync');
 
+// For hashing the admin's password into a trip.
+const crypto = require('crypto');
+
+const hash = (password) => {
+  let sha = crypto.createHash('sha256');
+  sha.update(password);
+  return sha.digest('base64').substr(0, 6);
+};
+
 class ConfigManager {
   /**
     * Create a `ConfigManager` instance for (re)loading classes and config
@@ -65,6 +74,7 @@ class ConfigManager {
           default: currentConfig.adminPass,
           hidden: true,
           replace: '*',
+          before: value => hash(value)
         },
         websocketPort: {
           type: 'number',
@@ -98,7 +108,7 @@ class ConfigManager {
     let conf = {};
     conf = this.load();
 
-    // trip salt is the last core config question, wait until it's been populated
+    // websocketport is the last core config question, wait until it's been populated
     // TODO: update this to work with new plugin support
     while(conf === null || typeof conf.websocketPort === 'undefined') {
       deSync.sleep(100);
