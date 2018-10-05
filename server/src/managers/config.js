@@ -16,6 +16,15 @@ const prompt = require('prompt');
 const path = require('path');
 const deSync = require('deasync');
 
+// For hashing the admin's password into a trip.
+const crypto = require('crypto');
+
+const hash = (password) => {
+  let sha = crypto.createHash('sha256');
+  sha.update(password);
+  return sha.digest('base64').substr(0, 6);
+};
+
 class ConfigManager {
   /**
     * Create a `ConfigManager` instance for (re)loading classes and config
@@ -41,9 +50,22 @@ class ConfigManager {
     * @param {Object} optionalConfigs optional (non-core) module config
     */
   getQuestions (currentConfig, optionalConfigs) {
+    let salt = null; // this is so it can be accessed from adminTrip.
+
     // core server setup questions
     const questions = {
       properties: {
+        tripSalt: {
+          type: 'string',
+          required: !currentConfig.tripSalt,
+          default: currentConfig.tripSalt,
+          hidden: true,
+          replace: '*',
+          before: value => {
+            salt = value;
+            return salt;
+          }
+        },
         adminName: {
           pattern: /^"?[a-zA-Z0-9_]+"?$/,
           type: 'string',
@@ -52,24 +74,19 @@ class ConfigManager {
           default: currentConfig.adminName,
           before: value => value.replace(/"/g, '')
         },
-        adminPass: {
+        adminTrip: {
           type: 'string',
-          required: !currentConfig.adminPass,
-          default: currentConfig.adminPass,
+          required: !currentConfig.adminTrip,
+          default: currentConfig.adminTrip,
           hidden: true,
           replace: '*',
+          description: 'adminPass',
+          before: value => hash(value + salt)
         },
         websocketPort: {
           type: 'number',
           required: !currentConfig.websocketPort,
           default: currentConfig.websocketPort || 6060
-        },
-        tripSalt: {
-          type: 'string',
-          required: !currentConfig.tripSalt,
-          default: currentConfig.tripSalt,
-          hidden: true,
-          replace: '*',
         }
       }
     };
@@ -98,9 +115,9 @@ class ConfigManager {
     let conf = {};
     conf = this.load();
 
-    // trip salt is the last core config question, wait until it's been populated
+    // websocketport is the last core config question, wait until it's been populated
     // TODO: update this to work with new plugin support
-    while(conf === null || typeof conf.tripSalt === 'undefined') {
+    while(conf === null || typeof conf.websocketPort === 'undefined') {
       deSync.sleep(100);
     }
 
@@ -127,10 +144,10 @@ class ConfigManager {
         ${chalk.white('Note:')} ${chalk.green('npm/yarn run config')} will re-run this utility.
 
         You will now be asked for the following:
+        -     ${chalk.magenta('      Salt')}, the salt for username trip
         -     ${chalk.magenta('Admin Name')}, the initial admin username
         -     ${chalk.magenta('Admin Pass')}, the initial admin password
         -     ${chalk.magenta('      Port')}, the port for the websocket
-        -     ${chalk.magenta('      Salt')}, the salt for username trip
         \u200b
       `);
 
