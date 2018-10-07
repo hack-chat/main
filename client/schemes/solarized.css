@@ -6,8 +6,11 @@ input,
 textarea {
   color: #93a1a1;
 }
-.messages {
-  border-color: #657b83;
+.message {
+  border-left: 1px solid rgba(101, 123, 131, 0.5);
+}
+.refmessage {
+  border-left: 1px solid rgba(101, 123, 131, 1);
 }
 .nick {
   color: #268bd2;

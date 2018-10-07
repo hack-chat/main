@@ -59,13 +59,10 @@ ul li {
   max-width: 600px;
   margin: 0 auto;
 }
-.messages {
-  border-left: 1px solid;
-}
 #messages {
   padding-top: 2em;
 }
-.message {
+.message, .refmessage {
   padding-bottom: 1em;
 }
 .nick {

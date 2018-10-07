@@ -156,7 +156,12 @@ var COMMANDS = {
 function pushMessage(args) {
 	// Message container
 	var messageEl = document.createElement('div');
-	messageEl.classList.add('message');
+
+	if (args.text.includes('@' + myNick.split('#')[0] + ' ')) {
+		messageEl.classList.add('refmessage');
+	} else {
+		messageEl.classList.add('message');
+	}
 
 	if (verifyNickname(myNick) && args.nick == myNick) {
 		messageEl.classList.add('me');
