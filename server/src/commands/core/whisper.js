@@ -63,6 +63,8 @@ exports.run = async (core, server, socket, payload) => {
     text: `${socket.nick} whispered: ${text}`
   }, targetClient);
 
+  targetClient.whisperReply = socket.nick;
+
   server.reply({
     cmd: 'info',
     type: 'whisper',
@@ -96,6 +98,29 @@ exports.whisperCheck = (core, server, socket, payload) => {
     return false;
   }
 
+  if (payload.text.startsWith('/r ')) {
+    if (typeof socket.whisperReply === 'undefined') {
+      server.reply({
+        cmd: 'warn',
+        text: 'Cannot reply to nobody'
+      }, socket);
+
+      return false;
+    }
+
+    let input = payload.text.split(' ');
+    input.splice(0, 1);
+    let whisperText = input.join(' ');
+
+    this.run(core, server, socket, {
+      cmd: 'whisper',
+      nick: socket.whisperReply,
+      text: whisperText
+    });
+
+    return false;
+  }
+
   return payload;
 };
 
@@ -106,5 +131,6 @@ exports.info = {
   description: 'Display text on targets screen that only they can see',
   usage: `
     API: { cmd: 'whisper', nick: '<target name>', text: '<text to whisper>' }
-    Text: /whisper <target name> <text to whisper>`
+    Text: /whisper <target name> <text to whisper>
+    Alt Text: /r <text to whisper, this will auto reply to the last person who whispered to you>`
 };
