@@ -85,6 +85,16 @@ exports.whisperCheck = (core, server, socket, payload) => {
 
   if (payload.text.startsWith('/whisper')) {
     let input = payload.text.split(' ');
+    // If there is no nickname target parameter
+    if (input[1] === undefined) {
+      server.reply({
+        cmd: 'warn',
+        text: 'Refer to `/help whisper` for instructions on how to use this command.'
+      }, socket);
+      
+      return false;
+    }
+
     let target = input[1].replace(/@/g, '');
     input.splice(0, 2);
     let whisperText = input.join(' ');
