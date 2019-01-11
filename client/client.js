@@ -559,6 +559,7 @@ var schemes = [
 var highlights = [
 	'agate',
 	'androidstudio',
+	'atom-one-dark',
 	'darcula',
 	'github',
 	'rainbow',
