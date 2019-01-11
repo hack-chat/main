@@ -544,7 +544,8 @@ var schemes = [
 	'chalk',
 	'default',
 	'eighties',
-	'greenscreen',
+	'greenscreen'
+	'mariana',
 	'mocha',
 	'monokai',
 	'nese',
