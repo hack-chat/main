@@ -545,6 +545,7 @@ var schemes = [
 	'default',
 	'eighties',
 	'greenscreen',
+	'mariana',
 	'mocha',
 	'monokai',
 	'nese',
@@ -558,6 +559,7 @@ var schemes = [
 var highlights = [
 	'agate',
 	'androidstudio',
+	'atom-one-dark',
 	'darcula',
 	'github',
 	'rainbow',
