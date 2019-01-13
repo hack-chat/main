@@ -13,13 +13,13 @@ textarea {
   border-left: 1px solid rgba(101, 123, 131, 1);
 }
 .nick {
-  color: #2B2D63;
+  color: #5d8cb7;
 }
 .trip {
   color: #586e75;
 }
 .text a {
-  color: #515151;
+  color: #7a8f94;
 }
 .admin .nick {
   color: #387300;
@@ -28,7 +28,7 @@ textarea {
   color: #4E9A06;
 }
 .me .nick {
-  color: #4C3F6E;
+  color: #594984;
 }
 .info .nick,
 .info .text {
