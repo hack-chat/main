@@ -7,7 +7,9 @@
  *
 */
 
-const verifyNickname = (nick) => /^[a-zA-Z0-9_]{1,24}$/.test(nick);
+var verifyNickname = function (nick) {
+	return /^[a-zA-Z0-9_]{1,24}$/.test(nick);
+}
 
 var frontpage = [
 	"                            _           _         _       _   ",
