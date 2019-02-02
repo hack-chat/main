@@ -19,9 +19,14 @@ exports.run = async (core, server, socket, data) => {
 
   // build reply based on reload results
   if (loadResult == '') {
-    loadResult = `Loaded ${core.commands._commands.length} commands, 0 errors`;
+    loadResult = `Reloaded ${core.commands._commands.length} commands, 0 errors`;
   } else {
-    loadResult = `Loaded ${core.commands._commands.length} commands, error(s): ${loadResult}`;
+    loadResult = `Reloaded ${core.commands._commands.length} commands, error(s):
+      ${loadResult}`;
+  }
+
+  if (typeof data.reason !== 'undefined') {
+    loadResult += `\nReason: ${data.reason}`;
   }
 
   // reply with results
@@ -42,5 +47,5 @@ exports.info = {
   name: 'reload',
   description: '(Re)loads any new commands into memory, outputs errors if any',
   usage: `
-    API: { cmd: 'reload' }`
+    API: { cmd: 'reload', reason: '<optional reason append>' }`
 };

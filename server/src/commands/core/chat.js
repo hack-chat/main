@@ -90,14 +90,12 @@ exports.commandCheckOut = (core, server, socket, payload) => {
     return payload;
   }
 
+  // TODO: make emotes their own module/event #lazydev
   if (payload.text.startsWith('//me ')) {
     payload.text = payload.text.substr(1, payload.text.length);
 
     return payload;
-  }
-
-  // TODO: make emotes their own module #lazydev
-  if (payload.text.startsWith('/me ')) {
+  } else if (payload.text.startsWith('/me ')) {
     let emote = payload.text.substr(4);
     if (emote.trim() === '') {
       emote = 'fails at life';
@@ -106,6 +104,7 @@ exports.commandCheckOut = (core, server, socket, payload) => {
     let newPayload = {
       cmd: 'info',
       type: 'emote',
+      nick: payload.nick,
       text: `@${payload.nick} ${emote}`
     };
 

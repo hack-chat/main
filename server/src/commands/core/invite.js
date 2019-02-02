@@ -31,11 +31,16 @@ exports.run = async (core, server, socket, data) => {
   // build and send invite
   let payload = {
     cmd: 'info',
+    type: 'invite',
+    from: socket.nick,
     invite: channel,
     text: `${socket.nick} invited you to ?${channel}`
   };
 
-  let inviteSent = server.broadcast( payload, { channel: socket.channel, nick: data.nick });
+  let inviteSent = server.broadcast( payload, {
+    channel: socket.channel,
+    nick: data.nick
+  });
 
   // server indicates the user was not found
   if (!inviteSent) {
@@ -48,6 +53,8 @@ exports.run = async (core, server, socket, data) => {
   // reply with common channel
   server.reply({
     cmd: 'info',
+    type: 'invite',
+    invite: channel,
     text: `You invited ${data.nick} to ?${channel}`
   }, socket);
 

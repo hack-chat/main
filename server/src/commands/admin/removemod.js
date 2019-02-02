@@ -14,8 +14,8 @@ exports.run = async (core, server, socket, data) => {
 
   // find targets current connections
   let targetMod = server.findSockets({ trip: data.trip });
-  if (newMod.length !== 0) {
-    for (let i = 0, l = newMod.length; i < l; i++) {
+  if (targetMod.length !== 0) {
+    for (let i = 0, l = targetMod.length; i < l; i++) {
       // downgrade privilages
       targetMod[i].uType = 'user';
 
@@ -30,7 +30,9 @@ exports.run = async (core, server, socket, data) => {
   // return success message
   server.reply({
     cmd: 'info',
-    text: `Removed mod trip: ${data.trip}, remember to run 'saveconfig' to make it permanent`
+    text: `Removed mod trip: ${
+      data.trip
+    }, remember to run 'saveconfig' to make it permanent`
   }, socket);
 
   // notify all mods

@@ -32,7 +32,7 @@ exports.parseNickname = (core, data) => {
   }
 
   let password = nickArray[1];
-  
+
   if (hash(password + core.config.tripSalt) === core.config.adminTrip) {
     userInfo.uType = 'admin';
     userInfo.trip = 'Admin';

@@ -20,7 +20,10 @@ exports.run = async (core, server, socket, data) => {
     if (typeof channels[currentUsers[i].channel] === 'undefined') {
       channels[currentUsers[i].channel] = [];
     }
-    channels[currentUsers[i].channel].push(currentUsers[i].nick);
+    
+    channels[currentUsers[i].channel].push(
+      `[${currentUsers[i].trip||'null'}]${currentUsers[i].nick}`
+    );
   }
 
   // build output

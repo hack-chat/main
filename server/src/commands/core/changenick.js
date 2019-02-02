@@ -55,6 +55,8 @@ exports.run = async (core, server, socket, data) => {
   }
 
   // build join and leave notices
+  // TODO: this is a legacy client holdover, name changes in the future will
+  //       have thieir own event
   let leaveNotice = {
     cmd: 'onlineRemove',
     nick: socket.nick
@@ -81,11 +83,49 @@ exports.run = async (core, server, socket, data) => {
   socket.nick = newNick;
 };
 
+// module hook functions
+exports.initHooks = (server) => {
+  server.registerHook('in', 'chat', this.nickCheck);
+};
+
+// hooks chat commands checking for /whisper
+exports.nickCheck = (core, server, socket, payload) => {
+  if (typeof payload.text !== 'string') {
+    return false;
+  }
+
+  if (payload.text.startsWith('/nick')) {
+    let input = payload.text.split(' ');
+
+    // If there is no nickname target parameter
+    if (input[1] === undefined) {
+      server.reply({
+        cmd: 'warn',
+        text: 'Refer to `/help nick` for instructions on how to use this command.'
+      }, socket);
+
+      return false;
+    }
+
+    let newNick = input[1].replace(/@/g, '');
+
+    this.run(core, server, socket, {
+      cmd: 'changenick',
+      nick: newNick
+    });
+
+    return false;
+  }
+
+  return payload;
+};
+
 // module meta
 exports.requiredData = ['nick'];
 exports.info = {
   name: 'changenick',
   description: 'This will change your current connections nickname',
   usage: `
-    API: { cmd: 'changenick', nick: '<new nickname>' }`
+    API: { cmd: 'changenick', nick: '<new nickname>' }
+    Text: /nick <new nickname>`
 };
