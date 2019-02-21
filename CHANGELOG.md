@@ -3,6 +3,20 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.1.9] - 2019-02-21
+### Added
+- `./server/src/commands/core/emote.js` module to provide action text
+- `./server/src/core/server.js` priorities to command hooking
+- Priority levels to all command modules
+- `./server/src/commands/core/chat.js` Unknown '/' commands will now return a warning
+- `./server/src/commands/internal/legacylayer.js` to provide compatibility to legacy connections
+
+### Changed
+- Updated all libraries to latest
+- `./server/src/core/server.js` Removed unneeded function bindings
+- `./server/src/core/server.js` Hook function layout
+- `./server/src/managers/config.js` Documentation wording
+
 ## [2.1.0] - 2018-09-29
 ### Added
 - Module hook framework, isolating modules and making them truly drop-to-install

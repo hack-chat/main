@@ -58,7 +58,7 @@ exports.run = async (core, server, socket, data) => {
 
 // module hook functions
 exports.initHooks = (server) => {
-  server.registerHook('in', 'chat', this.statsCheck);
+  server.registerHook('in', 'chat', this.statsCheck, 26);
 };
 
 // hooks chat commands checking for /stats

@@ -62,8 +62,8 @@ exports.run = async (core, server, socket, data) => {
 
 // module hook functions
 exports.initHooks = (server) => {
-  server.registerHook('in', 'chat', this.commandCheckIn);
-  server.registerHook('out', 'chat', this.commandCheckOut);
+  server.registerHook('in', 'chat', this.commandCheckIn, 20);
+  server.registerHook('in', 'chat', this.finalCmdCheck, 254);
 };
 
 // checks for miscellaneous '/' based commands
@@ -84,31 +84,26 @@ exports.commandCheckIn = (core, server, socket, payload) => {
   return payload;
 };
 
-// checks for miscellaneous '/' based commands
-exports.commandCheckOut = (core, server, socket, payload) => {
+exports.finalCmdCheck = (core, server, socket, payload) => {
+  if (typeof payload.text !== 'string') {
+    return false;
+  }
+
   if (!payload.text.startsWith('/')) {
     return payload;
   }
 
-  // TODO: make emotes their own module/event #lazydev
-  if (payload.text.startsWith('//me ')) {
-    payload.text = payload.text.substr(1, payload.text.length);
+  if (payload.text.startsWith('//')) {
+    payload.text = payload.text.substr(1);
 
     return payload;
-  } else if (payload.text.startsWith('/me ')) {
-    let emote = payload.text.substr(4);
-    if (emote.trim() === '') {
-      emote = 'fails at life';
-    }
+  } else {
+    server.reply({
+      cmd: 'warn',
+      text: `Unknown command: ${payload.text}`
+    }, socket);
 
-    let newPayload = {
-      cmd: 'info',
-      type: 'emote',
-      nick: payload.nick,
-      text: `@${payload.nick} ${emote}`
-    };
-
-    return newPayload;
+    return false;
   }
 
   return payload;
@@ -123,6 +118,5 @@ exports.info = {
     API: { cmd: 'chat', text: '<text to send>' }
     Text: Uuuuhm. Just kind type in that little box at the bottom and hit enter.\n
     Bonus super secret hidden commands:
-    /me <emote>
     /myhash`
 };

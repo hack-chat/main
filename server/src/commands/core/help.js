@@ -57,7 +57,7 @@ exports.run = async (core, server, socket, payload) => {
 
 // module hook functions
 exports.initHooks = (server) => {
-  server.registerHook('in', 'chat', this.helpCheck);
+  server.registerHook('in', 'chat', this.helpCheck, 28);
 };
 
 // hooks chat commands checking for /whisper
@@ -67,7 +67,7 @@ exports.helpCheck = (core, server, socket, payload) => {
   }
 
   if (payload.text.startsWith('/help')) {
-    let input = payload.text.substr(1, payload.text.length).split(' ', 2);
+    let input = payload.text.substr(1).split(' ', 2);
 
     this.run(core, server, socket, {
       cmd: input[0],

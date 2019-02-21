@@ -30,9 +30,7 @@ class server extends wsServer {
     this._cmdBlacklist = {};
     this._cmdKey = internalCmdKey;
 
-    this._heartBeat = setInterval(((data) => {
-      this.beatHeart();
-    }).bind(this), pulseSpeed);
+    this._heartBeat = setInterval(() => this.beatHeart(), pulseSpeed);
 
     this.on('error', (err) => {
       this.handleError('server', err);
@@ -42,7 +40,7 @@ class server extends wsServer {
       this.newConnection(socket, request);
     });
 
-    this._core.commands.initCommandHooks(this);
+    this.loadHooks();
   }
 
   /**
@@ -74,17 +72,17 @@ class server extends wsServer {
   newConnection (socket, request) {
     socket.remoteAddress = request.headers['x-forwarded-for'] || request.connection.remoteAddress;
 
-  	socket.on('message', ((data) => {
+  	socket.on('message', (data) => {
       this.handleData(socket, data);
-    }).bind(this));
+    });
 
-    socket.on('close', (() => {
+    socket.on('close', () => {
       this.handleClose(socket);
-    }).bind(this));
+    });
 
-    socket.on('error', ((err) => {
+    socket.on('error', (err) => {
       this.handleError(socket, err);
-    }).bind(this));
+    });
   }
 
   /**
@@ -326,6 +324,39 @@ class server extends wsServer {
   }
 
   /**
+    * (Re)loads all command module hooks, then sorts their order of operation by
+    * priority, ascending (0 being highest priority)
+    *
+    */
+  loadHooks () {
+    // clear current hooks (if any)
+    this.clearHooks();
+    // notify each module to register their hooks (if any)
+    this._core.commands.initCommandHooks(this);
+
+    if (typeof this._hooks['in'] !== 'undefined') {
+      // start sorting, with incoming first
+      let curHooks = [ ...this._hooks['in'].keys() ];
+      let hookObj = [];
+      for (let i = 0, j = curHooks.length; i < j; i++) {
+        hookObj = this._hooks['in'].get(curHooks[i]);
+        hookObj.sort( (h1, h2) => h1.priority - h2.priority );
+        this._hooks['in'].set(hookObj);
+      }
+    }
+
+    if (typeof this._hooks['out'] !== 'undefined') {
+      // then outgoing
+      curHooks = [ ...this._hooks['out'].keys() ];
+      for (let i = 0, j = curHooks.length; i < j; i++) {
+        hookObj = this._hooks['out'].get(curHooks[i]);
+        hookObj.sort( (h1, h2) => h1.priority - h2.priority );
+        this._hooks['out'].set(hookObj);
+      }
+    }
+  }
+
+  /**
     * Adds a target function to an array of hooks. Hooks are executed either before
     * processing user input (`in`) or before sending data back to the client (`out`)
     * and allows a module to modify each payload before moving forward
@@ -333,9 +364,13 @@ class server extends wsServer {
     * @param {String} type The type of event, typically `in` (incoming) or `out` (outgoing)
     * @param {String} command Should match the desired `cmd` attrib of the payload
     * @param {Function} hookFunction Target function to execute, should accept `server`, `socket` and `payload` as parameters
+    * @param {Number} priority Execution priority, hooks with priority 1 will be executed before hooks with priority 200 for example
     */
-    // TODO: add hook priority levels
-  registerHook (type, command, hookFunction) {
+  registerHook (type, command, hookFunction, priority) {
+    if (typeof priority === 'undefined') {
+      priority = 25;
+    }
+
     if (typeof this._hooks[type] === 'undefined') {
       this._hooks[type] = new Map();
     }
@@ -344,7 +379,10 @@ class server extends wsServer {
       this._hooks[type].set(command, []);
     }
 
-    this._hooks[type].get(command).push(hookFunction);
+    this._hooks[type].get(command).push({
+      run: hookFunction,
+      priority: priority
+    });
   }
 
   /**
@@ -367,14 +405,14 @@ class server extends wsServer {
 
         for (let i = 0, j = hooks.length; i < j; i++) {
           try {
-            payload = hooks[i](this._core, this, socket, payload);
+            payload = hooks[i].run(this._core, this, socket, payload);
           } catch (err) {
             let errText = `Hook failure, '${type}', '${command}': ${err}`;
             console.log(errText);
             return errText;
           }
 
-          // A payload may choose to return false to prevent all further processing
+          // A hook function may choose to return false to prevent all further processing
           if (payload === false) {
             return false;
           }

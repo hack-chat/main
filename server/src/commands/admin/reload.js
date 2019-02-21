@@ -9,13 +9,12 @@ exports.run = async (core, server, socket, data) => {
     return server._police.frisk(socket.remoteAddress, 20);
   }
 
-  // do command reloads and store results
+  // do command reload and store results
   let loadResult = core.managers.dynamicImports.reloadDirCache('src/commands');
   loadResult += core.commands.loadCommands();
 
   // clear and rebuild all module hooks
-  server.clearHooks();
-  core.commands.initCommandHooks(server);
+  server.loadHooks();
 
   // build reply based on reload results
   if (loadResult == '') {

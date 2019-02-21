@@ -116,7 +116,6 @@ class ConfigManager {
     conf = this.load();
 
     // websocketport is the last core config question, wait until it's been populated
-    // TODO: update this to work with new plugin support
     while(conf === null || typeof conf.websocketPort === 'undefined') {
       deSync.sleep(100);
     }
@@ -138,8 +137,8 @@ class ConfigManager {
         ${chalk.gray('--------------(') + chalk.white(' HackChat Setup Wizard v1.0 ') + chalk.gray(')--------------')}
         ${chalk.magenta('°º¤ø,¸¸,ø¤º°`°º¤ø,¸,ø¤°º¤ø,¸¸,ø¤º°`°º¤ø,¸°º¤ø,¸¸,ø¤º°`°º¤ø')}
 
-        For advanced setup, see the HackChat wiki at:
-        ${chalk.green('https://github.com/')}
+        For advanced setup, see the documentation at:
+        ${chalk.green('https://github.com/hack-chat/main/tree/master/documentation')}
 
         ${chalk.white('Note:')} ${chalk.green('npm/yarn run config')} will re-run this utility.
 

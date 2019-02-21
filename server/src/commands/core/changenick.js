@@ -85,10 +85,10 @@ exports.run = async (core, server, socket, data) => {
 
 // module hook functions
 exports.initHooks = (server) => {
-  server.registerHook('in', 'chat', this.nickCheck);
+  server.registerHook('in', 'chat', this.nickCheck, 29);
 };
 
-// hooks chat commands checking for /whisper
+// hooks chat commands checking for /nick
 exports.nickCheck = (core, server, socket, payload) => {
   if (typeof payload.text !== 'string') {
     return false;

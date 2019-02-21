@@ -61,8 +61,8 @@ exports.run = async (core, server, socket, data) => {
 
 // module hook functions
 exports.initHooks = (server) => {
-  server.registerHook('in', 'chat', this.chatCheck);
-  server.registerHook('in', 'invite', this.inviteCheck);
+  server.registerHook('in', 'chat', this.chatCheck, 25);
+  server.registerHook('in', 'invite', this.inviteCheck, 25);
   // TODO: add whisper hook, need hook priorities todo finished first
 };
 
