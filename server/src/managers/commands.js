@@ -9,7 +9,7 @@
 
 const path = require('path');
 const chalk = require('chalk');
-const didYouMean = require('didyoumean2');
+const didYouMean = require('didyoumean2').default;
 
 class CommandManager {
   /**
