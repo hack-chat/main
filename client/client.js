@@ -74,7 +74,12 @@ function join(channel) {
 	} else {
 		// for local installs
  		var protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
-		ws = new WebSocket(protocol + '//' + document.domain + ':6060');
+		// if you changed the port during the server config, change 'wsPath'
+		// to the new port (example: ':8080')
+		// if you are reverse proxying, change 'wsPath' to the new location
+		// (example: '/chat-ws')
+		var wsPath = ':6060';
+		ws = new WebSocket(protocol + '//' + document.domain + wsPath);
 	}
 
 	var wasConnected = false;
