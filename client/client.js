@@ -73,7 +73,8 @@ function join(channel) {
 		ws = new WebSocket('wss://hack.chat/chat-ws');
 	} else {
 		// for local installs
-		ws = new WebSocket('ws://' + document.domain + ':6060');
+ 		var protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
+		ws = new WebSocket(protocol + '//' + document.domain + ':6060');
 	}
 
 	var wasConnected = false;
