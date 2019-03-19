@@ -3,6 +3,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.1.9 pre 2.2] - 2019-03-18
+### Changed
+- Configuration script setup, making it more portable/sane
+- Refactored naming scheme and entry point
+
+### Removed
+- Configuration setup from `./serverLib/ConfigManager`
+- Unused feature allowing command modules to add to the configuration/setup process
+- `deasync` dependency
+
 ## [2.1.9] - 2019-02-21
 ### Added
 - `./server/src/commands/core/emote.js` module to provide action text

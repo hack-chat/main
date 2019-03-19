@@ -135,7 +135,7 @@ exports.run = async (core, server, socket, data) => {
   }, socket);
 
   // stats are fun
-  core.managers.stats.increment('users-joined');
+  core.stats.increment('users-joined');
 };
 
 // module meta

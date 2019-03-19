@@ -43,17 +43,17 @@ exports.run = async (core, server, socket, data) => {
     cmd: 'info',
     text: stripIndents`current-connections: ${uniqueClientCount}
                        current-channels: ${uniqueChannels}
-                       users-joined: ${(core.managers.stats.get('users-joined') || 0)}
-                       invites-sent: ${(core.managers.stats.get('invites-sent') || 0)}
-                       messages-sent: ${(core.managers.stats.get('messages-sent') || 0)}
-                       users-banned: ${(core.managers.stats.get('users-banned') || 0)}
-                       users-kicked: ${(core.managers.stats.get('users-kicked') || 0)}
-                       stats-requested: ${(core.managers.stats.get('stats-requested') || 0)}
-                       server-uptime: ${formatTime(process.hrtime(core.managers.stats.get('start-time')))}`
+                       users-joined: ${(core.stats.get('users-joined') || 0)}
+                       invites-sent: ${(core.stats.get('invites-sent') || 0)}
+                       messages-sent: ${(core.stats.get('messages-sent') || 0)}
+                       users-banned: ${(core.stats.get('users-banned') || 0)}
+                       users-kicked: ${(core.stats.get('users-kicked') || 0)}
+                       stats-requested: ${(core.stats.get('stats-requested') || 0)}
+                       server-uptime: ${formatTime(process.hrtime(core.stats.get('start-time')))}`
   }, socket);
 
   // stats are fun
-  core.managers.stats.increment('stats-requested');
+  core.stats.increment('stats-requested');
 };
 
 // module hook functions

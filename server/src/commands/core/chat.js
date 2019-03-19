@@ -57,7 +57,7 @@ exports.run = async (core, server, socket, data) => {
   server.broadcast( payload, { channel: socket.channel});
 
   // stats are fun
-  core.managers.stats.increment('messages-sent');
+  core.stats.increment('messages-sent');
 };
 
 // module hook functions

@@ -49,7 +49,7 @@ exports.run = async (core, server, socket, data) => {
   }, { uType: 'mod' });
 
   // stats are fun
-  core.managers.stats.decrement('users-banned');
+  core.stats.decrement('users-banned');
 };
 
 // module meta

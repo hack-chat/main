@@ -14,24 +14,12 @@ class ImportsManager {
   /**
     * Create a `ImportsManager` instance for (re)loading classes and config
     *
-    * @param {Object} core reference to the global core object
     * @param {String} base executing directory name; __dirname
     */
-  constructor (core, base) {
-    this._core = core;
+  constructor (base) {
     this._base = base;
 
     this._imports = {};
-    this._optionalConfigs = {};
-  }
-
-  /**
-    * Pull core reference
-    *
-    * @type {Object} readonly
-    */
-  get core () {
-    return this._core;
   }
 
   /**
@@ -41,15 +29,6 @@ class ImportsManager {
     */
   get base () {
     return this._base;
-  }
-
-  /**
-    * Pull optional (none-core) config options
-    *
-    * @type {Object}
-    */
-  get optionalConfigs () {
-    return Object.assign({}, this._optionalConfigs);
   }
 
   /**
@@ -87,12 +66,6 @@ class ImportsManager {
           errorText += err;
           console.error(err);
           return errorText;
-        }
-
-        if (imported.configs) {
-          imported.configs.forEach(config => {
-            this._optionalConfigs[config.name] = config;
-          });
         }
 
         if (!this._imports[dirName]) {

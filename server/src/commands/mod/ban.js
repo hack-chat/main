@@ -56,7 +56,7 @@ exports.run = async (core, server, socket, data) => {
   badClient.terminate();
 
   // stats are fun
-  core.managers.stats.increment('users-banned');
+  core.stats.increment('users-banned');
 };
 
 // module meta

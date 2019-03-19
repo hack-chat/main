@@ -59,7 +59,7 @@ exports.run = async (core, server, socket, data) => {
   }, socket);
 
   // stats are fun
-  core.managers.stats.increment('invites-sent');
+  core.stats.increment('invites-sent');
 };
 
 // module meta

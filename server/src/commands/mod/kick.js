@@ -69,7 +69,7 @@ exports.run = async (core, server, socket, data) => {
   }, { channel: socket.channel, uType: 'user' });
 
   // stats are fun
-  core.managers.stats.increment('users-kicked', kicked.length);
+  core.stats.increment('users-kicked', kicked.length);
 };
 
 // module meta

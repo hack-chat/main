@@ -8,7 +8,7 @@
   *
   */
 
-class Police {
+class RateLimiter {
   /**
    * Create a ratelimiter instance.
    */
@@ -94,10 +94,10 @@ class Police {
     if (typeof this._hashes[id] !== 'undefined') {
       id = this._hashes[id];
     }
-    
+
     let record = this.search(id);
     record.arrested = false;
   }
 }
 
-module.exports = Police;
+module.exports = RateLimiter;

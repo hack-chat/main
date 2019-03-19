@@ -7,13 +7,13 @@
   *
   */
 
-class Stats {
+class StatsManager {
   /**
     * Create a stats instance.
     *
     */
   constructor () {
-    this._stats = {};
+    this.data = {};
   }
 
   /**
@@ -22,7 +22,7 @@ class Stats {
     * @param {String} key Reference to the arbitrary store name
     */
   get (key) {
-    return this._stats[key];
+    return this.data[key];
   }
 
   /**
@@ -32,7 +32,7 @@ class Stats {
     * @param {Number} value New value for `key`
     */
   set (key, value) {
-    this._stats[key] = value;
+    this.data[key] = value;
   }
 
   /**
@@ -56,4 +56,4 @@ class Stats {
   }
 }
 
-module.exports = Stats;
+module.exports = StatsManager;

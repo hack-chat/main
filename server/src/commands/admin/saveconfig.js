@@ -10,7 +10,7 @@ exports.run = async (core, server, socket, data) => {
   }
 
   // attempt save, notify of failure
-  if (!core.managers.config.save()) {
+  if (!core.configManager.save()) {
     return server.reply({
       cmd: 'warn',
       text: 'Failed to save config, check logs.'

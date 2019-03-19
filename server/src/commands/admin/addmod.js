@@ -10,7 +10,7 @@ exports.run = async (core, server, socket, data) => {
   }
 
   // add new trip to config
-  core.config.mods.push({ trip: data.trip }); // purposely not using `config.set()` to avoid auto-save
+  core.config.mods.push({ trip: data.trip });
 
   // find targets current connections
   let newMod = server.findSockets({ trip: data.trip });

@@ -8,7 +8,6 @@
   */
 
 const path = require('path');
-const chalk = require('chalk');
 const didYouMean = require('didyoumean2').default;
 
 class CommandManager {
@@ -33,7 +32,7 @@ class CommandManager {
 
     const core = this.core;
 
-    const commandImports = core.managers.dynamicImports.getImport('src/commands');
+    const commandImports = core.dynamicImports.getImport('src/commands');
     let cmdErrors = '';
     Object.keys(commandImports).forEach(file => {
       let command = commandImports[file];
@@ -61,7 +60,7 @@ class CommandManager {
     }
 
     if (!command.category) {
-      let base = path.join(this.core.managers.dynamicImports.base, 'commands');
+      let base = path.join(this.core.dynamicImports.base, 'commands');
 
       let category = 'Uncategorized';
       if (file.indexOf(path.sep) > -1) {

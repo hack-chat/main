@@ -21,7 +21,6 @@
     "chalk": "^2.4.2",
     "common-tags": "^1.8.0",
     "dateformat": "^3.0.3",
-    "deasync": "^0.1.14",
     "didyoumean2": "^2.0.2",
     "fs-extra": "^7.0.1",
     "prompt": "^1.0.0",

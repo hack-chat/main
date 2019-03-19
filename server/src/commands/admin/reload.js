@@ -10,7 +10,7 @@ exports.run = async (core, server, socket, data) => {
   }
 
   // do command reload and store results
-  let loadResult = core.managers.dynamicImports.reloadDirCache('src/commands');
+  let loadResult = core.dynamicImports.reloadDirCache('src/commands');
   loadResult += core.commands.loadCommands();
 
   // clear and rebuild all module hooks

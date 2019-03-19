@@ -12,10 +12,10 @@ const socketReady = require('ws').OPEN;
 const crypto = require('crypto');
 const ipSalt = [...Array(Math.floor(Math.random()*128)+128)].map(i=>(~~(Math.random()*36)).toString(36)).join('');
 const internalCmdKey = [...Array(Math.floor(Math.random()*128)+128)].map(i=>(~~(Math.random()*36)).toString(36)).join('');
-const Police = require('./rateLimiter');
+const RateLimiter = require('./RateLimiter');
 const pulseSpeed = 16000; // ping all clients every X ms
 
-class server extends wsServer {
+class MainServer extends wsServer {
   /**
    * Create a HackChat server instance.
    *
@@ -26,7 +26,7 @@ class server extends wsServer {
 
     this._core = core;
     this._hooks = {};
-    this._police = new Police();
+    this._police = new RateLimiter();
     this._cmdBlacklist = {};
     this._cmdKey = internalCmdKey;
 
@@ -431,4 +431,4 @@ class server extends wsServer {
   }
 }
 
-module.exports = server;
+module.exports = MainServer;

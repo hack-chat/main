@@ -27,7 +27,7 @@ exports.run = async (core, server, socket, data) => {
   }, socket);
 
   // stats are fun
-  core.managers.stats.increment('stats-requested');
+  core.stats.increment('stats-requested');
 };
 
 // module meta
