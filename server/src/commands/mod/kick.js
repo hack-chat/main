@@ -6,7 +6,7 @@
 exports.run = async (core, server, socket, data) => {
   // increase rate limit chance and ignore if not admin or mod
   if (socket.uType === 'user') {
-    return server._police.frisk(socket.remoteAddress, 10);
+    return server.police.frisk(socket.remoteAddress, 10);
   }
 
   // check user input

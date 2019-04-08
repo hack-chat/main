@@ -45,7 +45,6 @@ class CoreApp {
 
   buildImportManager () {
     this.dynamicImports = new ImportsManager(path.join(__dirname, '../..'));
-    this.dynamicImports.init();
   }
 
   buildCommandsManager () {

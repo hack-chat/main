@@ -4,4 +4,6 @@
   *
   */
 
+console.log('');
 console.log('Config generated! You may now start the server normally.');
+console.log('');

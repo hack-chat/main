@@ -14,12 +14,11 @@ class ImportsManager {
   /**
     * Create a `ImportsManager` instance for (re)loading classes and config
     *
-    * @param {String} base executing directory name; __dirname
+    * @param {String} basePath executing directory name; default __dirname
     */
-  constructor (base) {
-    this._base = base;
-
-    this._imports = {};
+  constructor (basePath) {
+    this.basePath = basePath;
+    this.imports = {};
   }
 
   /**
@@ -28,29 +27,18 @@ class ImportsManager {
     * @type {String} readonly
     */
   get base () {
-    return this._base;
-  }
-
-  /**
-    * Initialize this class and start loading target directories
-    *
-    */
-  init () {
-    let errorText = '';
-    ImportsManager.load_dirs.forEach(dir => {
-      errorText += this.loadDir(dir);
-    });
-
-    return errorText;
+    return this.basePath;
   }
 
   /**
     * Gather all js files from target directory, then verify and load
     *
-    * @param {String} dirName The name of the dir to load, relative to the _base path.
+    * @param {String} dirName The name of the dir to load, relative to the basePath.
+    *
+    * @return {String} Load errors or empty if none
     */
   loadDir (dirName) {
-    const dir = path.resolve(this._base, dirName);
+    const dir = path.resolve(this.basePath, dirName);
 
     let errorText = '';
     try {
@@ -68,11 +56,11 @@ class ImportsManager {
           return errorText;
         }
 
-        if (!this._imports[dirName]) {
-          this._imports[dirName] = {};
+        if (!this.imports[dirName]) {
+          this.imports[dirName] = {};
         }
 
-        this._imports[dirName][file] = imported;
+        this.imports[dirName][file] = imported;
       });
     } catch (e) {
       let err = `Unable to load modules from ${dirName}\n${e}`;
@@ -88,14 +76,22 @@ class ImportsManager {
     * Unlink references to each loaded module, pray to google that gc knows it's job,
     * then reinitialize this class to start the reload
     *
-    * @param {String} dirName The name of the dir to load, relative to the _base path.
+    * @param {Array} dirName The name of the dir to load, relative to the _base path.
+    *
+    * @return {String} Load errors or empty if none
     */
-  reloadDirCache (dirName) {
-    Object.keys(this._imports[dirName]).forEach((mod) => {
-      delete require.cache[require.resolve(mod)];
+  reloadDirCache () {
+    let errorText = '';
+
+    Object.keys(this.imports).forEach(dir => {
+      Object.keys(this.imports[dir]).forEach((mod) => {
+        delete require.cache[require.resolve(mod)];
+      });
+
+      errorText += this.loadDir(dir);
     });
 
-    return this.init();
+    return errorText;
   }
 
   /**
@@ -103,19 +99,18 @@ class ImportsManager {
     * load required directory if not found
     *
     * @param {String} dirName The name of the dir to load, relative to the _base path.
+    *
+    * @return {Object} Object containing command module paths and structs
     */
   getImport (dirName) {
-    let imported = this._imports[dirName];
+    let imported = this.imports[dirName];
 
     if (!imported) {
       this.loadDir(dirName);
     }
 
-    return Object.assign({}, this._imports[dirName]);
+    return Object.assign({}, this.imports[dirName]);
   }
 }
-
-// automagically loaded directorys on instantiation
-ImportsManager.load_dirs = ['src/commands'];
 
 module.exports = ImportsManager;

@@ -5,9 +5,9 @@
 
 // module main
 exports.run = async (core, server, socket, data) => {
-  if (data.cmdKey !== server._cmdKey) {
+  if (data.cmdKey !== server.cmdKey) {
     // internal command attempt by client, increase rate limit chance and ignore
-    return server._police.frisk(socket.remoteAddress, 20);
+    return server.police.frisk(socket.remoteAddress, 20);
   }
 
   // send leave notice to client peers

@@ -14,7 +14,7 @@ exports.init = (core) => {
 exports.run = async (core, server, socket, data) => {
   // increase rate limit chance and ignore if not admin or mod
   if (socket.uType === 'user') {
-    return server._police.frisk(socket.remoteAddress, 10);
+    return server.police.frisk(socket.remoteAddress, 10);
   }
 
   // check user input
@@ -93,7 +93,7 @@ exports.chatCheck = (core, server, socket, payload) => {
     }
 
     // blanket "spam" protection, may expose the ratelimiting lines from `chat` and use that, TODO: one day #lazydev
-    server._police.frisk(socket.remoteAddress, 9);
+    server.police.frisk(socket.remoteAddress, 9);
 
     return false;
   }

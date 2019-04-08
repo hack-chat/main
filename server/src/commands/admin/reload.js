@@ -6,11 +6,11 @@
 exports.run = async (core, server, socket, data) => {
   // increase rate limit chance and ignore if not admin
   if (socket.uType != 'admin') {
-    return server._police.frisk(socket.remoteAddress, 20);
+    return server.police.frisk(socket.remoteAddress, 20);
   }
 
   // do command reload and store results
-  let loadResult = core.dynamicImports.reloadDirCache('src/commands');
+  let loadResult = core.dynamicImports.reloadDirCache();
   loadResult += core.commands.loadCommands();
 
   // clear and rebuild all module hooks
@@ -18,9 +18,9 @@ exports.run = async (core, server, socket, data) => {
 
   // build reply based on reload results
   if (loadResult == '') {
-    loadResult = `Reloaded ${core.commands._commands.length} commands, 0 errors`;
+    loadResult = `Reloaded ${core.commands.commands.length} commands, 0 errors`;
   } else {
-    loadResult = `Reloaded ${core.commands._commands.length} commands, error(s):
+    loadResult = `Reloaded ${core.commands.commands.length} commands, error(s):
       ${loadResult}`;
   }
 

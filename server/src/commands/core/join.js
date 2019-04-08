@@ -55,7 +55,7 @@ exports.parseNickname = (core, data) => {
 // module main
 exports.run = async (core, server, socket, data) => {
   // check for spam
-  if (server._police.frisk(socket.remoteAddress, 3)) {
+  if (server.police.frisk(socket.remoteAddress, 3)) {
     return server.reply({
       cmd: 'warn',
       text: 'You are joining channels too fast. Wait a moment and try again.'

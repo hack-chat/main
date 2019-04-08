@@ -10,6 +10,9 @@
 const path = require('path');
 const didYouMean = require('didyoumean2').default;
 
+// default command modules path
+const CmdDir = 'src/commands';
+
 class CommandManager {
   /**
     * Create a `CommandManager` instance for handling commands/protocol
@@ -18,26 +21,25 @@ class CommandManager {
     */
   constructor (core) {
     this.core = core;
-    this._commands = [];
-    this._categories = [];
+    this.commands = [];
+    this.categories = [];
   }
 
   /**
     * (Re)initializes name spaces for commands and starts load routine
     *
+    * @return {String} Module errors or empty if none
     */
   loadCommands () {
-    this._commands = [];
-    this._categories = [];
+    this.commands = [];
+    this.categories = [];
 
-    const core = this.core;
-
-    const commandImports = core.dynamicImports.getImport('src/commands');
+    const commandImports = this.core.dynamicImports.getImport(CmdDir);
     let cmdErrors = '';
     Object.keys(commandImports).forEach(file => {
       let command = commandImports[file];
       let name = path.basename(file);
-      cmdErrors += this._validateAndLoad(command, file, name);
+      cmdErrors += this.validateAndLoad(command, file, name);
     });
 
     return cmdErrors;
@@ -49,9 +51,11 @@ class CommandManager {
     * @param {Object} command reference to the newly loaded object
     * @param {String} file file path to the module
     * @param {String} name command (`cmd`) name
+    *
+    * @return {String} Module errors or empty if none
     */
-  _validateAndLoad (command, file, name) {
-    let error = this._validateCommand(command);
+  validateAndLoad (command, file, name) {
+    let error = this.validateCommand(command);
 
     if (error) {
       let errText = `Failed to load '${name}': ${error}`;
@@ -70,8 +74,8 @@ class CommandManager {
 
       command.info.category = category;
 
-      if (this._categories.indexOf(category) === -1) {
-        this._categories.push(category);
+      if (this.categories.indexOf(category) === -1) {
+        this.categories.push(category);
       }
     }
 
@@ -85,7 +89,7 @@ class CommandManager {
       }
     }
 
-    this._commands.push(command);
+    this.commands.push(command);
 
     return '';
   }
@@ -94,8 +98,10 @@ class CommandManager {
     * Checks the module after having been `require()`ed in and reports errors
     *
     * @param {Object} object reference to the newly loaded object
+    *
+    * @return {String} Module errors or null if none
     */
-  _validateCommand (object) {
+  validateCommand (object) {
     if (typeof object !== 'object')
       return 'command setup is invalid';
 
@@ -115,27 +121,37 @@ class CommandManager {
     * Pulls all command names from a passed `category`
     *
     * @param {String} category [Optional] filter return results by this category
+    *
+    * @return {Array} Array of command modules matching the category
     */
   all (category) {
-    return !category ? this._commands : this._commands.filter(c => c.info.category.toLowerCase() === category.toLowerCase());
+    return !category ? this.commands : this.commands.filter(
+        c => c.info.category.toLowerCase() === category.toLowerCase()
+      );
   }
 
   /**
     * Pulls all category names
     *
+    * @return {Array} Array of sub directories under CmdDir
     */
-  categories () {
-    return this._categories;
+  get categoriesList () {
+    return this.categories;
   }
 
   /**
     * Pulls command by name or alia(s)
     *
     * @param {String} name name or alias of command
+    *
+    * @return {Object} Target command module object
     */
   get (name) {
     return this.findBy('name', name)
-      || this._commands.find(command => command.info.aliases instanceof Array && command.info.aliases.indexOf(name) > -1);
+      || this.commands.find(
+        command => command.info.aliases instanceof Array &&
+        command.info.aliases.indexOf(name) > -1
+      );
   }
 
   /**
@@ -143,9 +159,11 @@ class CommandManager {
     *
     * @param {String} key name or alias of command
     * @param {String} value name or alias of command
+    *
+    * @return {Object} Target command module object
     */
   findBy (key, value) {
-    return this._commands.find(c => c.info[key] === value);
+    return this.commands.find(c => c.info[key] === value);
   }
 
   /**
@@ -154,7 +172,9 @@ class CommandManager {
     * @param {Object} server main server object
     */
   initCommandHooks (server) {
-    this._commands.filter(c => typeof c.initHooks !== 'undefined').forEach(c => c.initHooks(server));
+    this.commands.filter(c => typeof c.initHooks !== 'undefined').forEach(
+        c => c.initHooks(server)
+      );
   }
 
   /**
@@ -163,6 +183,8 @@ class CommandManager {
     * @param {Object} server main server reference
     * @param {Object} socket calling socket reference
     * @param {Object} data command structure passed by socket (client)
+    *
+    * @return {*} Arbitrary module return data
     */
   handleCommand (server, socket, data) {
     // Try to find command first
@@ -172,7 +194,7 @@ class CommandManager {
       return this.execute(command, server, socket, data);
     } else {
       // Then fail with helpful (sorta) message
-      return this._handleFail(server, socket, data);
+      return this.handleFail(server, socket, data);
     }
   }
 
@@ -182,8 +204,10 @@ class CommandManager {
     * @param {Object} server main server reference
     * @param {Object} socket calling socket reference
     * @param {Object} data command structure passed by socket (client)
+    *
+    * @return {*} Arbitrary module return data
     */
-  _handleFail(server, socket, data) {
+  handleFail (server, socket, data) {
     const maybe = didYouMean(data.cmd, this.all().map(c => c.info.name), {
       threshold: 5,
       thresholdType: 'edit-distance'
@@ -193,13 +217,17 @@ class CommandManager {
       // Found a suggestion, pass it on to their dyslexic self
       return this.handleCommand(server, socket, {
         cmd: 'socketreply',
-        cmdKey: server._cmdKey,
+        cmdKey: server.cmdKey,
         text: `Command not found, did you mean: \`${maybe}\`?`
       });
     }
 
-    // Request so mangled that I don't even, silently fail
-    return;
+    // Request so mangled that I don't even. . .
+    return this.handleCommand(server, socket, {
+      cmd: 'socketreply',
+      cmdKey: server.cmdKey,
+      text: 'Unknown command'
+    });
   }
 
   /**
@@ -209,8 +237,10 @@ class CommandManager {
     * @param {Object} server main server reference
     * @param {Object} socket calling socket reference
     * @param {Object} data command structure passed by socket (client)
+    *
+    * @return {*} Arbitrary module return data
     */
-  async execute(command, server, socket, data) {
+  async execute (command, server, socket, data) {
     if (typeof command.requiredData !== 'undefined') {
       let missing = [];
       for (let i = 0, len = command.requiredData.length; i < len; i++) {
@@ -219,11 +249,16 @@ class CommandManager {
       }
 
       if (missing.length > 0) {
-        console.log(`Failed to execute '${command.info.name}': missing required ${missing.join(', ')}\n\n`);
+        console.log(`Failed to execute '${
+            command.info.name
+          }': missing required ${missing.join(', ')}\n\n`);
+
         this.handleCommand(server, socket, {
           cmd: 'socketreply',
-          cmdKey: server._cmdKey,
-          text: `Failed to execute '${command.info.name}': missing required ${missing.join(', ')}\n\n`
+          cmdKey: server.cmdKey,
+          text: `Failed to execute '${
+              command.info.name
+            }': missing required ${missing.join(', ')}\n\n`
         });
 
         return null;
@@ -238,7 +273,7 @@ class CommandManager {
 
       this.handleCommand(server, socket, {
         cmd: 'socketreply',
-        cmdKey: server._cmdKey,
+        cmdKey: server.cmdKey,
         text: errText
       });
 

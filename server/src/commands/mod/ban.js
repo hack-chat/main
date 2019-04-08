@@ -6,7 +6,7 @@
 exports.run = async (core, server, socket, data) => {
   // increase rate limit chance and ignore if not admin or mod
   if (socket.uType === 'user') {
-    return server._police.frisk(socket.remoteAddress, 10);
+    return server.police.frisk(socket.remoteAddress, 10);
   }
 
   // check user input
@@ -36,7 +36,7 @@ exports.run = async (core, server, socket, data) => {
   }
 
   // commit arrest record
-  server._police.arrest(badClient.remoteAddress, badClient.hash);
+  server.police.arrest(badClient.remoteAddress, badClient.hash);
 
   console.log(`${socket.nick} [${socket.trip}] banned ${targetNick} in ${socket.channel}`);
 

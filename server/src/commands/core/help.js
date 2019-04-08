@@ -8,7 +8,7 @@ const stripIndents = require('common-tags').stripIndents;
 // module main
 exports.run = async (core, server, socket, payload) => {
   // check for spam
-  if (server._police.frisk(socket.remoteAddress, 2)) {
+  if (server.police.frisk(socket.remoteAddress, 2)) {
     return server.reply({
       cmd: 'warn',
       text: 'You are sending too much text. Wait a moment and try again.\nPress the up arrow key to restore your last message.'
@@ -27,7 +27,7 @@ exports.run = async (core, server, socket, payload) => {
       API:  {cmd: 'help', command: '<command name>'}`;
     reply += '\n\n-------------------------------------\n\n';
 
-    let categories = core.commands.categories().sort();
+    let categories = core.commands.categoriesList.sort();
     for (let i = 0, j = categories.length; i < j; i++) {
       reply += `${categories[i].replace('../src/commands/', '').replace(/^\w/, c => c.toUpperCase())} Commands:\n`;
       let catCommands = core.commands.all(categories[i]).sort((a, b) => a.info.name.localeCompare(b.info.name));

@@ -20,6 +20,8 @@ class StatsManager {
     * Retrieve value of arbitrary `key` reference
     *
     * @param {String} key Reference to the arbitrary store name
+    *
+    * @return {*} Data referenced by `key`
     */
   get (key) {
     return this.data[key];

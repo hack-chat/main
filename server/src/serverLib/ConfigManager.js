@@ -15,10 +15,10 @@ class ConfigManager {
   /**
     * Create a `ConfigManager` instance for managing application settings
     *
-    * @param {String} base executing directory name; __dirname
+    * @param {String} basePath executing directory name; __dirname
     */
-  constructor (base = __dirname) {
-    this.configPath = path.resolve(base, 'config/config.json');
+  constructor (basePath = __dirname) {
+    this.configPath = path.resolve(basePath, 'config/config.json');
 
     if (!fse.existsSync(this.configPath)){
       fse.ensureFileSync(this.configPath);
@@ -26,10 +26,9 @@ class ConfigManager {
   }
 
   /**
-    * (Re)builds the config.json (main server config), or loads the config into mem
-    * if rebuilding, process will exit- this is to allow a process manager to take over
+    * Loads config.json (main server config) into mem
     *
-    * @param {Boolean} reconfiguring set to true by `scripts/configure.js`, will exit if true
+    * @return {Object || Boolean} False if the config.json could not be loaded
     */
   async load () {
     try {
@@ -44,6 +43,7 @@ class ConfigManager {
   /**
     * Creates backup of current config into configPath
     *
+    * @return {String} Backed up config.json path
     */
   async backup () {
     const backupPath = `${this.configPath}.${dateFormat('dd-mm-yy-HH-MM-ss')}.bak`;
@@ -56,6 +56,7 @@ class ConfigManager {
     * First makes a backup of the current `config.json`, then writes current config
     * to disk
     *
+    * @return {Boolean} False on failure
     */
   async save () {
     const backupPath = await this.backup();
@@ -77,6 +78,8 @@ class ConfigManager {
     *
     * @param {*} key arbitrary configuration key
     * @param {*} value new value to change `key` to
+    *
+    * @return {Boolean} False on failure
     */
   async set (key, value) {
     const realKey = `${key}`;

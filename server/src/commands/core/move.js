@@ -5,7 +5,7 @@
 // module main
 exports.run = async (core, server, socket, data) => {
   // check for spam
-  if (server._police.frisk(socket.remoteAddress, 6)) {
+  if (server.police.frisk(socket.remoteAddress, 6)) {
     return server.reply({
       cmd: 'warn',
       text: 'You are changing channels too fast. Wait a moment before trying again.'

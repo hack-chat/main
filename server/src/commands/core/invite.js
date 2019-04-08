@@ -8,7 +8,7 @@ const verifyNickname = (nick) => /^[a-zA-Z0-9_]{1,24}$/.test(nick);
 // module main
 exports.run = async (core, server, socket, data) => {
   // check for spam
-  if (server._police.frisk(socket.remoteAddress, 2)) {
+  if (server.police.frisk(socket.remoteAddress, 2)) {
     return server.reply({
       cmd: 'warn',
       text: 'You are sending invites too fast. Wait a moment before trying again.'

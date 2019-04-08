@@ -6,7 +6,7 @@
 exports.run = async (core, server, socket, data) => {
   // increase rate limit chance and ignore if not admin
   if (socket.uType != 'admin') {
-    return server._police.frisk(socket.remoteAddress, 20);
+    return server.police.frisk(socket.remoteAddress, 20);
   }
 
   // attempt save, notify of failure

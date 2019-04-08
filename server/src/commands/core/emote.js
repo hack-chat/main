@@ -24,12 +24,12 @@ exports.run = async (core, server, socket, payload) => {
 
   if (!text) {
     // lets not send objects or empty text, yea?
-    return server._police.frisk(socket.remoteAddress, 8);
+    return server.police.frisk(socket.remoteAddress, 8);
   }
 
   // check for spam
   let score = text.length / 83 / 4;
-  if (server._police.frisk(socket.remoteAddress, score)) {
+  if (server.police.frisk(socket.remoteAddress, score)) {
     return server.reply({
       cmd: 'warn',
       text: 'You are sending too much text. Wait a moment and try again.\nPress the up arrow key to restore your last message.'

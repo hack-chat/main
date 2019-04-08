@@ -13,25 +13,24 @@ class RateLimiter {
    * Create a ratelimiter instance.
    */
   constructor () {
-    this._records = {};
-    this._halflife = 30 * 1000; // milliseconds
-    this._threshold = 25;
-    this._hashes = [];
+    this.records = {};
+    this.halflife = 30 * 1000; // milliseconds
+    this.threshold = 25;
+    this.hashes = [];
   }
 
   /**
     * Finds current score by `id`
     *
     * @param {String} id target id / address
-    * @public
     *
-    * @memberof Police
+    * @return {Object} Object containing the record meta
     */
   search (id) {
-    let record = this._records[id];
+    let record = this.records[id];
 
     if (!record) {
-      record = this._records[id] = {
+      record = this.records[id] = {
         time: Date.now(),
         score: 0
       }
@@ -45,9 +44,8 @@ class RateLimiter {
     *
     * @param {String} id target id / address
     * @param {Number} deltaScore amount to adjust current score by
-    * @public
     *
-    * @memberof Police
+    * @return {Boolean} True if record threshold has been exceeded
     */
   frisk (id, deltaScore) {
     let record = this.search(id);
@@ -56,11 +54,11 @@ class RateLimiter {
       return true;
     }
 
-    record.score *= Math.pow(2, -(Date.now() - record.time ) / this._halflife);
+    record.score *= Math.pow(2, -(Date.now() - record.time ) / this.halflife);
     record.score += deltaScore;
     record.time = Date.now();
 
-    if (record.score >= this._threshold) {
+    if (record.score >= this.threshold) {
       return true;
     }
 
@@ -71,28 +69,22 @@ class RateLimiter {
     * Statically set server to no longer accept traffic from `id`
     *
     * @param {String} id target id / address
-    * @public
-    *
-    * @memberof Police
     */
   arrest (id, hash) {
     let record = this.search(id);
 
     record.arrested = true;
-    this._hashes[hash] = id;
+    this.hashes[hash] = id;
   }
 
   /**
     * Remove statically assigned limit from `id`
     *
     * @param {String} id target id / address
-    * @public
-    *
-    * @memberof Police
     */
   pardon (id) {
-    if (typeof this._hashes[id] !== 'undefined') {
-      id = this._hashes[id];
+    if (typeof this.hashes[id] !== 'undefined') {
+      id = this.hashes[id];
     }
 
     let record = this.search(id);

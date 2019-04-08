@@ -7,7 +7,7 @@ const verifyNickname = (nick) => /^[a-zA-Z0-9_]{1,24}$/.test(nick);
 
 // module main
 exports.run = async (core, server, socket, data) => {
-  if (server._police.frisk(socket.remoteAddress, 6)) {
+  if (server.police.frisk(socket.remoteAddress, 6)) {
     return server.reply({
       cmd: 'warn',
       text: 'You are changing nicknames too fast. Wait a moment before trying again.'
@@ -31,7 +31,7 @@ exports.run = async (core, server, socket, data) => {
   // prevent admin impersonation
   // TODO: prevent mod impersonation
   if (newNick.toLowerCase() == core.config.adminName.toLowerCase()) {
-    server._police.frisk(socket.remoteAddress, 4);
+    server.police.frisk(socket.remoteAddress, 4);
 
     return server.reply({
       cmd: 'warn',
