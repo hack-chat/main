@@ -401,6 +401,8 @@ $('#chatinput').onkeydown = function (e) {
 		var pos = e.target.selectionStart || 0;
 		var text = e.target.value;
 		var index = text.lastIndexOf('@', pos);
+		
+		var autocompletedNick = false;
 
 		if (index >= 0) {
 			var stub = text.substring(index + 1, pos).toLowerCase();
@@ -411,7 +413,13 @@ $('#chatinput').onkeydown = function (e) {
 
 			if (nicks.length == 1) {
 				insertAtCursor(nicks[0].substr(stub.length) + " ");
+				autocompletedNick = true;
 			}
+		}
+		
+		// Since we did not insert a nick, we insert a tab character
+		if (!autocompletedNick) {
+			insertAtCursor('\t');
 		}
 	}
 }
