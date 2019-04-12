@@ -410,10 +410,12 @@ $('#chatinput').onkeydown = function (e) {
 			var nicks = onlineUsers.filter(function (nick) {
 				return nick.toLowerCase().indexOf(stub) == 0
 			});
-
-			if (nicks.length == 1) {
-				insertAtCursor(nicks[0].substr(stub.length) + " ");
+			
+			if (nicks.length > 0) {
 				autocompletedNick = true;
+				if (nicks.length == 1) {
+					insertAtCursor(nicks[0].substr(stub.length) + " ");
+				}
 			}
 		}
 		
