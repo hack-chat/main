@@ -396,6 +396,12 @@ $('#chatinput').onkeydown = function (e) {
 		updateInputSize();
 	} else if (e.keyCode == 9 /* TAB */) {
 		// Tab complete nicknames starting with @
+		
+		if (e.ctrlKey) {
+			// Skip autocompletion and tab insertion if user is pressing ctrl
+			// ctrl-tab is used by browsers to cycle through tabs
+			return;	
+		}
 		e.preventDefault();
 
 		var pos = e.target.selectionStart || 0;
