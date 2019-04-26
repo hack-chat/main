@@ -268,13 +268,13 @@ class CommandManager {
     try {
       return await command.run(this.core, server, socket, data);
     } catch (err) {
-      let errText = `Failed to execute '${command.info.name}': ${err}`;
-      console.log(errText);
+      let errText = `Failed to execute '${command.info.name}': `;
+      console.log(errText + err.stack);
 
       this.handleCommand(server, socket, {
         cmd: 'socketreply',
         cmdKey: server.cmdKey,
-        text: errText
+        text: errText + err.toString()
       });
 
       return null;
