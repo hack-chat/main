@@ -177,7 +177,7 @@ function pushMessage(args) {
 	// Message container
 	var messageEl = document.createElement('div');
 
-	if (args.text.includes('@' + myNick.split('#')[0] + ' ')) {
+	if (typeof(myNick) === 'string' && args.text.includes('@' + myNick.split('#')[0] + ' ')) {
 		messageEl.classList.add('refmessage');
 	} else {
 		messageEl.classList.add('message');
