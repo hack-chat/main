@@ -23,6 +23,9 @@ class CommandManager {
     this.core = core;
     this.commands = [];
     this.categories = [];
+    if (!this.core.config.hasOwnProperty('logErrDetailed')) {
+      this.core.config.logErrDetailed = false;
+    }
   }
 
   /**
@@ -269,7 +272,14 @@ class CommandManager {
       return await command.run(this.core, server, socket, data);
     } catch (err) {
       let errText = `Failed to execute '${command.info.name}': `;
-      console.log(errText + err.stack);
+      
+      // If we have more detail enabled, then we get the trace
+      // if it isn't, or the property doesn't exist, then we'll get only the message
+      if (this.core.config.logErrDetailed === true) {
+        console.log(errText + err.stack);
+      } else {
+        console.log(errText + err.toString())
+      }
 
       this.handleCommand(server, socket, {
         cmd: 'socketreply',
