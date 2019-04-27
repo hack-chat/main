@@ -62,7 +62,10 @@ class ConfigManager {
     const backupPath = await this.backup();
 
     try {
-      fse.writeJSONSync(this.configPath, this.config);
+      fse.writeJSONSync(this.configPath, this.config, {
+       // Indent with two spaces
+        spaces: 2,
+      });
       fse.removeSync(backupPath);
 
       return true;
