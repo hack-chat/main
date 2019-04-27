@@ -87,6 +87,12 @@ class SetupWizard {
     if (typeof result.mods === 'undefined') {
       result.mods = [];
     }
+   
+    // If we should log errors with the err stack when they occur.
+    // See: CommandManager.js
+    if (typeof result.logErrDetailed === 'undefined') {
+      result.logErrDetailed = false;
+    }
 
     // finally create the actual JSON file
     try {
