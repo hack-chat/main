@@ -438,9 +438,13 @@ class MainServer extends WsServer {
           try {
             payload = hooks[i].run(this.core, this, socket, payload);
           } catch (err) {
-            let errText = `Hook failure, '${type}', '${command}': ${err}`;
-            console.log(errText);
-            return errText;
+            let errText = `Hook failure, '${type}', '${command}': `;
+            if (this.core.config.logErrDetailed === true) {
+              console.log(errText + err.stack);
+            } else {
+              console.log(errText + err.toString());
+            }
+            return errText + err.toString();
           }
 
           // A hook function may choose to return false to prevent all further processing
