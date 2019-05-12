@@ -128,16 +128,21 @@ function spawnNotification(title, body) {
 	}
 	// Otherwise, we need to ask the user for permission
 	else if (Notification.permission !== "denied") {
-		Notification.requestPermission().then(function (permission) {
-			// If the user accepts, let's create a notification
-			if (permission === "granted") {
-				var options = {
-					body: body,
-					icon: "/favicon-96x96.png"
-				};
-				var n = new Notification(title, options);
-			}
-		});
+		var notifyPromise = Notification.requestPermission();
+		if (notifyPromise) {
+			notifyPromise.then(function (permission) {
+				// If the user accepts, let's create a notification
+				if (permission === "granted") {
+					var options = {
+						body: body,
+						icon: "/favicon-96x96.png"
+					};
+					var n = new Notification(title, options);
+				}
+			}).catch(function (error) {
+				console.error("Problem creating notification:\n" + error);
+			});
+		}
 	}
 	// At last, if the user has denied notifications, and you 
 	// want to be respectful, there is no need to bother them any more.
@@ -176,7 +181,12 @@ function notify(args) {
 
 	// Play sound if enabled
 	if (soundSwitch.checked) {
-		document.getElementById("notify-sound").play()
+		var soundPromise = document.getElementById("notify-sound").play();
+		if (soundPromise) {
+			soundPromise.catch(function (error) {
+				console.error("Problem playing sound:\n" + error);
+			});
+		}
 	}
 }
 
