@@ -16,6 +16,9 @@
 </head>
 
 <body>
+  <audio style="display: none" id="notify-sound" preload="auto" src="audio/notify.mp3">
+    <source src="audio/notify.mp3" type="audio/ogg">
+  </audio>
   <article class="container">
     <div id="messages" class="messages"></div>
   </article>
@@ -34,6 +37,14 @@
       </p>
       <h4>Settings</h4>
       <p>
+        <input id="sound-switch" type="checkbox">
+        <label for="sound-switch">Sound notifications</label>
+      </p>
+      <p>
+        <input id="notify-switch" type="checkbox">
+        <label for="notify-switch">Screen notifcations</label>
+      </p>
+      <p>
         <input id="joined-left" type="checkbox" checked>
         <label for="joined-left">Join/left notify</label>
       </p>
@@ -42,7 +53,7 @@
         <label for="parse-latex">Parse LaTeX</label>
       </p>
       <p>
-        <button id="clear-messages">Clear messages</button>
+        <button id="clear-messages">Clear all messages</button>
       </p>
       <h4>Color scheme</h4>
       <select id="scheme-selector"></select>

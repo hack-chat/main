@@ -67,13 +67,153 @@ var myChannel = window.location.search.replace(/^\?/, '');
 var lastSent = [""];
 var lastSentPos = 0;
 
+
+/** Notification switch and local storage behavior **/
+var notifySwitch = document.getElementById("notify-switch")
+var notifySetting = localStorageGet("notify-api")
+var notifyPermissionExplained = 0; // 1 = granted msg shown, -1 = denied message shown
+
+// Inital request for notifications permission
+function RequestNotifyPermission() {
+	try {
+		var notifyPromise = Notification.requestPermission();
+		if (notifyPromise) {
+			notifyPromise.then(function (result) {
+				console.log("Hack.Chat notification permission: " + result);
+				if (result === "granted") {
+					if (notifyPermissionExplained === 0) {
+						pushMessage({
+							cmd: "chat",
+							nick: "*",
+							text: "Notifications permission granted.",
+							time: null
+						});
+						notifyPermissionExplained = 1;
+					}
+					return false;
+				} else {
+					if (notifyPermissionExplained === 0) {
+						pushMessage({
+							cmd: "chat",
+							nick: "*",
+							text: "Notifications permission denied, you won't be notified if someone @mentions you.",
+							time: null
+						});
+						notifyPermissionExplained = -1;
+					}
+					return true;
+				}
+			});
+		}
+	} catch (error) {
+		pushMessage({
+			cmd: "chat",
+			nick: "*",
+			text: "Unable to create a notification.",
+			time: null
+		});
+		console.error("An error occured trying to request notification permissions. This browser might not support desktop notifications.\nDetails:")
+		console.error(error)
+		return false;
+	}
+}
+
+
+// Update localStorage with value of checkbox
+notifySwitch.addEventListener('change', (event) => {
+	if (event.target.checked) {
+		RequestNotifyPermission();
+	}
+	localStorageSet("notify-api", notifySwitch.checked)
+})
+// Check if localStorage value is set, defaults to OFF
+if (notifySetting === null) {
+	localStorageSet("notify-api", "false")
+	notifySwitch.checked = false
+}
+// Configure notifySwitch checkbox element
+if (notifySetting === "true" || notifySetting === true) {
+	notifySwitch.checked = true
+} else if (notifySetting === "false" || notifySetting === false) {
+	notifySwitch.checked = false
+}
+
+
+/** Sound switch and local storage behavior **/
+var soundSwitch = document.getElementById("sound-switch")
+var notifySetting = localStorageGet("notify-sound")
+
+// Update localStorage with value of checkbox
+soundSwitch.addEventListener('change', (event) => {
+	localStorageSet("notify-sound", soundSwitch.checked)
+})
+// Check if localStorage value is set, defaults to OFF
+if (notifySetting === null) {
+	localStorageSet("notify-sound", "false")
+	soundSwitch.checked = false
+}
+// Configure soundSwitch checkbox element
+if (notifySetting === "true" || notifySetting === true) {
+	soundSwitch.checked = true
+} else if (notifySetting === "false" || notifySetting === false) {
+	soundSwitch.checked = false
+}
+
+
+
+// Create a new notification after checking if permission has been granted
+function spawnNotification(title, body) {
+	// Let's check if the browser supports notifications
+	if (!("Notification" in window)) {
+		console.error("This browser does not support desktop notification");
+	} else if (Notification.permission === "granted") { // Check if notification permissions are already given
+		// If it's okay let's create a notification
+		var options = {
+			body: body,
+			icon: "/favicon-96x96.png"
+		};
+		var n = new Notification(title, options);
+	}
+	// Otherwise, we need to ask the user for permission
+	else if (Notification.permission !== "denied") {
+		if (RequestNotifyPermission()) {
+			var options = {
+				body: body,
+				icon: "/favicon-96x96.png"
+			};
+			var n = new Notification(title, options);
+		}
+	} else if (Notification.permission == "denied") {
+		// At last, if the user has denied notifications, and you 
+		// want to be respectful, there is no need to bother them any more.
+	}
+}
+
+
+function notify(args) {
+	// Spawn notification if enabled
+	if (notifySwitch.checked) {
+		spawnNotification("?" + myChannel + "  —  " + args.nick, args.text)
+	}
+
+	// Play sound if enabled
+	if (soundSwitch.checked) {
+		var soundPromise = document.getElementById("notify-sound").play();
+		if (soundPromise) {
+			soundPromise.catch(function (error) {
+				console.error("Problem playing sound:\n" + error);
+			});
+		}
+	}
+}
+
 function join(channel) {
 	if (document.domain == 'hack.chat') {
 		// For https://hack.chat/
 		ws = new WebSocket('wss://hack.chat/chat-ws');
 	} else {
 		// for local installs
- 		var protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
+		var protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
 		// if you changed the port during the server config, change 'wsPath'
 		// to the new port (example: ':8080')
 		// if you are reverse proxying, change 'wsPath' to the new location
@@ -125,18 +265,32 @@ var COMMANDS = {
 			return;
 		}
 
-		pushMessage(args);
+		if (args.text.toLowerCase().includes("@" + myNick.toLowerCase().split("#")[0])) {
+			notify(args);
+			pushMessage(args);
+			// Indicate the message which was just added via style
+			document.getElementById("messages").lastChild.style.fontWeight = "bold"
+		} else {
+			pushMessage(args);
+		}
 	},
 
 	info: function (args) {
 		args.nick = '*';
 
-		pushMessage(args);
+		if (args.from != null && (args.type.toLowerCase() == "whisper" || args.type.toLowerCase() == "invite")) {
+			notify(args);
+			pushMessage(args);
+			// Make the message bold to stand out as a @mention
+			document.getElementById("messages").lastChild.style.fontWeight = "bold"
+		} else {
+			pushMessage(args);
+		}
 	},
 
 	warn: function (args) {
 		args.nick = '!';
-
+		notify(args);
 		pushMessage(args);
 	},
 
@@ -177,7 +331,7 @@ function pushMessage(args) {
 	// Message container
 	var messageEl = document.createElement('div');
 
-	if (typeof(myNick) === 'string' && args.text.includes('@' + myNick.split('#')[0] + ' ')) {
+	if (typeof (myNick) === 'string' && args.text.includes('@' + myNick.split('#')[0] + ' ')) {
 		messageEl.classList.add('refmessage');
 	} else {
 		messageEl.classList.add('message');
@@ -396,18 +550,18 @@ $('#chatinput').onkeydown = function (e) {
 		updateInputSize();
 	} else if (e.keyCode == 9 /* TAB */) {
 		// Tab complete nicknames starting with @
-		
+
 		if (e.ctrlKey) {
 			// Skip autocompletion and tab insertion if user is pressing ctrl
 			// ctrl-tab is used by browsers to cycle through tabs
-			return;	
+			return;
 		}
 		e.preventDefault();
 
 		var pos = e.target.selectionStart || 0;
 		var text = e.target.value;
 		var index = text.lastIndexOf('@', pos);
-		
+
 		var autocompletedNick = false;
 
 		if (index >= 0) {
@@ -416,7 +570,7 @@ $('#chatinput').onkeydown = function (e) {
 			var nicks = onlineUsers.filter(function (nick) {
 				return nick.toLowerCase().indexOf(stub) == 0
 			});
-			
+
 			if (nicks.length > 0) {
 				autocompletedNick = true;
 				if (nicks.length == 1) {
@@ -424,7 +578,7 @@ $('#chatinput').onkeydown = function (e) {
 				}
 			}
 		}
-		
+
 		// Since we did not insert a nick, we insert a tab character
 		if (!autocompletedNick) {
 			insertAtCursor('\t');
@@ -456,14 +610,14 @@ updateInputSize();
 
 $('#sidebar').onmouseenter = $('#sidebar').ontouchstart = function (e) {
 	$('#sidebar-content').classList.remove('hidden');
-        $('#sidebar').classList.add('expand');
+	$('#sidebar').classList.add('expand');
 	e.stopPropagation();
 }
 
 $('#sidebar').onmouseleave = document.ontouchstart = function () {
 	if (!$('#pin-sidebar').checked) {
 		$('#sidebar-content').classList.add('hidden');
-                $('#sidebar').classList.remove('expand');
+		$('#sidebar').classList.remove('expand');
 	}
 }
 
