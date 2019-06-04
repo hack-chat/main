@@ -65,6 +65,9 @@ ul li {
 .message, .refmessage {
   padding-bottom: 1em;
 }
+.refmessage {
+  font-weight: bold;
+}
 .nick {
   float: left;
   width: 16em;

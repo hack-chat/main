@@ -264,33 +264,16 @@ var COMMANDS = {
 		if (ignoredUsers.indexOf(args.nick) >= 0) {
 			return;
 		}
-
-		if (args.text.toLowerCase().includes("@" + myNick.toLowerCase().split("#")[0])) {
-			notify(args);
-			pushMessage(args);
-			// Indicate the message which was just added via style
-			document.getElementById("messages").lastChild.style.fontWeight = "bold"
-		} else {
-			pushMessage(args);
-		}
+		pushMessage(args);
 	},
 
 	info: function (args) {
 		args.nick = '*';
-
-		if (args.from != null && (args.type.toLowerCase() == "whisper" || args.type.toLowerCase() == "invite")) {
-			notify(args);
-			pushMessage(args);
-			// Make the message bold to stand out as a @mention
-			document.getElementById("messages").lastChild.style.fontWeight = "bold"
-		} else {
-			pushMessage(args);
-		}
+		pushMessage(args);
 	},
 
 	warn: function (args) {
 		args.nick = '!';
-		notify(args);
 		pushMessage(args);
 	},
 
@@ -331,8 +314,14 @@ function pushMessage(args) {
 	// Message container
 	var messageEl = document.createElement('div');
 
-	if (typeof (myNick) === 'string' && args.text.includes('@' + myNick.split('#')[0] + ' ')) {
+	if (
+		typeof (myNick) === 'string' && (
+			args.text.match(new RegExp('@' + myNick.split('#')[0], "gi")) ||
+			((args.type === "whisper" || args.type === "invite") && args.from)
+		)
+	) {
 		messageEl.classList.add('refmessage');
+		notify(args);
 	} else {
 		messageEl.classList.add('message');
 	}
