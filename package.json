@@ -18,6 +18,6 @@
   "author": "Marzavec",
   "license": "WTFPL",
   "dependencies": {
-    "pm2": "^3.2.9"
+    "pm2": "^3.5.1"
   }
 }
