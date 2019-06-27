@@ -316,7 +316,7 @@ function pushMessage(args) {
 
 	if (
 		typeof (myNick) === 'string' && (
-			args.text.match(new RegExp('@' + myNick.split('#')[0], "gi")) ||
+			args.text.match(new RegExp('@' + myNick.split('#')[0] + '\\b', "gi")) ||
 			((args.type === "whisper" || args.type === "invite") && args.from)
 		)
 	) {
