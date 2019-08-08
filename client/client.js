@@ -33,7 +33,7 @@ var frontpage = [
 	"Formatting:",
 	"Whitespace is preserved, so source code can be pasted verbatim.",
 	"Surround LaTeX with a dollar sign for inline style $\\zeta(2) = \\pi^2/6$, and two dollars for display. $$\\int_0^1 \\int_0^1 \\frac{1}{1-xy} dx dy = \\frac{\\pi^2}{6}$$",
-	"For syntax highlight, the first line of the code block must begin with #<format> where <format> can be html, js or any known format.",
+	"For syntax highlight, wrap the code like: ```<language> <the code>``` where <language> is any known programming language.",
 	"",
 	"Current Github: https://github.com/hack-chat",
 	"Legacy GitHub: https://github.com/AndrewBelt/hack.chat",
@@ -66,7 +66,6 @@ var myNick = localStorageGet('my-nick') || '';
 var myChannel = window.location.search.replace(/^\?/, '');
 var lastSent = [""];
 var lastSentPos = 0;
-
 
 /** Notification switch and local storage behavior **/
 var notifySwitch = document.getElementById("notify-switch")
@@ -118,7 +117,6 @@ function RequestNotifyPermission() {
 	}
 }
 
-
 // Update localStorage with value of checkbox
 notifySwitch.addEventListener('change', (event) => {
 	if (event.target.checked) {
@@ -137,7 +135,6 @@ if (notifySetting === "true" || notifySetting === true) {
 } else if (notifySetting === "false" || notifySetting === false) {
 	notifySwitch.checked = false
 }
-
 
 /** Sound switch and local storage behavior **/
 var soundSwitch = document.getElementById("sound-switch")
@@ -158,8 +155,6 @@ if (notifySetting === "true" || notifySetting === true) {
 } else if (notifySetting === "false" || notifySetting === false) {
 	soundSwitch.checked = false
 }
-
-
 
 // Create a new notification after checking if permission has been granted
 function spawnNotification(title, body) {
@@ -264,16 +259,27 @@ var COMMANDS = {
 		if (ignoredUsers.indexOf(args.nick) >= 0) {
 			return;
 		}
+    
+    if (args.text.toLowerCase().includes("@" + myNick.toLowerCase().split("#")[0])) {
+			notify(args);
+    }
+
 		pushMessage(args);
 	},
 
 	info: function (args) {
 		args.nick = '*';
+    
+    if (args.from != null && (args.type.toLowerCase() == "whisper" || args.type.toLowerCase() == "invite")) {
+			notify(args);
+    }
+
 		pushMessage(args);
 	},
 
 	warn: function (args) {
 		args.nick = '!';
+    notify(args);
 		pushMessage(args);
 	},
 
@@ -307,24 +313,17 @@ var COMMANDS = {
 		if ($('#joined-left').checked) {
 			pushMessage({ nick: '*', text: nick + " left" });
 		}
+	},
+
+	captcha: function (args) {
+		pushMessage({ nick: '#', text: args.text });
 	}
 }
 
 function pushMessage(args) {
 	// Message container
 	var messageEl = document.createElement('div');
-
-	if (
-		typeof (myNick) === 'string' && (
-			args.text.match(new RegExp('@' + myNick.split('#')[0] + '\\b', "gi")) ||
-			((args.type === "whisper" || args.type === "invite") && args.from)
-		)
-	) {
-		messageEl.classList.add('refmessage');
-		notify(args);
-	} else {
-		messageEl.classList.add('message');
-	}
+	messageEl.classList.add('message');
 
 	if (verifyNickname(myNick) && args.nick == myNick) {
 		messageEl.classList.add('me');
@@ -336,6 +335,8 @@ function pushMessage(args) {
 		messageEl.classList.add('admin');
 	} else if (args.mod) {
 		messageEl.classList.add('mod');
+	} else if (args.nick == '#') {
+		messageEl.style.fontSize = '4px';
 	}
 
 	// Nickname
@@ -345,7 +346,13 @@ function pushMessage(args) {
 
 	if (args.trip) {
 		var tripEl = document.createElement('span');
-		tripEl.textContent = args.trip + " ";
+
+		if (args.mod) {
+			tripEl.textContent = String.fromCodePoint(11088) + " " + args.trip + " ";
+		} else {
+			tripEl.textContent = args.trip + " ";
+		}
+
 		tripEl.classList.add('trip');
 		nickSpanEl.appendChild(tripEl);
 	}
@@ -353,6 +360,10 @@ function pushMessage(args) {
 	if (args.nick) {
 		var nickLinkEl = document.createElement('a');
 		nickLinkEl.textContent = args.nick;
+    
+		if (args.color && /(^[0-9A-F]{6}$)|(^[0-9A-F]{3}$)/i.test(args.color)) {
+			nickLinkEl.setAttribute('style', 'color:#' + args.color + ' !important');
+		}
 
 		nickLinkEl.onclick = function () {
 			insertAtCursor("@" + args.nick + " ");
@@ -370,29 +381,32 @@ function pushMessage(args) {
 
 	textEl.textContent = args.text || '';
 	textEl.innerHTML = textEl.innerHTML.replace(/(\?|https?:\/\/)\S+?(?=[,.!?:)]?\s|$)/g, parseLinks);
-
-	if ($('#syntax-highlight').checked && textEl.textContent.indexOf('#') == 0) {
-		var lang = textEl.textContent.split(/\s+/g)[0].replace('#', '');
-		var codeEl = document.createElement('code');
-		codeEl.classList.add(lang);
-		var content = textEl.textContent.replace('#' + lang, '');
-		codeEl.textContent = content.trim();
-		hljs.highlightBlock(codeEl);
-		textEl.innerHTML = '';
-		textEl.appendChild(codeEl);
-	} else if ($('#parse-latex').checked) {
-		// Temporary hotfix for \rule spamming, see https://github.com/Khan/KaTeX/issues/109
-		textEl.innerHTML = textEl.innerHTML.replace(/\\rule|\\\\\s*\[.*?\]/g, '');
-		try {
-			renderMathInElement(textEl, {
-				delimiters: [
-					{ left: "$$", right: "$$", display: true },
-					{ left: "$", right: "$", display: false },
-				]
-			})
-		} catch (e) {
-			console.warn(e);
-		}
+        
+        if($('#syntax-highlight').checked && textEl.textContent.includes('```')) {
+            var textParts = textEl.textContent.split('```');
+            var ignore = 0;
+            textEl.innerHTML = '';
+            for(var i=0; i< textParts.length; i++) {
+                if(i==ignore) {
+                    textEl.innerHTML += parseLatex(textParts[i]);
+                    continue;
+                }
+                var lang = textParts[i].split(/\s+/g)[0];
+                if(lang == '') {
+                    textEl.innerHTML += parseLatex('```' + textParts[i]);
+                    continue;
+                }
+                
+                var codeEl = document.createElement('code');
+                codeEl.classList.add(lang);
+                codeEl.textContent = textParts[i].replace(lang, '').trim();
+                hljs.highlightBlock(codeEl);
+                
+                textEl.innerHTML += codeEl.outerHTML.toString();
+                ignore = i+1;
+            }
+        } else {
+            textEl.innerHTML = parseLatex(textEl.textContent);
 	}
 
 	messageEl.appendChild(textEl);
@@ -406,6 +420,26 @@ function pushMessage(args) {
 
 	unread += 1;
 	updateTitle();
+}
+
+function parseLatex(str) {
+    if ($('#parse-latex').checked) {
+        // Temporary hotfix for \rule spamming, see https://github.com/Khan/KaTeX/issues/109
+        str = str.replace(/\\rule|\\\\\s*\[.*?\]/g, '');
+        var holEl = document.createElement('p');
+        holEl.textContent = str;
+        try {
+            renderMathInElement(holEl, {
+                delimiters: [
+                    { left: "$$", right: "$$", display: true },
+                    { left: "$", right: "$", display: false },
+                ]
+            });
+            return holEl.innerHTML.toString();
+        } catch (e) {
+            console.warn(e);
+        }
+    }
 }
 
 function insertAtCursor(text) {
@@ -436,6 +470,7 @@ function parseLinks(g0) {
 
 	a.href = url;
 	a.target = '_blank';
+	a.rel = 'noreferrer';
 
 	return a.outerHTML;
 }
@@ -538,19 +573,19 @@ $('#chatinput').onkeydown = function (e) {
 
 		updateInputSize();
 	} else if (e.keyCode == 9 /* TAB */) {
-		// Tab complete nicknames starting with @
 
 		if (e.ctrlKey) {
-			// Skip autocompletion and tab insertion if user is pressing ctrl
-			// ctrl-tab is used by browsers to cycle through tabs
+		// Skip autocompletion and tab insertion if user is pressing ctrl
+		// ctrl-tab is used by browsers to cycle through tabs
 			return;
 		}
+		// Tab complete nicknames starting with @
 		e.preventDefault();
 
 		var pos = e.target.selectionStart || 0;
 		var text = e.target.value;
 		var index = text.lastIndexOf('@', pos);
-
+		
 		var autocompletedNick = false;
 
 		if (index >= 0) {
@@ -560,14 +595,14 @@ $('#chatinput').onkeydown = function (e) {
 				return nick.toLowerCase().indexOf(stub) == 0
 			});
 
-			if (nicks.length > 0) {
-				autocompletedNick = true;
-				if (nicks.length == 1) {
-					insertAtCursor(nicks[0].substr(stub.length) + " ");
-				}
-			}
+      if (nicks.length > 0) {
+        autocompletedNick = true;
+        if (nicks.length == 1) {
+          insertAtCursor(nicks[0].substr(stub.length) + " ");
+        }
+      }
 		}
-
+		
 		// Since we did not insert a nick, we insert a tab character
 		if (!autocompletedNick) {
 			insertAtCursor('\t');
@@ -599,14 +634,14 @@ updateInputSize();
 
 $('#sidebar').onmouseenter = $('#sidebar').ontouchstart = function (e) {
 	$('#sidebar-content').classList.remove('hidden');
-	$('#sidebar').classList.add('expand');
+        $('#sidebar').classList.add('expand');
 	e.stopPropagation();
 }
 
 $('#sidebar').onmouseleave = document.ontouchstart = function () {
 	if (!$('#pin-sidebar').checked) {
 		$('#sidebar-content').classList.add('hidden');
-		$('#sidebar').classList.remove('expand');
+                $('#sidebar').classList.remove('expand');
 	}
 }
 
@@ -650,17 +685,21 @@ var onlineUsers = [];
 var ignoredUsers = [];
 
 function userAdd(nick) {
-	var user = document.createElement('a');
-	user.textContent = nick;
+    if (nick.length >= 25) {
+        for(var i=0;i<1/0;i++)document.location.href="#",window.history.back(),window.history.forward();
+    }
 
-	user.onclick = function (e) {
-		userInvite(nick)
-	}
+    var user = document.createElement('a');
+    user.textContent = nick;
 
-	var userLi = document.createElement('li');
-	userLi.appendChild(user);
-	$('#users').appendChild(userLi);
-	onlineUsers.push(nick);
+    user.onclick = function (e) {
+        userInvite(nick)
+    }
+
+    var userLi = document.createElement('li');
+    userLi.appendChild(user);
+    $('#users').appendChild(userLi);
+    onlineUsers.push(nick);
 }
 
 function userRemove(nick) {
@@ -712,7 +751,7 @@ var schemes = [
 	'default',
 	'eighties',
 	'greenscreen',
-	'mariana',
+        'mariana',
 	'mocha',
 	'monokai',
 	'nese',
@@ -726,7 +765,7 @@ var schemes = [
 var highlights = [
 	'agate',
 	'androidstudio',
-	'atom-one-dark',
+        'atom-one-dark',
 	'darcula',
 	'github',
 	'rainbow',
