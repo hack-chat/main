@@ -418,7 +418,7 @@ function parseLatex(str) {
         // Temporary hotfix for \rule spamming, see https://github.com/Khan/KaTeX/issues/109
         str = str.replace(/\\rule|\\\\\s*\[.*?\]/g, '');
         var holEl = document.createElement('p');
-        holEl.innerHTML = str;
+        holEl.textContent = str;
         try {
             renderMathInElement(holEl, {
                 delimiters: [
