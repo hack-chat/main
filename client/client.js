@@ -322,9 +322,9 @@ function pushMessage(args) {
 	) {
 		messageEl.classList.add('refmessage');
 		notify(args);
-	} else {
-		messageEl.classList.add('message');
 	}
+
+	messageEl.classList.add('message');
 
 	if (verifyNickname(myNick) && args.nick == myNick) {
 		messageEl.classList.add('me');
