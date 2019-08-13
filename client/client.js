@@ -33,7 +33,7 @@ var frontpage = [
 	"Formatting:",
 	"Whitespace is preserved, so source code can be pasted verbatim.",
 	"Surround LaTeX with a dollar sign for inline style $\\zeta(2) = \\pi^2/6$, and two dollars for display. $$\\int_0^1 \\int_0^1 \\frac{1}{1-xy} dx dy = \\frac{\\pi^2}{6}$$",
-	"For syntax highlight, the first line of the code block must begin with #<format> where <format> can be html, js or any known format.",
+	"For syntax highlight, wrap the code like: ```<language> <the code>``` where <language> is any known programming language.",
 	"",
 	"Current Github: https://github.com/hack-chat",
 	"Legacy GitHub: https://github.com/AndrewBelt/hack.chat",
@@ -368,33 +368,38 @@ function pushMessage(args) {
 	var textEl = document.createElement('pre');
 	textEl.classList.add('text');
 
-	textEl.textContent = args.text || '';
-	textEl.innerHTML = textEl.innerHTML.replace(/(\?|https?:\/\/)\S+?(?=[,.!?:)]?\s|$)/g, parseLinks);
-
-	if ($('#syntax-highlight').checked && textEl.textContent.indexOf('#') == 0) {
-		var lang = textEl.textContent.split(/\s+/g)[0].replace('#', '');
-		var codeEl = document.createElement('code');
-		codeEl.classList.add(lang);
-		var content = textEl.textContent.replace('#' + lang, '');
-		codeEl.textContent = content.trim();
-		hljs.highlightBlock(codeEl);
-		textEl.innerHTML = '';
-		textEl.appendChild(codeEl);
-	} else if ($('#parse-latex').checked) {
-		// Temporary hotfix for \rule spamming, see https://github.com/Khan/KaTeX/issues/109
-		textEl.innerHTML = textEl.innerHTML.replace(/\\rule|\\\\\s*\[.*?\]/g, '');
-		try {
-			renderMathInElement(textEl, {
-				delimiters: [
-					{ left: "$$", right: "$$", display: true },
-					{ left: "$", right: "$", display: false },
-				]
-			})
-		} catch (e) {
-			console.warn(e);
-		}
+        textEl.textContent = args.text || '';
+        
+	if($('#syntax-highlight').checked && textEl.textContent.includes('```')) {
+            var textParts = textEl.textContent.split('```');
+            var ignore = 0;
+            textEl.innerHTML = '';
+            for(var i=0; i< textParts.length; i++) {
+                if(i==ignore) {
+                    textEl.innerHTML += parseLatex(textParts[i]);
+                    continue;
+                }
+                var lang = textParts[i].split(/\s+/g)[0];
+                if(lang == '') {
+                    textEl.innerHTML += parseLatex('```' + textParts[i]);
+                    continue;
+                }
+                
+                var codeEl = document.createElement('code');
+                codeEl.classList.add(lang);
+                codeEl.textContent = textParts[i].replace(lang, '').trim();
+                hljs.highlightBlock(codeEl);
+                
+                textEl.innerHTML += codeEl.outerHTML.toString();
+                ignore = i+1;
+            }
+        } else {
+            var parsed = parseLatex(textEl.textContent);
+            if(parsed != null)
+                textEl.innerHTML = parsed;
 	}
-
+        textEl.innerHTML = textEl.innerHTML.replace(/(\?|https?:\/\/)\S+?(?=[,.!?:)]?\s|$)/g, parseLinks);
+        
 	messageEl.appendChild(textEl);
 
 	// Scroll to bottom
@@ -406,6 +411,27 @@ function pushMessage(args) {
 
 	unread += 1;
 	updateTitle();
+}
+
+function parseLatex(str) {
+    if ($('#parse-latex').checked) {
+        // Temporary hotfix for \rule spamming, see https://github.com/Khan/KaTeX/issues/109
+        str = str.replace(/\\rule|\\\\\s*\[.*?\]/g, '');
+        var holEl = document.createElement('p');
+        holEl.textContent = str;
+        try {
+            renderMathInElement(holEl, {
+                delimiters: [
+                    { left: "$$", right: "$$", display: true },
+                    { left: "$", right: "$", display: false },
+                ]
+            });
+            return holEl.innerHTML.toString();
+        } catch (e) {
+            console.warn(e);
+        }
+    }
+    return null;
 }
 
 function insertAtCursor(text) {
