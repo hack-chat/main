@@ -7,6 +7,103 @@
  *
 */
 
+// initialize markdown engine
+var markdownOptions = {
+	html: false,
+	xhtmlOut: false,
+	breaks: true,
+	langPrefix: '',
+	linkify: true,
+	linkTarget: '_blank" rel="noreferrer',
+	typographer:  true,
+	quotes: `""''`,
+
+	doHighlight: true,
+	highlight: function (str, lang) {
+		if (!markdownOptions.doHighlight || !window.hljs) { return ''; }
+
+		if (lang && hljs.getLanguage(lang)) {
+			try {
+				return hljs.highlight(lang, str).value;
+			} catch (__) {}
+		}
+
+		try {
+			return hljs.highlightAuto(str).value;
+		} catch (__) {}
+
+		return '';
+	}
+};
+
+var md = new Remarkable('full', markdownOptions);
+
+// image handler
+var allowImages = false;
+var imgHostWhitelist = [
+	'i.imgur.com',
+	'imgur.com',
+];
+
+function getDomain(link) {
+	var a = document.createElement('a');
+	a.href = link;
+	return a.hostname;
+}
+
+function isWhiteListed(link) {
+	return imgHostWhitelist.indexOf(getDomain(link)) !== -1;
+}
+
+md.renderer.rules.image = function (tokens, idx, options) {
+	var src = Remarkable.utils.escapeHtml(tokens[idx].src);
+
+	if (isWhiteListed(src) && allowImages) {
+		var imgSrc = ' src="' + Remarkable.utils.escapeHtml(tokens[idx].src) + '"';
+		var title = tokens[idx].title ? (' title="' + Remarkable.utils.escapeHtml(Remarkable.utils.replaceEntities(tokens[idx].title)) + '"') : '';
+		var alt = ' alt="' + (tokens[idx].alt ? Remarkable.utils.escapeHtml(Remarkable.utils.replaceEntities(Remarkable.utils.unescapeMd(tokens[idx].alt))) : '') + '"';
+		var suffix = options.xhtmlOut ? ' /' : '';
+		var scrollOnload = isAtBottom() ? ' onload="window.scrollTo(0, document.body.scrollHeight)"' : '';
+		return '<a href="' + src + '" target="_blank" rel="noreferrer"><img' + scrollOnload + imgSrc + alt + title + suffix + '></a>';
+	}
+
+  return '<a href="' + src + '" target="_blank" rel="noreferrer">' + Remarkable.utils.escapeHtml(Remarkable.utils.replaceEntities(src)) + '</a>';
+};
+
+md.renderer.rules.link_open = function (tokens, idx, options) {
+	var title = tokens[idx].title ? (' title="' + Remarkable.utils.escapeHtml(Remarkable.utils.replaceEntities(tokens[idx].title)) + '"') : '';
+  var target = options.linkTarget ? (' target="' + options.linkTarget + '"') : '';
+  return '<a rel="noreferrer" onclick="return verifyLink(this)" href="' + Remarkable.utils.escapeHtml(tokens[idx].href) + '"' + title + target + '>';
+};
+
+md.renderer.rules.text = function(tokens, idx) {
+	tokens[idx].content = Remarkable.utils.escapeHtml(tokens[idx].content);
+
+	if (tokens[idx].content.indexOf('?') !== -1) {
+		tokens[idx].content = tokens[idx].content.replace(/(^|\s)(\?)\S+?(?=[,.!?:)]?\s|$)/gm, function(match) {
+			var channelLink = Remarkable.utils.escapeHtml(Remarkable.utils.replaceEntities(match.trim()));
+			var whiteSpace = '';
+			if (match[0] !== '?') {
+				whiteSpace = match[0];
+			}
+			return whiteSpace + '<a href="' + channelLink + '" target="_blank">' + channelLink + '</a>';
+		});
+	}
+
+  return tokens[idx].content;
+};
+
+md.use(remarkableKatex);
+
+function verifyLink(link) {
+	var linkHref = Remarkable.utils.escapeHtml(Remarkable.utils.replaceEntities(link.href));
+	if (linkHref !== link.innerHTML) {
+		return confirm('Warning, please verify this is where you want to go: ' + linkHref);
+	}
+
+	return true;
+}
+
 var verifyNickname = function (nick) {
 	return /^[a-zA-Z0-9_]{1,24}$/.test(nick);
 }
@@ -67,7 +164,6 @@ var myChannel = window.location.search.replace(/^\?/, '');
 var lastSent = [""];
 var lastSentPos = 0;
 
-
 /** Notification switch and local storage behavior **/
 var notifySwitch = document.getElementById("notify-switch")
 var notifySetting = localStorageGet("notify-api")
@@ -118,7 +214,6 @@ function RequestNotifyPermission() {
 	}
 }
 
-
 // Update localStorage with value of checkbox
 notifySwitch.addEventListener('change', (event) => {
 	if (event.target.checked) {
@@ -137,7 +232,6 @@ if (notifySetting === "true" || notifySetting === true) {
 } else if (notifySetting === "false" || notifySetting === false) {
 	notifySwitch.checked = false
 }
-
 
 /** Sound switch and local storage behavior **/
 var soundSwitch = document.getElementById("sound-switch")
@@ -158,8 +252,6 @@ if (notifySetting === "true" || notifySetting === true) {
 } else if (notifySetting === "false" || notifySetting === false) {
 	soundSwitch.checked = false
 }
-
-
 
 // Create a new notification after checking if permission has been granted
 function spawnNotification(title, body) {
@@ -184,11 +276,10 @@ function spawnNotification(title, body) {
 			var n = new Notification(title, options);
 		}
 	} else if (Notification.permission == "denied") {
-		// At last, if the user has denied notifications, and you 
+		// At last, if the user has denied notifications, and you
 		// want to be respectful, there is no need to bother them any more.
 	}
 }
-
 
 function notify(args) {
 	// Spawn notification if enabled
@@ -320,7 +411,6 @@ function pushMessage(args) {
 			((args.type === "whisper" || args.type === "invite") && args.from)
 		)
 	) {
-		messageEl.classList.add('refmessage');
 		notify(args);
 	}
 
@@ -365,41 +455,10 @@ function pushMessage(args) {
 	}
 
 	// Text
-	var textEl = document.createElement('pre');
+	var textEl = document.createElement('p');
 	textEl.classList.add('text');
+	textEl.innerHTML = md.render(args.text);
 
-        textEl.textContent = args.text || '';
-        
-	if($('#syntax-highlight').checked && textEl.textContent.includes('```')) {
-            var textParts = textEl.textContent.split('```');
-            var ignore = 0;
-            textEl.innerHTML = '';
-            for(var i=0; i< textParts.length; i++) {
-                if(i==ignore) {
-                    textEl.innerHTML += parseLatex(textParts[i]);
-                    continue;
-                }
-                var lang = textParts[i].split(/\s+/g)[0];
-                if(lang == '') {
-                    textEl.innerHTML += parseLatex('```' + textParts[i]);
-                    continue;
-                }
-                
-                var codeEl = document.createElement('code');
-                codeEl.classList.add(lang);
-                codeEl.textContent = textParts[i].replace(lang, '').trim();
-                hljs.highlightBlock(codeEl);
-                
-                textEl.innerHTML += codeEl.outerHTML.toString();
-                ignore = i+1;
-            }
-        } else {
-            var parsed = parseLatex(textEl.textContent);
-            if(parsed != null)
-                textEl.innerHTML = parsed;
-	}
-        textEl.innerHTML = textEl.innerHTML.replace(/(\?|https?:\/\/)\S+?(?=[,.!?:)]?\s|$)/g, parseLinks);
-        
 	messageEl.appendChild(textEl);
 
 	// Scroll to bottom
@@ -411,27 +470,6 @@ function pushMessage(args) {
 
 	unread += 1;
 	updateTitle();
-}
-
-function parseLatex(str) {
-    if ($('#parse-latex').checked) {
-        // Temporary hotfix for \rule spamming, see https://github.com/Khan/KaTeX/issues/109
-        str = str.replace(/\\rule|\\\\\s*\[.*?\]/g, '');
-        var holEl = document.createElement('p');
-        holEl.textContent = str;
-        try {
-            renderMathInElement(holEl, {
-                delimiters: [
-                    { left: "$$", right: "$$", display: true },
-                    { left: "$", right: "$", display: false },
-                ]
-            });
-            return holEl.innerHTML.toString();
-        } catch (e) {
-            console.warn(e);
-        }
-    }
-    return null;
 }
 
 function insertAtCursor(text) {
@@ -451,19 +489,6 @@ function send(data) {
 	if (ws && ws.readyState == ws.OPEN) {
 		ws.send(JSON.stringify(data));
 	}
-}
-
-function parseLinks(g0) {
-	var a = document.createElement('a');
-
-	a.innerHTML = g0;
-
-	var url = a.textContent;
-
-	a.href = url;
-	a.target = '_blank';
-
-	return a.outerHTML;
 }
 
 var windowActive = true;
@@ -620,7 +645,6 @@ $('#chatinput').oninput = function () {
 
 updateInputSize();
 
-
 /* sidebar */
 
 $('#sidebar').onmouseenter = $('#sidebar').ontouchstart = function (e) {
@@ -629,7 +653,14 @@ $('#sidebar').onmouseenter = $('#sidebar').ontouchstart = function (e) {
 	e.stopPropagation();
 }
 
-$('#sidebar').onmouseleave = document.ontouchstart = function () {
+$('#sidebar').onmouseleave = document.ontouchstart = function (event) {
+	var e = event.toElement || event.relatedTarget;
+	try {
+		if (e.parentNode == this || e == this) {
+	     return;
+	  }
+	} catch (e) { return; }
+
 	if (!$('#pin-sidebar').checked) {
 		$('#sidebar-content').classList.add('hidden');
 		$('#sidebar').classList.remove('expand');
@@ -639,9 +670,7 @@ $('#sidebar').onmouseleave = document.ontouchstart = function () {
 $('#clear-messages').onclick = function () {
 	// Delete children elements
 	var messages = $('#messages');
-	while (messages.firstChild) {
-		messages.removeChild(messages.firstChild);
-	}
+	messages.innerHTML = '';
 }
 
 // Restore settings from localStorage
@@ -657,6 +686,8 @@ if (localStorageGet('joined-left') == 'false') {
 
 if (localStorageGet('parse-latex') == 'false') {
 	$('#parse-latex').checked = false;
+	md.inline.ruler.disable([ 'katex' ]);
+	md.block.ruler.disable([ 'katex' ]);
 }
 
 $('#pin-sidebar').onchange = function (e) {
@@ -668,7 +699,37 @@ $('#joined-left').onchange = function (e) {
 }
 
 $('#parse-latex').onchange = function (e) {
-	localStorageSet('parse-latex', !!e.target.checked);
+	var enabled = !!e.target.checked;
+	localStorageSet('parse-latex', enabled);
+	if (enabled) {
+		md.inline.ruler.enable([ 'katex' ]);
+		md.block.ruler.enable([ 'katex' ]);
+	} else {
+		md.inline.ruler.disable([ 'katex' ]);
+		md.block.ruler.disable([ 'katex' ]);
+	}
+}
+
+if (localStorageGet('syntax-highlight') == 'false') {
+	$('#syntax-highlight').checked = false;
+	markdownOptions.doHighlight = false;
+}
+
+$('#syntax-highlight').onchange = function (e) {
+	var enabled = !!e.target.checked;
+	localStorageSet('syntax-highlight', enabled);
+	markdownOptions.doHighlight = enabled;
+}
+
+if (localStorageGet('allow-imgur') == 'false') {
+	$('#allow-imgur').checked = false;
+	allowImages = false;
+}
+
+$('#allow-imgur').onchange = function (e) {
+	var enabled = !!e.target.checked;
+	localStorageSet('allow-imgur', enabled);
+	allowImages = enabled;
 }
 
 // User list
@@ -772,7 +833,7 @@ function setScheme(scheme) {
 
 function setHighlight(scheme) {
 	currentHighlight = scheme;
-	$('#highlight-link').href = "//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/" + scheme + ".min.css";
+	$('#highlight-link').href = "vendor/hljs/styles/" + scheme + ".min.css";
 	localStorageSet('highlight', scheme);
 }
 

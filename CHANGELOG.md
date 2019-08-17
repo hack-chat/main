@@ -3,6 +3,22 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.1.91 pre 2.2] - 2019-08-17
+### Added
+- (Client) Markdown engine
+- (Client) Imgur based image posting (through markdown)
+
+### Changed
+- (Client) Removed cloudflare references making hack.chat is self-hosted again
+- (Client) The way messages are pushed, closing an xss vuln in PRs 985dd6f and 9fcb235
+- (Client) Side bar layout
+- (Client) Fixed some options not storing
+- (Client) Fixed firefox drop down menu bug
+- (Client) Updated Katex lib
+
+### Stretched
+- The term "minimal"
+
 ## [2.1.9 pre 2.2] - 2019-03-18
 ### Changed
 - Configuration script setup, making it more portable/sane

@@ -2,6 +2,7 @@ body {
   padding: 0;
   margin: 0;
   overflow-y: scroll;
+  font-family: monospace;
 }
 body,
 input,
@@ -43,8 +44,22 @@ a {
 a:hover {
   text-decoration: underline;
 }
-ul {
-  padding-left: 0;
+#sidebar-content ul {
+  padding-inline-start: 20px;
+}
+#sidebar-content ul li {
+  list-style: disc outside none;
+}
+ul, ol {
+    margin-top: 0;
+    margin-bottom: 10px;
+    display: block;
+    list-style-type: disc;
+    margin-block-start: 1em;
+    margin-block-end: 1em;
+    margin-inline-start: 0px;
+    margin-inline-end: 0px;
+    padding-inline-start: 40px;
 }
 ul li {
   list-style: inside;
@@ -64,9 +79,6 @@ ul li {
 }
 .message, .refmessage {
   padding-bottom: 1em;
-}
-.refmessage {
-  font-weight: bold;
 }
 .nick {
   float: left;
@@ -113,6 +125,89 @@ ul li {
   width: 180px;
   padding-bottom: 10%;
 }
+h1,h2,h3,h4,h5,h6 {
+  margin: 3px;
+  margin-top: 0px;
+}
+blockquote {
+  padding: 3px 10px;
+  margin: 3px;
+  border-left: 5px solid #4e4e4e;
+}
+code {
+  padding: 2px 4px;
+  font-size: 90%;
+  color: #000000;
+  background-color: #4e4e4e;
+  border-radius: 4px;
+}
+hr {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  border: 0;
+  border-top: 1px solid #4e4e4e;
+}
+mark {
+  background-color: #60ac39;
+  color: black;
+}
+pre {
+  display: block;
+  padding: 9.5px;
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.42857143;
+  color: #797979;
+  word-break: break-all;
+  word-wrap: break-word;
+  background-color: #4e4e4e;
+  border: 1px solid #000;
+  border-radius: 4px;
+}
+table {
+  background-color: transparent;
+  width: 100%;
+  max-width: 100%;
+  margin-bottom: 20px;
+  border-spacing: 0;
+  border-collapse: collapse;
+}
+table > caption + thead > tr:first-child > th, table > colgroup + thead > tr:first-child > th, table > thead:first-child > tr:first-child > th, table > caption + thead > tr:first-child > td, table > colgroup + thead > tr:first-child > td, table > thead:first-child > tr:first-child > td {
+    border-top: 0;
+}
+table > thead > tr > th {
+    vertical-align: bottom;
+    border-bottom: 2px solid #4e4e4e;
+}
+table > thead > tr > th, table > tbody > tr > th, table > tfoot > tr > th, table > thead > tr > td, table > tbody > tr > td, table > tfoot > tr > td {
+    padding: 8px;
+    line-height: 1.42857143;
+    vertical-align: top;
+    border-top: 1px solid #4e4e4e;
+}
+th {
+    text-align: left;
+}
+td, th {
+    padding: 0;
+}
+table > tbody > tr:nth-child(odd) > td, table > tbody > tr:nth-child(odd) > th {
+    background-color: #4e4e4e;
+}
+table > thead > tr > th, table > tbody > tr > th, table > tfoot > tr > th, table > thead > tr > td, table > tbody > tr > td, table > tfoot > tr > td {
+    padding: 8px;
+    line-height: 1.42857143;
+    vertical-align: top;
+    border-top: 1px solid #4e4e4e;
+}
+td, th {
+    padding: 0;
+}
+img {
+  max-width: 50%;
+  max-height: 800px;
+}
+
 @media only screen and (max-width: 600px) {
   .messages {
     border: none;

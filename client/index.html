@@ -5,14 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta charset="utf-8">
   <title>hack.chat</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="katex/katex.min.css">
-  <link id="scheme-link" rel="stylesheet" href="schemes/atelier-dune.css">
-  <script src="katex/katex.min.js"></script>
-  <script src="katex/contrib/auto-render.min.js"></script>
-  <link id="highlight-link" rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/hybrid.min.css">
   <link rel="manifest" href="manifest.json">
-  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+
+  <link rel="stylesheet" href="style.css">
+  <link id="scheme-link" rel="stylesheet" href="schemes/atelier-dune.css">
+
+  <link rel="stylesheet" href="vendor/katex/katex.min.css">
+  <script src="vendor/katex/katex.min.js"></script>
+  <script src="vendor/remarkable-katex/remarkableKatex.min.js"></script>
+
+  <script src="vendor/hljs/highlight.min.js"></script>
+  <link id="highlight-link" rel="stylesheet" href="vendor/hljs/styles/hybrid.min.css">
+  <script src="vendor/remarkable/remarkable.min.js"></script>
 </head>
 
 <body>
@@ -31,11 +35,11 @@
   </footer>
   <nav id="sidebar">
     <div id="sidebar-content" class="hidden">
+      <h4>Settings</h4>
       <p>
         <input id="pin-sidebar" type="checkbox">
         <label for="pin-sidebar">Pin sidebar</label>
       </p>
-      <h4>Settings</h4>
       <p>
         <input id="sound-switch" type="checkbox">
         <label for="sound-switch">Sound notifications</label>
@@ -50,19 +54,30 @@
       </p>
       <p>
         <input id="parse-latex" type="checkbox" checked>
-        <label for="parse-latex">Parse LaTeX</label>
+        <label for="parse-latex">Allow LaTeX</label>
       </p>
+      <p>
+        <input id="syntax-highlight" type="checkbox" checked>
+        <label for="syntax-highlight">Allow Highlight</label>
+      </p>
+      <p>
+        <input id="allow-imgur" type="checkbox">
+        <label for="allow-imgur" title="Embed images like: ![Title](https://i.imgur.com/image.png)">Allow Imgur</label>
+      </p>
+      <hr>
+      <p>
+        <h4>Color scheme</h4>
+        <select id="scheme-selector"></select>
+      </p>
+      <p>
+        <h4>Highlight scheme</h4>
+        <select id="highlight-selector"></select>
+      </p>
+      <hr>
       <p>
         <button id="clear-messages">Clear all messages</button>
       </p>
-      <h4>Color scheme</h4>
-      <select id="scheme-selector"></select>
-      <p>
-        <input id="syntax-highlight" type="checkbox" checked>
-        <label for="syntax-highlight">Syntax Highlight</label>
-      </p>
-      <h4>Highlight scheme</h4>
-      <select id="highlight-selector"></select>
+      <hr>
       <h4>Users online</h4>
       <p>(Click user to invite)</p>
       <ul id="users"></ul>

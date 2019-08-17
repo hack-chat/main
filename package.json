@@ -1,6 +1,6 @@
 {
   "name": "hack.chat-v2",
-  "version": "2.1.10",
+  "version": "2.1.91",
   "description": "a minimal distraction free chat application",
   "main": "index.js",
   "repository": {
