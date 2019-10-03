@@ -17,6 +17,6 @@
   "author": "Marzavec",
   "license": "WTFPL",
   "dependencies": {
-    "http-server": "^0.11.1"
+    "http-server": "^0.9.0"
   }
 }

@@ -363,10 +363,12 @@ class MainServer extends WsServer {
     // notify each module to register their hooks (if any)
     this.core.commands.initCommandHooks(this);
 
+    let curHooks = [];
+    let hookObj = [];
+
     if (typeof this.hooks['in'] !== 'undefined') {
       // start sorting, with incoming first
-      let curHooks = [ ...this.hooks['in'].keys() ];
-      let hookObj = [];
+      curHooks = [ ...this.hooks['in'].keys() ];
       for (let i = 0, j = curHooks.length; i < j; i++) {
         hookObj = this.hooks['in'].get(curHooks[i]);
         hookObj.sort( (h1, h2) => h1.priority - h2.priority );
