@@ -42,6 +42,9 @@ exports.run = async (core, server, socket, payload) => {
     nick: socket.nick,
     text: `@${socket.nick} ${text}`
   };
+  if (socket.trip) {
+    newPayload.trip = socket.trip;
+  }
 
   // broadcast to channel peers
   server.broadcast( newPayload, { channel: socket.channel});
