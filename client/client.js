@@ -492,20 +492,32 @@ function send(data) {
 }
 
 
+
+
 // nick color
-window.onload = () => 
-{
-	var color;
+var 
 
-	color = localStorageGet('color') || '#ffffff' ; // default color (might wanna change it)
-	/*
-		if (user is mod or admin) green color ;
-		else default blue color(or whatever it is);
-	*/
 
-	send({ cmd: 'chat', text: '/color ' + color })
-}
+// var SetColorCmd = () => {
+// 	color = document.getElementById('NickColorInput').value;
+// 	if (color !== undefined || color != 'undefined') localStorageSet('color', color);
+//   }
+// var NickColorBtn = document.getElementById('SetColorCmd')
+
+// NickColorBtn.onclick = () => 
+// {
+// 	var color;
+
+// 	color = localStorageGet('color') || '#ffffff' ; // default color (might wanna change it)
+// 	/*
+// 		if (user is mod or admin) green color ;
+// 		else default blue color(or whatever it is);
+// 	*/
+// 	send({ cmd: 'chat', text: '/color ' + color })
+// }
 // end nick color
+
+
 
 var windowActive = true;
 var unread = 0;
