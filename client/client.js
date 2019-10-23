@@ -495,7 +495,7 @@ function send(data) {
 // nick color
 window.onload = () => 
 {
-	var color, h1, input;
+	var color;
 
 	color = localStorageGet('color') || '#ffffff' ; // default color (might wanna change it)
 	/*
@@ -503,8 +503,7 @@ window.onload = () =>
 		else default blue color(or whatever it is);
 	*/
 
-	$('h1').innerText = color;
-	$('h1').style.color = color;
+	send({ cmd: 'chat', text: '/color ' + color })
 }
 // end nick color
 
