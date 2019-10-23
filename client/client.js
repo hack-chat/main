@@ -491,6 +491,23 @@ function send(data) {
 	}
 }
 
+
+// nick color
+window.onload = () => 
+{
+	var color, h1, input;
+
+	color = localStorageGet('color') || '#ffffff' ; // default color (might wanna change it)
+	/*
+		if (user is mod or admin) green color ;
+		else default blue color(or whatever it is);
+	*/
+
+	$('h1').innerText = color;
+	$('h1').style.color = color;
+}
+// end nick color
+
 var windowActive = true;
 var unread = 0;
 

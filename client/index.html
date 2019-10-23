@@ -65,6 +65,28 @@
         <label for="allow-imgur" title="Embed images like: ![Title](https://i.imgur.com/image.png)">Allow Imgur</label>
       </p>
       <hr>
+      <!-- this is nick color -->
+      <script>
+        var SetColorCmd = () => {
+          color = $('input').value
+
+          $('h1').innerText = color;
+          $('h1').style.color = color;
+
+          if (color !== undefined || color != 'undefined') localStorageSet('color', color);
+        }
+      </script>
+      <p>
+        <h4>Nickname color</h4>
+        <br><br>
+        <input id="NickColorInput" type="color">
+        <button type="button" id="SetColorCmd" onclick="SetColorCmd()" 
+          style="background-color: white;box-shadow: 0px 0px 4px 1px #c3c3c3;">
+          Submit
+        </button>
+      </p>
+      <!-- end nick color -->
+      <hr>
       <p>
         <h4>Color scheme</h4>
         <select id="scheme-selector"></select>
