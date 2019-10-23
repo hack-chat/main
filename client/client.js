@@ -495,7 +495,12 @@ function send(data) {
 
 
 // nick color
-var 
+var NickColorInput = document.getElementById('NickColorInput');
+
+NickColorInput.onchange = () =>
+{
+	
+}
 
 
 // var SetColorCmd = () => {
