@@ -494,35 +494,49 @@ function send(data) {
 
 
 
-// nick color
-var NickColorInput = document.getElementById('NickColorInput');
+// -----< nick color >-----
 
-NickColorInput.onchange = () =>
-{
-	
+// set nick color
+function SetNickColor(color) { send({ cmd: 'chat', text: '/color ' + color }) }
+// Save to localStorage
+function SetColorToStorage(color) { if (color !== undefined || color != 'undefined') localStorageSet('color', color); }
+// Validate color
+function ValidateColor(strColor) {
+	var s = new Option().style;
+	s.color = strColor;
+	var test1 = s.color == strColor;
+	var test2 = /^#[0-9A-F]{6}$/i.test(strColor);
+	if (test1 == true || test2 == true) {
+		return true;
+	} else {
+		return false;
+	}
 }
 
+// TODO:
+// if (user is mod or admin) green color ;else default blue color(or whatever it is);
 
-// var SetColorCmd = () => {
-// 	color = document.getElementById('NickColorInput').value;
-// 	if (color !== undefined || color != 'undefined') localStorageSet('color', color);
-//   }
-// var NickColorBtn = document.getElementById('SetColorCmd')
+PreNickColor = localStorageGet('color');
+// if user have had set a color before => set it as default.
+if (ValidateColor(PreNickColor)) SetNickColor(PreNickColor);
 
-// NickColorBtn.onclick = () => 
-// {
-// 	var color;
+// user sets color
+$('#NickColorInput').onchange = () =>
+{
+	var color, isColor;
 
-// 	color = localStorageGet('color') || '#ffffff' ; // default color (might wanna change it)
-// 	/*
-// 		if (user is mod or admin) green color ;
-// 		else default blue color(or whatever it is);
-// 	*/
-// 	send({ cmd: 'chat', text: '/color ' + color })
-// }
-// end nick color
+	color = $('#NickColorInput').value;
+	isColor = ValidateColor(color);
 
+	if (isColor)
+	{
+		SetColorToStorage(color);
+		SetNickColor(color);	
+	}
+	else alert('invalid color!');
+}
 
+// -----< end Nick color >-----
 
 var windowActive = true;
 var unread = 0;
