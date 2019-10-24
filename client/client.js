@@ -514,7 +514,7 @@ function ValidateColor(strColor) {
 }
 
 PreNickColor = localStorageGet('color');
-// if user have had set a color before => set it as default.
+// if user has set a color before => set it as default.
 if (ValidateColor(PreNickColor)) SetNickColor(PreNickColor);
 
 // user sets color
