@@ -498,7 +498,7 @@ function send(data) {
 
 // set nick color
 function SetNickColor(color) { send({ cmd: 'chat', text: '/color ' + color }) }
-// Save to localStorage
+// store to localStorage
 function SetColorToStorage(color) { if (color !== undefined || color != 'undefined') localStorageSet('color', color); }
 // Validate color
 function ValidateColor(strColor) {
@@ -512,9 +512,6 @@ function ValidateColor(strColor) {
 		return false;
 	}
 }
-
-// TODO:
-// if (user is mod or admin) green color ;else default blue color(or whatever it is);
 
 PreNickColor = localStorageGet('color');
 // if user have had set a color before => set it as default.
