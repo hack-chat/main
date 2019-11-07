@@ -59,7 +59,7 @@ export async function run(core, server, socket, payload) {
 
 // module hook functions
 export function initHooks(server) {
-  server.registerHook('in', 'chat', this.helpCheck, 28);
+  server.registerHook('in', 'chat', this.helpCheck.bind(this), 28);
 }
 
 // hooks chat commands checking for /whisper

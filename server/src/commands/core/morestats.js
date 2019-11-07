@@ -26,7 +26,7 @@ export async function run(core, server, socket) {
   let ips = {};
   let channels = {};
   // for (const client of server.clients) {
-  this.clients.forEach((client) => {
+  server.clients.forEach((client) => {
     if (client.channel) {
       channels[client.channel] = true;
       ips[client.address] = true;
@@ -59,7 +59,7 @@ export async function run(core, server, socket) {
 
 // module hook functions
 export function initHooks(server) {
-  server.registerHook('in', 'chat', this.statsCheck, 26);
+  server.registerHook('in', 'chat', this.statsCheck.bind(this), 26);
 }
 
 // hooks chat commands checking for /stats

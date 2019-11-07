@@ -8,7 +8,7 @@ export async function run(core, server, socket) {
   let ips = {};
   let channels = {};
   // for (const client of server.clients) {
-  this.clients.forEach((client) => {
+  server.clients.forEach((client) => {
     if (client.channel) {
       channels[client.channel] = true;
       ips[client.address] = true;

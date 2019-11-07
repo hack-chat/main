@@ -56,7 +56,7 @@ export async function run(core, server, socket, payload) {
 
 // module hook functions
 export function initHooks(server) {
-  server.registerHook('in', 'chat', this.emoteCheck, 30);
+  server.registerHook('in', 'chat', this.emoteCheck.bind(this), 30);
 }
 
 // hooks chat commands checking for /me

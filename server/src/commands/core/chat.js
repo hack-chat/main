@@ -66,8 +66,8 @@ export async function run(core, server, socket, data) {
 
 // module hook functions
 export function initHooks(server) {
-  server.registerHook('in', 'chat', this.commandCheckIn, 20);
-  server.registerHook('in', 'chat', this.finalCmdCheck, 254);
+  server.registerHook('in', 'chat', this.commandCheckIn.bind(this), 20);
+  server.registerHook('in', 'chat', this.finalCmdCheck.bind(this), 254);
 }
 
 // checks for miscellaneous '/' based commands

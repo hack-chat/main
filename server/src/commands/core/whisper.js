@@ -78,7 +78,7 @@ export async function run(core, server, socket, payload) {
 
 // module hook functions
 export function initHooks(server) {
-  server.registerHook('in', 'chat', this.whisperCheck, 20);
+  server.registerHook('in', 'chat', this.whisperCheck.bind(this), 20);
 }
 
 // hooks chat commands checking for /whisper

@@ -87,7 +87,7 @@ export async function run(core, server, socket, data) {
 
 // module hook functions
 export function initHooks(server) {
-  server.registerHook('in', 'chat', this.nickCheck, 29);
+  server.registerHook('in', 'chat', this.nickCheck.bind(this), 29);
 }
 
 // hooks chat commands checking for /nick
