@@ -2,9 +2,6 @@
   Description: Outputs the current command module list or command categories
 */
 
-// module support functions
-const { stripIndents } = require('common-tags');
-
 // module main
 export async function run(core, server, socket, payload) {
   // check for spam
@@ -22,29 +19,29 @@ export async function run(core, server, socket, payload) {
 
   let reply = '';
   if (typeof payload.command === 'undefined') {
-    reply = stripIndents`Listing all current commands. For specific help on certain commands, use either:
-      Text: /help <command name>
-      API:  {cmd: 'help', command: '<command name>'}`;
-    reply += '\n\n-------------------------------------\n\n';
+    reply += '# All commands:\n|Category:|Name:|\n|---:|---|\n';
 
     const categories = core.commands.categoriesList.sort();
     for (let i = 0, j = categories.length; i < j; i += 1) {
-      reply += `${categories[i].replace('../src/commands/', '').replace(/^\w/, (c) => c.toUpperCase())} Commands:\n`;
+      reply += `|${categories[i].replace('../src/commands/', '').replace(/^\w/, (c) => c.toUpperCase())}:|`;
       const catCommands = core.commands.all(categories[i]).sort((a, b) => a.info.name.localeCompare(b.info.name));
-      reply += `  ${catCommands.map((c) => `${c.info.name}`).join(', ')}\n\n`;
+      reply += `${catCommands.map((c) => `${c.info.name}`).join(', ')}|\n`;
     }
+
+    reply += '---\nFor specific help on certain commands, use either:\nText: `/help <command name>`\nAPI: `{cmd: \'help\', command: \'<command name>\'}`';
   } else {
     const command = core.commands.get(payload.command);
 
     if (typeof command === 'undefined') {
-      reply = 'Unknown command';
+      reply += 'Unknown command';
     } else {
-      reply = stripIndents`Name: ${command.info.name}
-        Aliases: ${typeof command.info.aliases !== 'undefined' ? command.info.aliases.join(', ') : 'None'}
-        Category: ${command.info.category.replace('../src/commands/', '').replace(/^\w/, (c) => c.toUpperCase())}
-        Required Parameters: ${command.requiredData || 'None'}\n
-        Description: ${command.info.description || '¯\_(ツ)_/¯'}\n
-        Usage: ${command.info.usage || command.info.name}`;
+      reply += `# ${command.info.name} command:\n| | |\n|---:|---|\n`;
+      reply += `|**Name:**|${command.info.name}|\n`;
+      reply += `|**Aliases:**|${typeof command.info.aliases !== 'undefined' ? command.info.aliases.join(', ') : 'None'}|\n`;
+      reply += `|**Category:**|${command.info.category.replace('../src/commands/', '').replace(/^\w/, (c) => c.toUpperCase())}|\n`;
+      reply += `|**Required Parameters:**|${command.requiredData || 'None'}|\n`;
+      reply += `|**Description:**|${command.info.description || '¯\_(ツ)_/¯'}|\n\n`;
+      reply += `**Usage:** ${command.info.usage || command.info.name}`;
     }
   }
 
