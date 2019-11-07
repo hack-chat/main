@@ -3,34 +3,35 @@
 */
 
 // module main
-exports.run = async (core, server, socket, data) => {
+export async function run(core, server, socket) {
   // increase rate limit chance and ignore if not admin or mod
   if (socket.uType === 'user') {
-    return server.police.frisk(socket.remoteAddress, 10);
+    return server.police.frisk(socket.address, 10);
   }
 
   // remove arrest records
-  server.police.records = {};
+  server.police.clear();
 
   console.log(`${socket.nick} [${socket.trip}] unbanned all`);
 
   // reply with success
   server.reply({
     cmd: 'info',
-    text: `Unbanned all ip addresses`
+    text: 'Unbanned all ip addresses',
   }, socket);
 
   // notify mods
   server.broadcast({
     cmd: 'info',
-    text: `${socket.nick} unbanned all ip addresses`
+    text: `${socket.nick} unbanned all ip addresses`,
   }, { uType: 'mod' });
-};
 
-// module meta
-exports.info = {
+  return true;
+}
+
+export const info = {
   name: 'unbanall',
   description: 'Clears all banned ip addresses',
   usage: `
-    API: { cmd: 'unbanall' }`
+    API: { cmd: 'unbanall' }`,
 };

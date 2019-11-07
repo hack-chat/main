@@ -9,43 +9,45 @@ const parseText = (text) => {
     return false;
   }
 
-  // strip newlines from beginning and end
-  text = text.replace(/^\s*\n|^\s+$|\n\s*$/g, '');
-  // replace 3+ newlines with just 2 newlines
-  text = text.replace(/\n{3,}/g, "\n\n");
+  let sanitizedText = text;
 
-  return text;
+  // strip newlines from beginning and end
+  sanitizedText = sanitizedText.replace(/^\s*\n|^\s+$|\n\s*$/g, '');
+  // replace 3+ newlines with just 2 newlines
+  sanitizedText = sanitizedText.replace(/\n{3,}/g, '\n\n');
+
+  return sanitizedText;
 };
 
 // module main
-exports.run = async (core, server, socket, data) => {
+export async function run(core, server, socket, data) {
   // check user input
-  let text = parseText(data.text);
+  const text = parseText(data.text);
 
   if (!text) {
     // lets not send objects or empty text, yea?
-    return server.police.frisk(socket.remoteAddress, 13);
+    return server.police.frisk(socket.address, 13);
   }
 
   // check for spam
-  let score = text.length / 83 / 4;
-  if (server.police.frisk(socket.remoteAddress, score)) {
+  const score = text.length / 83 / 4;
+  if (server.police.frisk(socket.address, score)) {
     return server.reply({
       cmd: 'warn',
-      text: 'You are sending too much text. Wait a moment and try again.\nPress the up arrow key to restore your last message.'
+      text: 'You are sending too much text. Wait a moment and try again.\nPress the up arrow key to restore your last message.',
     }, socket);
   }
 
   // build chat payload
-  let payload = {
+  const payload = {
     cmd: 'chat',
     nick: socket.nick,
-    text: text
+    text,
   };
 
-  if (socket.uType == 'admin') {
+  if (socket.uType === 'admin') {
     payload.admin = true;
-  } else if (socket.uType == 'mod') {
+  } else if (socket.uType === 'mod') {
     payload.mod = true;
   }
 
@@ -54,20 +56,22 @@ exports.run = async (core, server, socket, data) => {
   }
 
   // broadcast to channel peers
-  server.broadcast( payload, { channel: socket.channel});
+  server.broadcast(payload, { channel: socket.channel });
 
   // stats are fun
   core.stats.increment('messages-sent');
-};
+
+  return true;
+}
 
 // module hook functions
-exports.initHooks = (server) => {
+export function initHooks(server) {
   server.registerHook('in', 'chat', this.commandCheckIn, 20);
   server.registerHook('in', 'chat', this.finalCmdCheck, 254);
-};
+}
 
 // checks for miscellaneous '/' based commands
-exports.commandCheckIn = (core, server, socket, payload) => {
+export function commandCheckIn(core, server, socket, payload) {
   if (typeof payload.text !== 'string') {
     return false;
   }
@@ -75,16 +79,16 @@ exports.commandCheckIn = (core, server, socket, payload) => {
   if (payload.text.startsWith('/myhash')) {
     server.reply({
       cmd: 'info',
-      text: `Your hash: ${socket.hash}`
+      text: `Your hash: ${socket.hash}`,
     }, socket);
 
     return false;
   }
 
   return payload;
-};
+}
 
-exports.finalCmdCheck = (core, server, socket, payload) => {
+export function finalCmdCheck(core, server, socket, payload) {
   if (typeof payload.text !== 'string') {
     return false;
   }
@@ -97,26 +101,23 @@ exports.finalCmdCheck = (core, server, socket, payload) => {
     payload.text = payload.text.substr(1);
 
     return payload;
-  } else {
-    server.reply({
-      cmd: 'warn',
-      text: `Unknown command: ${payload.text}`
-    }, socket);
-
-    return false;
   }
 
-  return payload;
-};
+  server.reply({
+    cmd: 'warn',
+    text: `Unknown command: ${payload.text}`,
+  }, socket);
 
-// module meta
-exports.requiredData = ['text'];
-exports.info = {
+  return false;
+}
+
+export const requiredData = ['text'];
+export const info = {
   name: 'chat',
   description: 'Broadcasts passed `text` field to the calling users channel',
   usage: `
     API: { cmd: 'chat', text: '<text to send>' }
     Text: Uuuuhm. Just kind type in that little box at the bottom and hit enter.\n
     Bonus super secret hidden commands:
-    /myhash`
+    /myhash`,
 };

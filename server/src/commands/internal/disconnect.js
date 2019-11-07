@@ -4,28 +4,29 @@
 */
 
 // module main
-exports.run = async (core, server, socket, data) => {
+export async function run(core, server, socket, data) {
   if (data.cmdKey !== server.cmdKey) {
     // internal command attempt by client, increase rate limit chance and ignore
-    return server.police.frisk(socket.remoteAddress, 20);
+    return server.police.frisk(socket.address, 20);
   }
 
   // send leave notice to client peers
   if (socket.channel) {
     server.broadcast({
       cmd: 'onlineRemove',
-      nick: socket.nick
+      nick: socket.nick,
     }, { channel: socket.channel });
   }
 
   // commit close just in case
   socket.terminate();
-};
 
-// module meta
-exports.requiredData = ['cmdKey'];
-exports.info = {
+  return true;
+}
+
+export const requiredData = ['cmdKey'];
+export const info = {
   name: 'disconnect',
   usage: 'Internal Use Only',
-  description: 'Internally used to relay `onlineRemove` event to clients'
+  description: 'Internally used to relay `onlineRemove` event to clients',
 };

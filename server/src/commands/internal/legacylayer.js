@@ -3,18 +3,19 @@
 */
 
 // module main
-exports.run = async (core, server, socket, data) => {
-  return;
-};
+export async function run(core, server, socket, data) {
+  /**
+    * @todo
+    */
+}
 
 // module hook functions
-exports.initHooks = (server) => {
+export function initHooks(server) {
   // module is only a placeholder
-  //server.registerHook('out', '', this.);
-};
+  // server.registerHook('out', '', this.);
+}
 
-// module meta
-exports.info = {
+export const info = {
   name: 'legacylayer',
-  description: 'This module adjusts outgoing data, making it compatible with legacy clients'
+  description: 'This module adjusts outgoing data, making it compatible with legacy clients',
 };

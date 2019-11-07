@@ -3,12 +3,11 @@
 */
 
 // module main
-exports.run = async (core, server, socket, data) => {
-  return;
-};
+export async function run() {
 
-// module meta
-exports.info = {
+}
+
+export const info = {
   name: 'ping',
-  description: 'This module is only in place to supress error notices legacy sources may get'
+  description: 'This module is only in place to supress error notices legacy sources may get',
 };

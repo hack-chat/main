@@ -3,19 +3,20 @@
 */
 
 // module main
-exports.run = async (core, server, socket, data) => {
+export async function run(core, server, socket) {
   // gather connection and channel count
   let ips = {};
   let channels = {};
-  for (let client of server.clients) {
+  // for (const client of server.clients) {
+  this.clients.forEach((client) => {
     if (client.channel) {
       channels[client.channel] = true;
-      ips[client.remoteAddress] = true;
+      ips[client.address] = true;
     }
-  }
+  });
 
-  let uniqueClientCount = Object.keys(ips).length;
-  let uniqueChannels = Object.keys(channels).length;
+  const uniqueClientCount = Object.keys(ips).length;
+  const uniqueChannels = Object.keys(channels).length;
 
   ips = null;
   channels = null;
@@ -23,17 +24,16 @@ exports.run = async (core, server, socket, data) => {
   // dispatch info
   server.reply({
     cmd: 'info',
-    text: `${uniqueClientCount} unique IPs in ${uniqueChannels} channels`
+    text: `${uniqueClientCount} unique IPs in ${uniqueChannels} channels`,
   }, socket);
 
   // stats are fun
   core.stats.increment('stats-requested');
-};
+}
 
-// module meta
-exports.info = {
+export const info = {
   name: 'stats',
   description: 'Sends back legacy server stats to the calling client',
   usage: `
-    API: { cmd: 'stats' }`
+    API: { cmd: 'stats' }`,
 };

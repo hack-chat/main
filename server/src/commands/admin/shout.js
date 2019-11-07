@@ -3,24 +3,25 @@
 */
 
 // module main
-exports.run = async (core, server, socket, data) => {
+export async function run(core, server, socket, data) {
   // increase rate limit chance and ignore if not admin
-  if (socket.uType != 'admin') {
-    return server.police.frisk(socket.remoteAddress, 20);
+  if (socket.uType !== 'admin') {
+    return server.police.frisk(socket.address, 20);
   }
 
   // send text to all channels
   server.broadcast({
     cmd: 'info',
-    text: `Server Notice: ${data.text}`
+    text: `Server Notice: ${data.text}`,
   }, {});
-};
 
-// module meta
-exports.requiredData = ['text'];
-exports.info = {
+  return true;
+}
+
+export const requiredData = ['text'];
+export const info = {
   name: 'shout',
   description: 'Displays passed text to every client connected',
   usage: `
-    API: { cmd: 'shout', text: '<shout text>' }`
+    API: { cmd: 'shout', text: '<shout text>' }`,
 };

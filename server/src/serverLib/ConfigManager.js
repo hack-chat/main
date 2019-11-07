@@ -1,38 +1,47 @@
+import dateFormat from 'dateformat';
+import {
+  existsSync,
+  ensureFileSync,
+  readJsonSync,
+  copySync,
+  writeJSONSync,
+  removeSync,
+} from 'fs-extra';
+import { resolve } from 'path';
+
 /**
   * Server configuration manager, handling loading, creation, parsing and saving
   * of the main config.json file
-  *
-  * Version: v2.0.0
-  * Developer: Marzavec ( https://github.com/marzavec )
-  * License: WTFPL ( http://www.wtfpl.net/txt/copying/ )
-  *
+  * @property {String} base - Base path that all imports are required in from
+  * @author Marzavec ( https://github.com/marzavec )
+  * @version v2.0.0
+  * @license WTFPL ( http://www.wtfpl.net/txt/copying/ )
   */
-const dateFormat = require('dateformat');
-const fse = require('fs-extra');
-const path = require('path');
-
 class ConfigManager {
   /**
     * Create a `ConfigManager` instance for managing application settings
-    *
     * @param {String} basePath executing directory name; __dirname
     */
-  constructor (basePath = __dirname) {
-    this.configPath = path.resolve(basePath, 'config/config.json');
+  constructor(basePath = __dirname) {
+    /**
+      * Full path to config.json file
+      * @type {String}
+      */
+    this.configPath = resolve(basePath, 'config/config.json');
 
-    if (!fse.existsSync(this.configPath)){
-      fse.ensureFileSync(this.configPath);
+    if (!existsSync(this.configPath)) {
+      ensureFileSync(this.configPath);
     }
   }
 
   /**
-    * Loads config.json (main server config) into mem
-    *
-    * @return {Object || Boolean} False if the config.json could not be loaded
+    * Loads config.json (main server config) into memory
+    * @public
+    * @return {(JSON|Boolean)} False if the config.json could not be loaded
     */
-  async load () {
+  async load() {
     try {
-      this.config = fse.readJsonSync(this.configPath);
+      this.config = readJsonSync(this.configPath);
     } catch (e) {
       return false;
     }
@@ -42,12 +51,12 @@ class ConfigManager {
 
   /**
     * Creates backup of current config into configPath
-    *
+    * @private
     * @return {String} Backed up config.json path
     */
-  async backup () {
+  backup() {
     const backupPath = `${this.configPath}.${dateFormat('dd-mm-yy-HH-MM-ss')}.bak`;
-    fse.copySync(this.configPath, backupPath);
+    copySync(this.configPath, backupPath);
 
     return backupPath;
   }
@@ -55,18 +64,18 @@ class ConfigManager {
   /**
     * First makes a backup of the current `config.json`, then writes current config
     * to disk
-    *
+    * @public
     * @return {Boolean} False on failure
     */
-  async save () {
-    const backupPath = await this.backup();
+  save() {
+    const backupPath = this.backup();
 
     try {
-      fse.writeJSONSync(this.configPath, this.config, {
-       // Indent with two spaces
+      writeJSONSync(this.configPath, this.config, {
+        // Indent with two spaces
         spaces: 2,
       });
-      fse.removeSync(backupPath);
+      removeSync(backupPath);
 
       return true;
     } catch (err) {
@@ -78,18 +87,17 @@ class ConfigManager {
 
   /**
     * Updates current config[`key`] with `value` then writes changes to disk
-    *
     * @param {*} key arbitrary configuration key
     * @param {*} value new value to change `key` to
-    *
+    * @public
     * @return {Boolean} False on failure
     */
-  async set (key, value) {
+  set(key, value) {
     const realKey = `${key}`;
     this.config[realKey] = value;
 
-    return await this.save();
+    return this.save();
   }
 }
 
-module.exports = ConfigManager;
+export default ConfigManager;

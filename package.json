@@ -12,12 +12,13 @@
     "npm": ">= 6.7.0"
   },
   "scripts": {
-    "start": "pm2 start ./server/main.js --name hackchat-dev-server && cd ./clientSource && npm start && pm2 stop hackchat-dev-server",
+    "start": "pm2 start ./server/main.js --node-args=\"-r esm\" --name hackchat-dev-server && cd ./clientSource && npm start && pm2 stop hackchat-dev-server",
     "postinstall": "cd ./clientSource && npm install && cd .. & cd ./server && npm install && npm run config"
   },
   "author": "Marzavec",
   "license": "WTFPL",
   "dependencies": {
-    "pm2": "^3.5.1"
+    "esm": "^3.2.25",
+    "pm2": "^4.1.2"
   }
 }

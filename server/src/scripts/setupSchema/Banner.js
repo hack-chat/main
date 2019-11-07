@@ -5,8 +5,8 @@
   *
   */
 
-const stripIndents = require('common-tags').stripIndents;
-const chalk = require('chalk');
+import { stripIndents } from 'common-tags';
+import chalk from 'chalk';
 
 // gotta have that sexy console
 console.log(stripIndents`
@@ -20,9 +20,9 @@ console.log(stripIndents`
   ${chalk.white('Note:')} ${chalk.green('npm/yarn run config')} will re-run this utility.
 
   You will now be asked for the following:
-  -     ${chalk.magenta('      Salt')}, the salt for username trip
-  -     ${chalk.magenta('Admin Name')}, the initial admin username
-  -     ${chalk.magenta('Admin Pass')}, the initial admin password
-  -     ${chalk.magenta('      Port')}, the port for the websocket
+  -  ${chalk.magenta('      Salt')}, the salt for username trip
+  -  ${chalk.magenta('Admin Name')}, the initial admin username
+  -  ${chalk.magenta('Admin Pass')}, the initial admin password
+  -  ${chalk.magenta('      Port')}, the port for the websocket
   \u200b
 `);

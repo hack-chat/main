@@ -3,26 +3,26 @@
 */
 
 // module main
-exports.run = async (core, server, socket, data) => {
+export async function run(core, server, socket, data) {
   // increase rate limit chance and ignore if not admin
-  if (socket.uType != 'admin') {
-    return server.police.frisk(socket.remoteAddress, 20);
+  if (socket.uType !== 'admin') {
+    return server.police.frisk(socket.address, 20);
   }
 
   // remove trip from config
-  core.config.mods = core.config.mods.filter(mod => mod.trip !== data.trip);
+  core.config.mods = core.config.mods.filter((mod) => mod.trip !== data.trip);
 
   // find targets current connections
-  let targetMod = server.findSockets({ trip: data.trip });
+  const targetMod = server.findSockets({ trip: data.trip });
   if (targetMod.length !== 0) {
-    for (let i = 0, l = targetMod.length; i < l; i++) {
+    for (let i = 0, l = targetMod.length; i < l; i += 1) {
       // downgrade privilages
       targetMod[i].uType = 'user';
 
       // inform ex-mod
       server.send({
         cmd: 'info',
-        text: 'You are now a user.'
+        text: 'You are now a user.',
       }, targetMod[i]);
     }
   }
@@ -32,21 +32,22 @@ exports.run = async (core, server, socket, data) => {
     cmd: 'info',
     text: `Removed mod trip: ${
       data.trip
-    }, remember to run 'saveconfig' to make it permanent`
+    }, remember to run 'saveconfig' to make it permanent`,
   }, socket);
 
   // notify all mods
   server.broadcast({
     cmd: 'info',
-    text: `Removed mod: ${data.trip}`
+    text: `Removed mod: ${data.trip}`,
   }, { uType: 'mod' });
-};
 
-// module meta
-exports.requiredData = ['trip'];
-exports.info = {
+  return true;
+}
+
+export const requiredData = ['trip'];
+export const info = {
   name: 'removemod',
   description: 'Removes target trip from the config as a mod and downgrades the socket type',
   usage: `
-    API: { cmd: 'removemod', trip: '<target trip>' }`
+    API: { cmd: 'removemod', trip: '<target trip>' }`,
 };

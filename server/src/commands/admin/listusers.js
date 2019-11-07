@@ -3,46 +3,47 @@
 */
 
 // module main
-exports.run = async (core, server, socket, data) => {
+export async function run(core, server, socket) {
   // increase rate limit chance and ignore if not admin
-  if (socket.uType != 'admin') {
-    return server.police.frisk(socket.remoteAddress, 20);
+  if (socket.uType !== 'admin') {
+    return server.police.frisk(socket.address, 20);
   }
 
   // find all users currently in a channel
-  let currentUsers = server.findSockets({
-    channel: (channel) => true
+  const currentUsers = server.findSockets({
+    channel: (channel) => true,
   });
 
   // compile channel and user list
-  let channels = {};
-  for (let i = 0, j = currentUsers.length; i < j; i++) {
+  const channels = {};
+  for (let i = 0, j = currentUsers.length; i < j; i += 1) {
     if (typeof channels[currentUsers[i].channel] === 'undefined') {
       channels[currentUsers[i].channel] = [];
     }
-    
+
     channels[currentUsers[i].channel].push(
-      `[${currentUsers[i].trip||'null'}]${currentUsers[i].nick}`
+      `[${currentUsers[i].trip || 'null'}]${currentUsers[i].nick}`,
     );
   }
 
   // build output
-  let lines = [];
-  for (let channel in channels) {
-    lines.push(`?${channel} ${channels[channel].join(", ")}`);
+  const lines = [];
+  for (const channel in channels) {
+    lines.push(`?${channel} ${channels[channel].join(', ')}`);
   }
 
   // send reply
   server.reply({
     cmd: 'info',
-    text: lines.join("\n")
+    text: lines.join('\n'),
   }, socket);
-};
 
-// module meta
-exports.info = {
+  return true;
+}
+
+export const info = {
   name: 'listusers',
   description: 'Outputs all current channels and sockets in those channels',
   usage: `
-    API: { cmd: 'listusers' }`
+    API: { cmd: 'listusers' }`,
 };

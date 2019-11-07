@@ -1,21 +1,17 @@
 /**
   * Server configuration script, to (re)configure server options
-  *
-  * Version: v2.0.0
-  * Developer: Marzavec ( https://github.com/marzavec )
-  * License: WTFPL ( http://www.wtfpl.net/txt/copying/ )
-  *
+  * @author Marzavec ( https://github.com/marzavec )
+  * @version v2.0.0
+  * @license WTFPL ( http://www.wtfpl.net/txt/copying/ )
   */
 
-'use strict';
-
 // import required classes
-const path = require('path');
-const ConfigManager = require('../serverLib/ConfigManager');
-const SetupWizard = require('./configLib/SetupWizard');
+import { join } from 'path';
+import ConfigManager from '../serverLib/ConfigManager';
+import SetupWizard from './configLib/SetupWizard';
 
 // import and initialize configManager & dependencies
-const serverConfig = new ConfigManager(path.join(__dirname, '../..'));
+const serverConfig = new ConfigManager(join(__dirname, '../..'));
 const setup = new SetupWizard(serverConfig);
 
 setup.start();

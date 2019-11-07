@@ -3,13 +3,25 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.1.92 pre 2.2] - 2019-11-06
+### Added
+- (Server) `./server/src/utility/` directory
+- (Server) `Constants.js` class in `utility`
+- (Server) `esm` module to transpile ES6
+
+### Changed
+- (Server) Changed ES5 styling to ES6
+- (Server) And improved source comments
+- (Server) Minor code format changes
+- (Server) Updated all dependencies (be sure to update your local copy with the new packages)
+
 ## [2.1.91 pre 2.2] - 2019-08-17
 ### Added
 - (Client) Markdown engine
 - (Client) Imgur based image posting (through markdown)
 
 ### Changed
-- (Client) Removed cloudflare references making hack.chat is self-hosted again
+- (Client) Removed cloudflare references making hack.chat self-hosted again
 - (Client) The way messages are pushed, closing an xss vuln in PRs 985dd6f and 9fcb235
 - (Client) Side bar layout
 - (Client) Fixed some options not storing

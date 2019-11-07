@@ -12,8 +12,8 @@
     "npm": ">= 5.7.1"
   },
   "scripts": {
-    "start": "node main.js",
-    "config": "node src/scripts/configure.js"
+    "start": "node -r esm main.js",
+    "config": "node -r esm src/scripts/configure.js"
   },
   "author": "Marzavec",
   "license": "WTFPL",
@@ -22,9 +22,10 @@
     "common-tags": "^1.8.0",
     "dateformat": "^3.0.3",
     "didyoumean2": "^2.0.2",
+    "esm": "^3.2.25",
     "fs-extra": "^7.0.1",
     "prompt": "^1.0.0",
     "readdir-recursive": "0.0.4",
-    "ws": "^6.1.4"
+    "ws": "^7.2.0"
   }
 }

@@ -15,10 +15,10 @@ const Questions = {
       type: 'string',
       hidden: true,
       replace: '*',
-      before: value => {
+      before: (value) => {
         salt = value;
         return value;
-      }
+      },
     },
 
     adminName: {
@@ -26,7 +26,7 @@ const Questions = {
       pattern: /^"?[a-zA-Z0-9_]+"?$/,
       type: 'string',
       message: 'Nicks can only contain letters, numbers and underscores',
-      before: value => value.replace(/"/g, '')
+      before: (value) => value.replace(/"/g, ''),
     },
 
     adminTrip: {
@@ -35,21 +35,21 @@ const Questions = {
       replace: '*',
       description: 'Admin Password',
       message: 'You must enter or re-enter a password',
-      before: value => {
+      before: (value) => {
         const crypto = require('crypto');
-        let sha = crypto.createHash('sha256');
+        const sha = crypto.createHash('sha256');
         sha.update(value + salt);
         return sha.digest('base64').substr(0, 6);
-      }
+      },
     },
 
     websocketPort: {
       type: 'integer',
       message: 'The port may only be a number!',
       description: 'Websocket Port',
-      default: '6060'
-    }
-  }
-}
+      default: '6060',
+    },
+  },
+};
 
 module.exports = Questions;
