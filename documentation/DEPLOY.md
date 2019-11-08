@@ -13,7 +13,7 @@
 
 1. (Follow steps 1 - 3 above)
 1. Use PM2 to start the backend server.
-    * Terminal Command: `pm2 start ./server/main.js --node-args="-r esm" --name hackchat-dev-server`
+    * Terminal Command: `pm2 start ./server/main.js --node-args="-r esm" --name hackchat`
     * See tips below to make the server start on boot.
 1. Migrate the contents of `./hackchat/client` into any suitable directory of your webserver. HackChat comes bundled with `http-server` for development purposes only, it is highly recommended that you use a better web server such as Nginx or Apache.
 1. (OPTIONAL) Cleanup; you may delete `hackchat/clientSource` and `hackchat/documentation`
@@ -24,8 +24,8 @@
 * **Do not use root.** Installing while using the root account or installing with root privileges will result in an error similar to the following:
 `npm WARN lifecycle hack.chat-v2@2.1.92~postinstall: cannot run in wd hack.chat-v2@2.1.91 cd ./clientSource && npm install && cd .. & cd ./server && npm install && npm run config (wd='/dir')`
 * PM2 may be configured to start the backend server on boot, read [https://pm2.keymetrics.io/docs/usage/startup/](https://pm2.keymetrics.io/docs/usage/startup/)
-* On some computers, due to a bug in `http-server`, **a blank page** may be shown while attempting to open the default index page. If this happens, change the url to include `index.html`, or browse to a channel; `http://127.0.0.1:3000/?programming`
-* **Do not install using** `sudo apt install nodejs`, instead use:
+* On some computers, due to a bug in `http-server`, **a blank page** may be shown while attempting to open the default index page. If this happens, change the url to include `index.html`, or browse to a channel; `http://127.0.0.1:3000/index.html?programming`. See https://github.com/hack-chat/main/issues/83
+* **Do not install NodeJS using** `sudo apt install nodejs`, instead use:
    ```bash
    cd ~
    curl -sL https://deb.nodesource.com/setup_10.x -o nodesource_setup.sh
