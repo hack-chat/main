@@ -24,7 +24,6 @@
 * **Do not use root.** Installing while using the root account or installing with root privileges will result in an error similar to the following:
 `npm WARN lifecycle hack.chat-v2@2.1.92~postinstall: cannot run in wd hack.chat-v2@2.1.91 cd ./clientSource && npm install && cd .. & cd ./server && npm install && npm run config (wd='/dir')`
 * PM2 may be configured to start the backend server on boot, read [https://pm2.keymetrics.io/docs/usage/startup/](https://pm2.keymetrics.io/docs/usage/startup/)
-* On some computers, due to a bug in `http-server`, **a blank page** may be shown while attempting to open the default index page. If this happens, change the url to include `index.html`, or browse to a channel; `http://127.0.0.1:3000/index.html?programming`. See https://github.com/hack-chat/main/issues/83
 * **Do not install NodeJS using** `sudo apt install nodejs`, instead use:
    ```bash
    cd ~
