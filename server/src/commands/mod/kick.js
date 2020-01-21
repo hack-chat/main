@@ -16,6 +16,13 @@ export async function run(core, server, socket, data) {
     }
   }
 
+  let destChannel;
+  if (typeof data.to === 'string' && !!data.to.trim()) {
+    destChannel = data.to;
+  } else {
+    destChannel = Math.random().toString(36).substr(2, 8);
+  }
+
   // find target user(s)
   const badClients = server.findSockets({ channel: socket.channel, nick: data.nick });
 
@@ -26,8 +33,7 @@ export async function run(core, server, socket, data) {
     }, socket);
   }
 
-  // check if found targets are kickable, commit kick
-  let newChannel = '';
+  // check if found targets are kickable, add them to the list if they are
   const kicked = [];
   for (let i = 0, j = badClients.length; i < j; i += 1) {
     if (badClients[i].uType !== 'user') {
@@ -36,17 +42,7 @@ export async function run(core, server, socket, data) {
         text: 'Cannot kick other mods, how rude',
       }, socket);
     } else {
-      newChannel = Math.random().toString(36).substr(2, 8);
-      badClients[i].channel = newChannel;
-
-      // inform mods with where they were sent
-      server.broadcast({
-        cmd: 'info',
-        text: `${badClients[i].nick} was banished to ?${newChannel}`,
-      }, { channel: socket.channel, uType: 'mod' });
-
-      kicked.push(badClients[i].nick);
-      console.log(`${socket.nick} [${socket.trip}] kicked ${badClients[i].nick} in ${socket.channel}`);
+      kicked.push(badClients[i]);
     }
   }
 
@@ -54,18 +50,42 @@ export async function run(core, server, socket, data) {
     return true;
   }
 
+  // Announce the kicked clients arrival in destChannel and that they were kicked
+  // Before they arrive, so they don't see they got moved
+  for (let i = 0; i < kicked.length; i++) {
+    server.broadcast({
+      cmd: 'onlineAdd',
+      nick: kicked[i].nick,
+      trip: kicked[i].trip || 'null',
+      hash: kicked[i].userHash
+    }, { channel: destChannel });
+  }
+
+  // Move all kicked clients to the new channel
+  for (let i = 0; i < kicked.length; i++) {
+    kicked[i].channel = destChannel;
+
+    server.broadcast({
+      cmd: 'info',
+      text: `${kicked[i].nick} was banished to ?${destChannel}`,
+    }, { channel: socket.channel, uType: 'mod' });
+
+    console.log(`${socket.nick} [${socket.trip}] kicked ${kicked[i].nick} in ${socket.channel} to ${destChannel} `);
+  }
+
+
   // broadcast client leave event
   for (let i = 0, j = kicked.length; i < j; i += 1) {
     server.broadcast({
       cmd: 'onlineRemove',
-      nick: kicked[i],
+      nick: kicked[i].nick,
     }, { channel: socket.channel });
   }
 
   // publicly broadcast kick event
   server.broadcast({
     cmd: 'info',
-    text: `Kicked ${kicked.join(', ')}`,
+    text: `Kicked ${kicked.map(k => k.nick).join(', ')}`,
   }, { channel: socket.channel, uType: 'user' });
 
   // stats are fun
@@ -79,5 +99,5 @@ export const info = {
   name: 'kick',
   description: 'Silently forces target client(s) into another channel. `nick` may be string or array of strings',
   usage: `
-    API: { cmd: 'kick', nick: '<target nick>' }`,
+    API: { cmd: 'kick', nick: '<target nick>', to: '<optional target channel>' }`,
 };
