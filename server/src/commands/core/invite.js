@@ -26,7 +26,7 @@ export async function run(core, server, socket, data) {
   }
 
   let channel;
-  if (typeof data.to == 'string') {
+  if (typeof data.to === 'string') {
     channel = data.to;
   } else {
     channel = Math.random().toString(36).substr(2, 8);
