@@ -25,8 +25,12 @@ export async function run(core, server, socket, data) {
     return true;
   }
 
-  // generate common channel
-  const channel = Math.random().toString(36).substr(2, 8);
+  let channel;
+  if (typeof data.to === 'string') {
+    channel = data.to;
+  } else {
+    channel = Math.random().toString(36).substr(2, 8);
+  }
 
   // build and send invite
   const payload = {
@@ -67,7 +71,7 @@ export async function run(core, server, socket, data) {
 export const requiredData = ['nick'];
 export const info = {
   name: 'invite',
-  description: 'Generates a unique (more or less) room name and passes it to two clients',
+  description: 'Sends an invite to the target client with the provided channel, or a random channel.',
   usage: `
-    API: { cmd: 'invite', nick: '<target nickname>' }`,
+    API: { cmd: 'invite', nick: '<target nickname>', to: '<optional destination channel>' }`,
 };
