@@ -1,3 +1,5 @@
+import * as Invite from "../core/invite"
+
 /*
  * Description: Make a user (spammer) dumb (mute)
  * Author: simple
@@ -115,19 +117,23 @@ export function chatCheck(core, server, socket, payload) {
 
 // shadow-prevent all invites from muzzled users
 export function inviteCheck(core, server, socket, payload) {
-  if (typeof payload.nick !== 'string') {
-    return false;
-  }
-
   if (core.muzzledHashes[socket.hash]) {
-    // generate common channel
-    const channel = Math.random().toString(36).substr(2, 8);
+    // Simulate invite
+    console.log("Dumbed invite check");
+    const nicks = Invite.getNicknames(payload.nick);
+    const validatedStatus = Invite.checkNicknamesValidity(server, socket.nick, nicks);
+    if (validatedStatus !== null) {
+      server.reply({
+        cmd: 'warn',
+        text: validatedStatus,
+      }, socket);
+      return false;
+    }
+
+    const channel = Invite.getChannel(payload.to);
 
     // send fake reply
-    server.reply({
-      cmd: 'info',
-      text: `You invited ${payload.nick} to ?${channel}`,
-    }, socket);
+    server.reply(Invite.getInviteSuccessPayload(nicks, channel), socket);
 
     return false;
   }
