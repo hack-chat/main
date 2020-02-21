@@ -65,6 +65,19 @@ class MainServer extends WsServer {
       */
     this.lastErr = null;
 
+    /**
+     * User numerical level information constants.
+     * @type {Object}
+     */
+    this.nulId = {
+      admin: 10000, // site-wide
+      moderator: 9999, // site-wide
+      channelOwner: 1001,
+      channelModerator: 1000,
+      user: 100,
+    };
+
+
     this.setupServer();
     this.loadHooks();
   }

@@ -20,6 +20,7 @@ export function parseNickname(core, data) {
     nick: '',
     uType: 'user',
     trip: null,
+    nul: server.nulId.user,
   };
 
   // seperate nick from password
@@ -34,6 +35,7 @@ export function parseNickname(core, data) {
   const password = nickArray[1];
 
   if (hash(password + core.config.tripSalt) === core.config.adminTrip) {
+    userInfo.nul = server.nulId.admin;
     userInfo.uType = 'admin';
     userInfo.trip = 'Admin';
   } else if (userInfo.nick.toLowerCase() === core.config.adminName.toLowerCase()) {
@@ -48,6 +50,7 @@ export function parseNickname(core, data) {
   core.config.mods.forEach((mod) => {
     if (userInfo.trip === mod.trip) {
       userInfo.uType = 'mod';
+      userInfo.nul = server.nulId.moderator;
     }
   });
 
