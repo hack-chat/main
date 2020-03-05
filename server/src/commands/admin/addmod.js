@@ -2,10 +2,12 @@
   Description: Adds the target trip to the mod list then elevates the uType
 */
 
+import * as UAC from "../utility/UAC/info";
+
 // module main
 export async function run(core, server, socket, data) {
   // increase rate limit chance and ignore if not admin
-  if (socket.uType !== 'admin') {
+  if (!UAC.isAdmin(socket.level)) {
     return server.police.frisk(socket.address, 20);
   }
 
@@ -18,6 +20,7 @@ export async function run(core, server, socket, data) {
     for (let i = 0, l = newMod.length; i < l; i += 1) {
       // upgrade privilages
       newMod[i].uType = 'mod';
+      newMod[i].level = UAC.levels.moderator;
 
       // inform new mod
       server.send({
@@ -37,7 +40,7 @@ export async function run(core, server, socket, data) {
   server.broadcast({
     cmd: 'info',
     text: `Added mod: ${data.trip}`,
-  }, { uType: 'mod' });
+  }, { level: UAC.isModerator });
 
   return true;
 }

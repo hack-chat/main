@@ -2,10 +2,12 @@
   Description: Forces a change on the target(s) socket's channel, then broadcasts event
 */
 
+import * as UAC from "../utility/UAC/info";
+
 // module main
 export async function run(core, server, socket, data) {
   // increase rate limit chance and ignore if not admin or mod
-  if (socket.uType === 'user') {
+  if (!UAC.isModerator(socket.level)) {
     return server.police.frisk(socket.address, 10);
   }
 
@@ -36,7 +38,7 @@ export async function run(core, server, socket, data) {
   // check if found targets are kickable, add them to the list if they are
   const kicked = [];
   for (let i = 0, j = badClients.length; i < j; i += 1) {
-    if (badClients[i].uType !== 'user') {
+    if (badClients[i].level >= socket.level) {
       server.reply({
         cmd: 'warn',
         text: 'Cannot kick other mods, how rude',
@@ -68,7 +70,7 @@ export async function run(core, server, socket, data) {
     server.broadcast({
       cmd: 'info',
       text: `${kicked[i].nick} was banished to ?${destChannel}`,
-    }, { channel: socket.channel, uType: 'mod' });
+    }, { channel: socket.channel, level: UAC.isModerator });
 
     console.log(`${socket.nick} [${socket.trip}] kicked ${kicked[i].nick} in ${socket.channel} to ${destChannel} `);
   }
@@ -86,7 +88,7 @@ export async function run(core, server, socket, data) {
   server.broadcast({
     cmd: 'info',
     text: `Kicked ${kicked.map(k => k.nick).join(', ')}`,
-  }, { channel: socket.channel, uType: 'user' });
+  }, { channel: socket.channel, level: (level) => level < UAC.levels.moderator });
 
   // stats are fun
   core.stats.increment('users-kicked', kicked.length);

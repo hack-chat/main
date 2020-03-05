@@ -2,6 +2,8 @@
   Description: Rebroadcasts any `text` to all clients in a `channel`
 */
 
+import * as UAC from "../utility/UAC/info";
+
 // module support functions
 const parseText = (text) => {
   // verifies user input is text
@@ -43,11 +45,12 @@ export async function run(core, server, socket, data) {
     cmd: 'chat',
     nick: socket.nick,
     text,
+    level: socket.level
   };
 
-  if (socket.uType === 'admin') {
+  if (UAC.isAdmin(socket.level)) {
     payload.admin = true;
-  } else if (socket.uType === 'mod') {
+  } else if (UAC.isModerator(socket.level)) {
     payload.mod = true;
   }
 
