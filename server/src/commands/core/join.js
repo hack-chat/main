@@ -32,7 +32,13 @@ export function parseNickname(core, data) {
     return 'Nickname must consist of up to 24 letters, numbers, and underscores';
   }
 
-  const password = nickArray[1];
+  let password = undefined;
+  // prioritize hash in nick for password over password field
+  if (typeof nickArray[1] === 'string') {
+    password = nickArray[1];
+  } else if (typeof data.password === 'string') {
+    password = data.password;
+  }
 
   if (hash(password + core.config.tripSalt) === core.config.adminTrip) {
     userInfo.uType = 'admin';
@@ -152,5 +158,5 @@ export const info = {
   name: 'join',
   description: 'Place calling socket into target channel with target nick & broadcast event to channel',
   usage: `
-    API: { cmd: 'join', nick: '<your nickname>', channel: '<target channel>' }`,
+    API: { cmd: 'join', nick: '<your nickname>', password: '<optional password>', channel: '<target channel>' }`,
 };
