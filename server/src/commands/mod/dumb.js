@@ -4,6 +4,7 @@
  */
 
 import * as UAC from '../utility/UAC/_info';
+import * as Invite from '../core/invite';
 
 // module constructor
 export function init(core) {
@@ -117,19 +118,21 @@ export function chatCheck(core, server, socket, payload) {
 
 // shadow-prevent all invites from muzzled users
 export function inviteCheck(core, server, socket, payload) {
-  if (typeof payload.nick !== 'string') {
-    return false;
-  }
-
   if (core.muzzledHashes[socket.hash]) {
+    const nickValid = Invite.checkNickname(payload.nick);
+    if (nickValid !== null) {
+      server.reply({
+        cmd: 'warn',
+        text: nickValid,
+      }, socket);
+      return false;
+    }
+
     // generate common channel
-    const channel = Math.random().toString(36).substr(2, 8);
+    const channel = Invite.getChannel();
 
     // send fake reply
-    server.reply({
-      cmd: 'info',
-      text: `You invited ${payload.nick} to ?${channel}`,
-    }, socket);
+    server.reply(Invite.createSuccessPayload(payload.nick, channel), socket);
 
     return false;
   }
