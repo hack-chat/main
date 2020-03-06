@@ -2,8 +2,7 @@
   Description: Generates a semi-unique channel name then broadcasts it to each client
 */
 
-// module support functions
-const verifyNickname = (nick) => /^[a-zA-Z0-9_]{1,24}$/.test(nick);
+import * as UAC from "../utility/UAC/_info";
 
 // module main
 export async function run(core, server, socket, data) {
@@ -16,7 +15,7 @@ export async function run(core, server, socket, data) {
   }
 
   // verify user input
-  if (typeof data.nick !== 'string' || !verifyNickname(data.nick)) {
+  if (typeof data.nick !== 'string' || !UAC.verifyNickname(data.nick)) {
     return true;
   }
 

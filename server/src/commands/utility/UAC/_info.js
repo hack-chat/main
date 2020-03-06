@@ -1,6 +1,6 @@
 /**
   * User Account Control information containing level constants
-  * and simple helper functions used to verify permissions
+  * and simple helper functions related to users
   * @property {Object} levels - Defines labels for default permission ranges
   * @author MinusGix ( https://github.com/MinusGix )
   * @version v1.0.0
@@ -82,4 +82,14 @@ export function isChannelTrusted(level) {
   */
 export function isTrustedUser(level) {
   return level >= levels.trustedUser;
+}
+
+/**
+  * Returns true if the nickname is valid
+  * @public
+  * @param {String} nick
+  * @return {boolean}
+  */
+export function verifyNickname (nick) {
+  return /^[a-zA-Z0-9_]{1,24}$/.test(nick);
 }

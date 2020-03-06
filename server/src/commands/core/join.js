@@ -13,8 +13,6 @@ const hash = (password) => {
   return sha.digest('base64').substr(0, 6);
 };
 
-const verifyNickname = (nick) => /^[a-zA-Z0-9_]{1,24}$/.test(nick);
-
 // exposed "login" function to allow hooks to verify user join events
 // returns object containing user info or string if error
 export function parseNickname(core, data) {
@@ -29,7 +27,7 @@ export function parseNickname(core, data) {
   const nickArray = data.nick.split('#', 2);
   userInfo.nick = nickArray[0].trim();
 
-  if (!verifyNickname(userInfo.nick)) {
+  if (!UAC.verifyNickname(userInfo.nick)) {
     // return error as string
     return 'Nickname must consist of up to 24 letters, numbers, and underscores';
   }
