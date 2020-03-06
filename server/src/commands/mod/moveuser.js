@@ -2,10 +2,12 @@
   Description: Removes the target socket from the current channel and forces a join event in another
 */
 
+import * as UAC from "../utility/UAC/info";
+
 // module main
 export async function run(core, server, socket, data) {
   // increase rate limit chance and ignore if not admin or mod
-  if (socket.uType === 'user') {
+  if (!UAC.isModerator(socket.level)) {
     return server.police.frisk(socket.address, 10);
   }
 
@@ -30,7 +32,7 @@ export async function run(core, server, socket, data) {
 
   const badClient = badClients[0];
 
-  if (badClient.uType !== 'user') {
+  if (badClient.level >= socket.level) {
     return server.reply({
       cmd: 'warn',
       text: 'Cannot move other mods, how rude',

@@ -2,6 +2,8 @@
   Description: Initial entry point, applies `channel` and `nick` to the calling socket
 */
 
+import * as UAC from "../utility/UAC/info";
+
 // module support functions
 const crypto = require('crypto');
 
@@ -20,6 +22,7 @@ export function parseNickname(core, data) {
     nick: '',
     uType: 'user',
     trip: null,
+    level: UAC.levels.user,
   };
 
   // seperate nick from password
@@ -36,6 +39,7 @@ export function parseNickname(core, data) {
   if (hash(password + core.config.tripSalt) === core.config.adminTrip) {
     userInfo.uType = 'admin';
     userInfo.trip = 'Admin';
+    userInfo.level = UAC.levels.admin;
   } else if (userInfo.nick.toLowerCase() === core.config.adminName.toLowerCase()) {
     // they've got the main-admin name while not being an admin
     return 'You are not the admin, liar!';
@@ -48,6 +52,7 @@ export function parseNickname(core, data) {
   core.config.mods.forEach((mod) => {
     if (userInfo.trip === mod.trip) {
       userInfo.uType = 'mod';
+      userInfo.level = UAC.levels.moderator;
     }
   });
 
@@ -113,6 +118,7 @@ export async function run(core, server, socket, data) {
     nick: userInfo.nick,
     trip: userInfo.trip || 'null',
     hash: userInfo.userHash,
+    level: userInfo.level,
   };
 
   // send join announcement and prep online set
@@ -126,6 +132,7 @@ export async function run(core, server, socket, data) {
   socket.nick = userInfo.nick;
   socket.channel = data.channel;
   socket.hash = userInfo.userHash;
+  socket.level = userInfo.level;
   if (userInfo.trip !== null) socket.trip = userInfo.trip;
 
   nicks.push(socket.nick);

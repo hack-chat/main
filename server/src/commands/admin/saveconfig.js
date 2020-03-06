@@ -2,10 +2,12 @@
   Description: Writes the current config to disk
 */
 
+import * as UAC from "../utility/UAC/info";
+
 // module main
 export async function run(core, server, socket) {
   // increase rate limit chance and ignore if not admin
-  if (socket.uType !== 'admin') {
+  if (!UAC.isAdmin(socket.level)) {
     return server.police.frisk(socket.address, 20);
   }
 
@@ -17,17 +19,11 @@ export async function run(core, server, socket) {
     }, socket);
   }
 
-  // return success message
+  // return success message to moderators and admins
   server.reply({
     cmd: 'info',
     text: 'Config saved!',
-  }, socket);
-
-  // notify mods #transparency
-  server.broadcast({
-    cmd: 'info',
-    text: 'Config saved!',
-  }, { uType: 'mod' });
+  }, { level: UAC.isModerator });
 
   return true;
 }

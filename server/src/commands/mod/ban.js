@@ -2,10 +2,12 @@
   Description: Adds the target socket's ip to the ratelimiter
 */
 
+import * as UAC from "../utility/UAC/info";
+
 // module main
 export async function run(core, server, socket, data) {
   // increase rate limit chance and ignore if not admin or mod
-  if (socket.uType === 'user') {
+  if (!UAC.isModerator(socket.level)) {
     return server.police.frisk(socket.address, 10);
   }
 
@@ -28,7 +30,7 @@ export async function run(core, server, socket, data) {
   [badClient] = badClient;
 
   // i guess banning mods or admins isn't the best idea?
-  if (badClient.uType !== 'user') {
+  if (badClient.level >= socket.level) {
     return server.reply({
       cmd: 'warn',
       text: 'Cannot ban other mods, how rude',
@@ -44,13 +46,13 @@ export async function run(core, server, socket, data) {
   server.broadcast({
     cmd: 'info',
     text: `Banned ${targetNick}`,
-  }, { channel: socket.channel, uType: 'user' });
+  }, { channel: socket.channel, level: (level) => level < UAC.levels.moderator });
 
   // notify mods
   server.broadcast({
     cmd: 'info',
     text: `${socket.nick} banned ${targetNick} in ${socket.channel}, userhash: ${badClient.hash}`,
-  }, { uType: 'mod' });
+  }, { level: UAC.isModerator });
 
   // force connection closed
   badClient.terminate();

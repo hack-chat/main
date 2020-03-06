@@ -3,6 +3,8 @@
  * Author: simple
  */
 
+import * as UAC from "../utility/UAC/info";
+
 // module constructor
 export function init(core) {
   if (typeof core.muzzledHashes === 'undefined') {
@@ -13,7 +15,7 @@ export function init(core) {
 // module main
 export async function run(core, server, socket, data) {
   // increase rate limit chance and ignore if not admin or mod
-  if (socket.uType === 'user') {
+  if (!UAC.isModerator(socket.level)) {
     return server.police.frisk(socket.address, 10);
   }
 
@@ -35,7 +37,7 @@ export async function run(core, server, socket, data) {
   [badClient] = badClient;
 
   // likely dont need this, muting mods and admins is fine
-  if (badClient.uType !== 'user') {
+  if (badClient.level >= socket.level) {
     return server.reply({
       cmd: 'warn',
       text: 'This trick wont work on mods and admin',
@@ -56,7 +58,7 @@ export async function run(core, server, socket, data) {
   server.broadcast({
     cmd: 'info',
     text: `${socket.nick} muzzled ${data.nick} in ${socket.channel}, userhash: ${badClient.hash}`,
-  }, { uType: 'mod' });
+  }, { level: UAC.isModerator });
 
   return true;
 }

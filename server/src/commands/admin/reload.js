@@ -2,10 +2,12 @@
   Description: Clears and resets the command modules, outputting any errors
 */
 
+import * as UAC from "../utility/UAC/info";
+
 // module main
 export async function run(core, server, socket, data) {
   // increase rate limit chance and ignore if not admin
-  if (socket.uType !== 'admin') {
+  if (!UAC.isAdmin(socket.level)) {
     return server.police.frisk(socket.address, 20);
   }
 
@@ -28,17 +30,11 @@ export async function run(core, server, socket, data) {
     loadResult += `\nReason: ${data.reason}`;
   }
 
-  // reply with results
+  // send results to moderators (which the user using this command is higher than)
   server.reply({
     cmd: 'info',
     text: loadResult,
-  }, socket);
-
-  // notify mods of reload #transparency
-  server.broadcast({
-    cmd: 'info',
-    text: loadResult,
-  }, { uType: 'mod' });
+  }, { level: UAC.isModerator });
 
   return true;
 }

@@ -2,10 +2,12 @@
   Description: Emmits a server-wide message as `info`
 */
 
+import * as UAC from "../utility/UAC/info";
+
 // module main
 export async function run(core, server, socket, data) {
   // increase rate limit chance and ignore if not admin
-  if (socket.uType !== 'admin') {
+  if (!UAC.isAdmin(socket.level)) {
     return server.police.frisk(socket.address, 20);
   }
 
