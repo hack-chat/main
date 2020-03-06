@@ -57,7 +57,7 @@ export async function run(core, server, socket, data) {
   // notify mods
   server.broadcast({
     cmd: 'info',
-    text: `${socket.nick} muzzled ${data.nick} in ${socket.channel}, userhash: ${badClient.hash}`,
+    text: `${socket.nick}#${socket.trip} muzzled ${data.nick} in ${socket.channel}, userhash: ${badClient.hash}`,
   }, { level: UAC.isModerator });
 
   return true;
