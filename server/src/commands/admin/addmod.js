@@ -2,7 +2,7 @@
   Description: Adds the target trip to the mod list then elevates the uType
 */
 
-import * as UAC from "../utility/UAC/info";
+import * as UAC from '../utility/UAC/_info';
 
 // module main
 export async function run(core, server, socket, data) {

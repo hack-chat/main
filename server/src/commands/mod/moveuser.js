@@ -2,7 +2,7 @@
   Description: Removes the target socket from the current channel and forces a join event in another
 */
 
-import * as UAC from "../utility/UAC/info";
+import * as UAC from '../utility/UAC/_info';
 
 // module main
 export async function run(core, server, socket, data) {

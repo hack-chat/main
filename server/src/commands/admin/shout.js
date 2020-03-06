@@ -2,7 +2,7 @@
   Description: Emmits a server-wide message as `info`
 */
 
-import * as UAC from "../utility/UAC/info";
+import * as UAC from '../utility/UAC/_info';
 
 // module main
 export async function run(core, server, socket, data) {

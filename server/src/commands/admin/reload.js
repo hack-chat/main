@@ -2,7 +2,7 @@
   Description: Clears and resets the command modules, outputting any errors
 */
 
-import * as UAC from "../utility/UAC/info";
+import * as UAC from '../utility/UAC/_info';
 
 // module main
 export async function run(core, server, socket, data) {

@@ -77,7 +77,7 @@ class RateLimiter {
       return true;
     }
 
-    record.score *= Math.pow(2, -(Date.now() - record.time ) / this.halflife);
+    record.score *= Math.pow(2, -(Date.now() - record.time) / this.halflife);
     record.score += deltaScore;
     record.time = Date.now();
 

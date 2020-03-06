@@ -2,7 +2,7 @@
   Description: Outputs all current channels and their user nicks
 */
 
-import * as UAC from "../utility/UAC/info";
+import * as UAC from '../utility/UAC/_info';
 
 // module main
 export async function run(core, server, socket) {

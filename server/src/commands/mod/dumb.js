@@ -3,7 +3,7 @@
  * Author: simple
  */
 
-import * as UAC from "../utility/UAC/info";
+import * as UAC from '../utility/UAC/_info';
 
 // module constructor
 export function init(core) {

@@ -2,7 +2,7 @@
   Description: Writes the current config to disk
 */
 
-import * as UAC from "../utility/UAC/info";
+import * as UAC from '../utility/UAC/_info';
 
 // module main
 export async function run(core, server, socket) {

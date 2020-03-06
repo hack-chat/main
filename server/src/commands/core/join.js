@@ -2,7 +2,7 @@
   Description: Initial entry point, applies `channel` and `nick` to the calling socket
 */
 
-import * as UAC from "../utility/UAC/info";
+import * as UAC from '../utility/UAC/_info';
 
 // module support functions
 const crypto = require('crypto');
@@ -22,7 +22,7 @@ export function parseNickname(core, data) {
     nick: '',
     uType: 'user',
     trip: null,
-    level: UAC.levels.user,
+    level: UAC.levels.default,
   };
 
   // seperate nick from password

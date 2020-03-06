@@ -2,7 +2,7 @@
   Description: Rebroadcasts any `text` to all clients in a `channel`
 */
 
-import * as UAC from "../utility/UAC/info";
+import * as UAC from '../utility/UAC/_info';
 
 // module support functions
 const parseText = (text) => {
@@ -45,7 +45,7 @@ export async function run(core, server, socket, data) {
     cmd: 'chat',
     nick: socket.nick,
     text,
-    level: socket.level
+    level: socket.level,
   };
 
   if (UAC.isAdmin(socket.level)) {

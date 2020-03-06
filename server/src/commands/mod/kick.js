@@ -2,7 +2,7 @@
   Description: Forces a change on the target(s) socket's channel, then broadcasts event
 */
 
-import * as UAC from "../utility/UAC/info";
+import * as UAC from '../utility/UAC/_info';
 
 // module main
 export async function run(core, server, socket, data) {
@@ -54,17 +54,17 @@ export async function run(core, server, socket, data) {
 
   // Announce the kicked clients arrival in destChannel and that they were kicked
   // Before they arrive, so they don't see they got moved
-  for (let i = 0; i < kicked.length; i++) {
+  for (let i = 0; i < kicked.length; i += 1) {
     server.broadcast({
       cmd: 'onlineAdd',
       nick: kicked[i].nick,
       trip: kicked[i].trip || 'null',
-      hash: kicked[i].userHash
+      hash: kicked[i].userHash,
     }, { channel: destChannel });
   }
 
   // Move all kicked clients to the new channel
-  for (let i = 0; i < kicked.length; i++) {
+  for (let i = 0; i < kicked.length; i += 1) {
     kicked[i].channel = destChannel;
 
     server.broadcast({
@@ -87,7 +87,7 @@ export async function run(core, server, socket, data) {
   // publicly broadcast kick event
   server.broadcast({
     cmd: 'info',
-    text: `Kicked ${kicked.map(k => k.nick).join(', ')}`,
+    text: `Kicked ${kicked.map((k) => k.nick).join(', ')}`,
   }, { channel: socket.channel, level: (level) => level < UAC.levels.moderator });
 
   // stats are fun

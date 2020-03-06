@@ -2,7 +2,7 @@
   Description: Removes a target ip from the ratelimiter
 */
 
-import * as UAC from "../utility/UAC/info";
+import * as UAC from '../utility/UAC/_info';
 
 // module main
 export async function run(core, server, socket, data) {

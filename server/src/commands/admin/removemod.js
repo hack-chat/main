@@ -2,7 +2,7 @@
   Description: Removes target trip from the config as a mod and downgrades the socket type
 */
 
-import * as UAC from "../utility/UAC/info";
+import * as UAC from '../utility/UAC/_info';
 
 // module main
 export async function run(core, server, socket, data) {
@@ -20,7 +20,7 @@ export async function run(core, server, socket, data) {
     for (let i = 0, l = targetMod.length; i < l; i += 1) {
       // downgrade privilages
       targetMod[i].uType = 'user';
-      targetMod[i].level = UAC.levels.user;
+      targetMod[i].level = UAC.levels.default;
 
       // inform ex-mod
       server.send({
