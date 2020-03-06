@@ -2,7 +2,7 @@
   Description: Allows calling client to change their current nickname
 */
 
-import * as UAC from "../utility/UAC/_info";
+import * as UAC from '../utility/UAC/_info';
 
 // module main
 export async function run(core, server, socket, data) {

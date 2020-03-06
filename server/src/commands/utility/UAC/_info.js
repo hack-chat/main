@@ -33,6 +33,7 @@ export const levels = {
 /**
   * Returns true if target level is equal or greater than the global admin level
   * @public
+  * @param {number} level Level to verify
   * @return {boolean}
   */
 export function isAdmin(level) {
@@ -42,6 +43,7 @@ export function isAdmin(level) {
 /**
   * Returns true if target level is equal or greater than the global moderator level
   * @public
+  * @param {number} level Level to verify
   * @return {boolean}
   */
 export function isModerator(level) {
@@ -51,6 +53,7 @@ export function isModerator(level) {
 /**
   * Returns true if target level is equal or greater than the channel owner level
   * @public
+  * @param {number} level Level to verify
   * @return {boolean}
   */
 export function isChannelOwner(level) {
@@ -60,6 +63,7 @@ export function isChannelOwner(level) {
 /**
   * Returns true if target level is equal or greater than the channel moderator level
   * @public
+  * @param {number} level Level to verify
   * @return {boolean}
   */
 export function isChannelModerator(level) {
@@ -69,6 +73,7 @@ export function isChannelModerator(level) {
 /**
   * Returns true if target level is equal or greater than the channel trust level
   * @public
+  * @param {number} level Level to verify
   * @return {boolean}
   */
 export function isChannelTrusted(level) {
@@ -78,6 +83,7 @@ export function isChannelTrusted(level) {
 /**
   * Returns true if target level is equal or greater than a trusted user
   * @public
+  * @param {number} level Level to verify
   * @return {boolean}
   */
 export function isTrustedUser(level) {
@@ -87,9 +93,9 @@ export function isTrustedUser(level) {
 /**
   * Returns true if the nickname is valid
   * @public
-  * @param {String} nick
+  * @param {string} nick Nickname to verify
   * @return {boolean}
   */
-export function verifyNickname (nick) {
+export function verifyNickname(nick) {
   return /^[a-zA-Z0-9_]{1,24}$/.test(nick);
 }

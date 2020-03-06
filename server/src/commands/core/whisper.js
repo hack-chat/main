@@ -2,7 +2,7 @@
   Description: Display text on targets screen that only they can see
 */
 
-import * as UAC from "../utility/UAC/_info";
+import * as UAC from '../utility/UAC/_info';
 
 // module support functions
 
