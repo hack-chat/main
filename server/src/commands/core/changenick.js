@@ -2,8 +2,7 @@
   Description: Allows calling client to change their current nickname
 */
 
-// module support functions
-const verifyNickname = (nick) => /^[a-zA-Z0-9_]{1,24}$/.test(nick);
+import * as UAC from "../utility/UAC/_info";
 
 // module main
 export async function run(core, server, socket, data) {
@@ -21,7 +20,7 @@ export async function run(core, server, socket, data) {
 
   // make sure requested nickname meets standards
   const newNick = data.nick.trim();
-  if (!verifyNickname(newNick)) {
+  if (!UAC.verifyNickname(newNick)) {
     return server.reply({
       cmd: 'warn',
       text: 'Nickname must consist of up to 24 letters, numbers, and underscores',

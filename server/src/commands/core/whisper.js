@@ -2,8 +2,9 @@
   Description: Display text on targets screen that only they can see
 */
 
+import * as UAC from "../utility/UAC/_info";
+
 // module support functions
-const verifyNickname = (nick) => /^[a-zA-Z0-9_]{1,24}$/.test(nick);
 
 const parseText = (text) => {
   // verifies user input is text
@@ -41,7 +42,7 @@ export async function run(core, server, socket, payload) {
   }
 
   const targetNick = payload.nick;
-  if (!verifyNickname(targetNick)) {
+  if (!UAC.verifyNickname(targetNick)) {
     return true;
   }
 
