@@ -33,7 +33,7 @@ export async function run(core, server, socket, data) {
   if (badClient.level >= socket.level) {
     return server.reply({
       cmd: 'warn',
-      text: 'Cannot ban other mods, how rude',
+      text: 'Cannot ban other users of the same level, how rude',
     }, socket);
   }
 

@@ -35,7 +35,7 @@ export async function run(core, server, socket, data) {
   if (badClient.level >= socket.level) {
     return server.reply({
       cmd: 'warn',
-      text: 'Cannot move other mods, how rude',
+      text: 'Cannot move other users of the same level, how rude',
     }, socket);
   }
 
