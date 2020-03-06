@@ -41,7 +41,7 @@ export async function run(core, server, socket, data) {
     if (badClients[i].level >= socket.level) {
       server.reply({
         cmd: 'warn',
-        text: 'Cannot kick other mods, how rude',
+        text: 'Cannot kick other users with the same level, how rude',
       }, socket);
     } else {
       kicked.push(badClients[i]);

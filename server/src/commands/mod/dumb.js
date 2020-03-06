@@ -40,7 +40,7 @@ export async function run(core, server, socket, data) {
   if (badClient.level >= socket.level) {
     return server.reply({
       cmd: 'warn',
-      text: 'This trick wont work on mods and admin',
+      text: 'This trick wont work on users of the same level',
     }, socket);
   }
 
