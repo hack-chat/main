@@ -51,7 +51,7 @@ export async function run(core, server, socket, data) {
   // notify mods
   server.broadcast({
     cmd: 'info',
-    text: `${socket.nick} banned ${targetNick} in ${socket.channel}, userhash: ${badClient.hash}`,
+    text: `${socket.nick}#${socket.trip} banned ${targetNick} in ${socket.channel}, userhash: ${badClient.hash}`,
   }, { level: UAC.isModerator });
 
   // force connection closed

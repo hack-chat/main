@@ -40,7 +40,7 @@ export async function run(core, server, socket, data) {
   // notify mods
   server.broadcast({
     cmd: 'info',
-    text: `${socket.nick} unmuzzled : ${target}`,
+    text: `${socket.nick}#${socket.trip} unmuzzled : ${target}`,
   }, { level: UAC.isModerator });
 
   return true;

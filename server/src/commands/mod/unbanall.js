@@ -25,7 +25,7 @@ export async function run(core, server, socket) {
   // notify mods
   server.broadcast({
     cmd: 'info',
-    text: `${socket.nick} unbanned all ip addresses`,
+    text: `${socket.nick}#${socket.trip} unbanned all ip addresses`,
   }, { level: UAC.isModerator });
 
   return true;

@@ -48,7 +48,7 @@ export async function run(core, server, socket, data) {
   // notify mods
   server.broadcast({
     cmd: 'info',
-    text: `${socket.nick} unbanned: ${target}`,
+    text: `${socket.nick}#${socket.trip} unbanned: ${target}`,
   }, { level: UAC.isModerator });
 
   // stats are fun
