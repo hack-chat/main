@@ -3,6 +3,7 @@
 */
 
 import * as UAC from '../utility/UAC/_info';
+import { Commands, ChatCommand } from '../utility/Commands/_main';
 
 // module support functions
 const parseText = (text) => {
@@ -69,6 +70,14 @@ export async function run(core, server, socket, data) {
 
 // module hook functions
 export function initHooks(server) {
+  Commands.addCommand(new ChatCommand("myhash")
+    .onTrigger((_, core, server, socket, info) => {
+      server.reply({
+        cmd: 'info',
+        text: `Your hash: ${socket.hash}`
+      }, socket);
+    }));
+
   server.registerHook('in', 'chat', this.commandCheckIn.bind(this), 20);
   server.registerHook('in', 'chat', this.finalCmdCheck.bind(this), 254);
 }
@@ -79,12 +88,7 @@ export function commandCheckIn(core, server, socket, payload) {
     return false;
   }
 
-  if (payload.text.startsWith('/myhash')) {
-    server.reply({
-      cmd: 'info',
-      text: `Your hash: ${socket.hash}`,
-    }, socket);
-
+  if (Commands.trigger(core, server, socket, payload)) {
     return false;
   }
 

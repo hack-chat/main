@@ -2,6 +2,9 @@
   Description: Broadcasts an emote to the current channel
 */
 
+import { Commands, ChatCommand } from "../utility/Commands/_main";
+import { RequirementMinimumParameterCount } from "../utility/Commands/_requirements";
+
 // module support functions
 const parseText = (text) => {
   // verifies user input is text
@@ -56,40 +59,14 @@ export async function run(core, server, socket, payload) {
 
 // module hook functions
 export function initHooks(server) {
-  server.registerHook('in', 'chat', this.emoteCheck.bind(this), 30);
-}
-
-// hooks chat commands checking for /me
-export function emoteCheck(core, server, socket, payload) {
-  if (typeof payload.text !== 'string') {
-    return false;
-  }
-
-  if (payload.text.startsWith('/me ')) {
-    const input = payload.text.split(' ');
-
-    // If there is no emote target parameter
-    if (input[1] === undefined) {
-      server.reply({
-        cmd: 'warn',
-        text: 'Refer to `/help emote` for instructions on how to use this command.',
-      }, socket);
-
-      return false;
-    }
-
-    input.splice(0, 1);
-    const actionText = input.join(' ');
-
-    this.run(core, server, socket, {
-      cmd: 'emote',
-      text: actionText,
-    });
-
-    return false;
-  }
-
-  return payload;
+  Commands.addCommand(new ChatCommand("me")
+    .addRequirements(new RequirementMinimumParameterCount(1))
+    .onTrigger((_, core, server, socket, info) => {
+      run(core, server, socket, {
+        cmd: 'emote',
+        text: info.getTail(),
+      });
+    }));
 }
 
 export const requiredData = ['text'];

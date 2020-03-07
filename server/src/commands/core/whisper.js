@@ -3,6 +3,8 @@
 */
 
 import * as UAC from '../utility/UAC/_info';
+import { Commands, ChatCommand } from '../utility/Commands/_main';
+import { RequirementSimple, RequirementMinimumParameterCount } from '../utility/Commands/_requirements';
 
 // module support functions
 
@@ -79,7 +81,36 @@ export async function run(core, server, socket, payload) {
 
 // module hook functions
 export function initHooks(server) {
-  server.registerHook('in', 'chat', this.whisperCheck.bind(this), 20);
+  Commands.addCommand(new ChatCommand("whisper")
+    .addRequirements(new RequirementMinimumParameterCount(2))
+    .onTrigger((_, core, server, socket, info) => {
+      const text = info.getSplitText();
+
+      const target = text[1].replace(/@/g, '');
+      const whisperText = text.slice(2).join(' ');
+
+      run(core, server, socket, {
+        cmd: 'whisper',
+        nick: target,
+        text: whisperText
+      });
+    }));
+
+  Commands.addCommand(new ChatCommand("r")
+    .addRequirements(
+      new RequirementMinimumParameterCount(1),
+      new RequirementSimple(
+        (_, core, server, socket) => typeof socket.whisperReply !== 'undefined',
+        () => "Cannot reply to nobody"
+      ),
+    )
+    .onTrigger((_, core, server, socket, info) => {
+      run(core, server, socket, {
+        cmd: 'whisper',
+        nick: socket.whisperReply,
+        text: info.getTail()
+      });
+    }));
 }
 
 // hooks chat commands checking for /whisper

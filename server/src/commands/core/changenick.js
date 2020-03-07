@@ -3,6 +3,8 @@
 */
 
 import * as UAC from '../utility/UAC/_info';
+import { Commands, ChatCommand } from '../utility/Commands/_main';
+import { RequirementMinimumParameterCount } from '../utility/Commands/_requirements';
 
 // module main
 export async function run(core, server, socket, data) {
@@ -86,39 +88,14 @@ export async function run(core, server, socket, data) {
 
 // module hook functions
 export function initHooks(server) {
-  server.registerHook('in', 'chat', this.nickCheck.bind(this), 29);
-}
-
-// hooks chat commands checking for /nick
-export function nickCheck(core, server, socket, payload) {
-  if (typeof payload.text !== 'string') {
-    return false;
-  }
-
-  if (payload.text.startsWith('/nick')) {
-    const input = payload.text.split(' ');
-
-    // If there is no nickname target parameter
-    if (input[1] === undefined) {
-      server.reply({
-        cmd: 'warn',
-        text: 'Refer to `/help nick` for instructions on how to use this command.',
-      }, socket);
-
-      return false;
-    }
-
-    const newNick = input[1].replace(/@/g, '');
-
-    this.run(core, server, socket, {
-      cmd: 'changenick',
-      nick: newNick,
-    });
-
-    return false;
-  }
-
-  return payload;
+  Commands.addCommand(new ChatCommand("nick")
+    .addRequirements(new RequirementMinimumParameterCount(1))
+    .onTrigger((_, core, server, socket, info) => {
+      run(core, server, socket, {
+        cmd: 'changenick',
+        nick: info.getSplitText()[1].replace(/@/g, ''),
+      });
+    }));
 }
 
 export const requiredData = ['nick'];

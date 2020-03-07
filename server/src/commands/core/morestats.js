@@ -2,6 +2,8 @@
   Description: Outputs more info than the legacy stats command
 */
 
+import { Commands, ChatCommand } from '../utility/Commands/_main';
+
 // module support functions
 const { stripIndents } = require('common-tags');
 
@@ -59,25 +61,14 @@ export async function run(core, server, socket) {
 
 // module hook functions
 export function initHooks(server) {
-  server.registerHook('in', 'chat', this.statsCheck.bind(this), 26);
+  Commands.addCommand(new ChatCommand("stats")
+    .onTrigger((_, core, server, socket, info) => {
+      run(core, server, socket, {
+        cmd: 'morestats'
+      });
+    }));
 }
 
-// hooks chat commands checking for /stats
-export function statsCheck(core, server, socket, payload) {
-  if (typeof payload.text !== 'string') {
-    return false;
-  }
-
-  if (payload.text.startsWith('/stats')) {
-    this.run(core, server, socket, {
-      cmd: 'morestats',
-    });
-
-    return false;
-  }
-
-  return payload;
-}
 
 export const info = {
   name: 'morestats',

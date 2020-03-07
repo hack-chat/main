@@ -2,6 +2,8 @@
   Description: Outputs the current command module list or command categories
 */
 
+import { Commands, ChatCommand } from "../utility/Commands/_main";
+
 // module main
 export async function run(core, server, socket, payload) {
   // check for spam
@@ -56,27 +58,13 @@ export async function run(core, server, socket, payload) {
 
 // module hook functions
 export function initHooks(server) {
-  server.registerHook('in', 'chat', this.helpCheck.bind(this), 28);
-}
-
-// hooks chat commands checking for /whisper
-export function helpCheck(core, server, socket, payload) {
-  if (typeof payload.text !== 'string') {
-    return false;
-  }
-
-  if (payload.text.startsWith('/help')) {
-    const input = payload.text.substr(1).split(' ', 2);
-
-    this.run(core, server, socket, {
-      cmd: input[0],
-      command: input[1],
-    });
-
-    return false;
-  }
-
-  return payload;
+  Commands.addCommand(new ChatCommand("help")
+    .onTrigger((_, core, server, socket, info) => {
+      run(core, server, socket, {
+        cmd: 'help',
+        command: info.getSplitText()[1],
+      });
+    }));
 }
 
 export const info = {
