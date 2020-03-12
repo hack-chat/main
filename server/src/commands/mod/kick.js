@@ -59,7 +59,7 @@ export async function run(core, server, socket, data) {
       cmd: 'onlineAdd',
       nick: kicked[i].nick,
       trip: kicked[i].trip || 'null',
-      hash: kicked[i].userHash,
+      hash: kicked[i].hash,
     }, { channel: destChannel });
   }
 
