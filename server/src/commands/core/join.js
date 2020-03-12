@@ -18,7 +18,7 @@ const hash = (password) => {
 export function parseNickname(core, data) {
   const userInfo = {
     nick: '',
-    uType: 'user',
+    uType: 'user', /* @legacy */
     trip: null,
     level: UAC.levels.default,
   };
@@ -41,7 +41,7 @@ export function parseNickname(core, data) {
   }
 
   if (hash(password + core.config.tripSalt) === core.config.adminTrip) {
-    userInfo.uType = 'admin';
+    userInfo.uType = 'admin'; /* @legacy */
     userInfo.trip = 'Admin';
     userInfo.level = UAC.levels.admin;
   } else if (userInfo.nick.toLowerCase() === core.config.adminName.toLowerCase()) {
@@ -55,7 +55,7 @@ export function parseNickname(core, data) {
   // for (const mod of core.config.mods) {
   core.config.mods.forEach((mod) => {
     if (userInfo.trip === mod.trip) {
-      userInfo.uType = 'mod';
+      userInfo.uType = 'mod'; /* @legacy */
       userInfo.level = UAC.levels.moderator;
     }
   });
@@ -111,40 +111,73 @@ export async function run(core, server, socket, data) {
     }, socket);
   }
 
-  userInfo.userHash = server.getSocketHash(socket);
+  userInfo.hash = server.getSocketHash(socket);
 
+  // assign "unique" socket ID
+  if (typeof socket.userid === 'undefined') {
+    userInfo.userid = Math.floor(Math.random() * 9999999999999);
+  }
+
+  // TODO: place this within it's own function allowing import
   // prepare to notify channel peers
   const newPeerList = server.findSockets({ channel: data.channel });
-  const nicks = [];
+  const nicks = []; /* @legacy */
+  const users = [];
 
   const joinAnnouncement = {
     cmd: 'onlineAdd',
     nick: userInfo.nick,
     trip: userInfo.trip || 'null',
-    hash: userInfo.userHash,
+    utype: userInfo.uType, /* @legacy */
+    hash: userInfo.hash,
     level: userInfo.level,
+    userid: userInfo.userid,
+    channel: data.channel,
   };
 
   // send join announcement and prep online set
   for (let i = 0, l = newPeerList.length; i < l; i += 1) {
     server.reply(joinAnnouncement, newPeerList[i]);
-    nicks.push(newPeerList[i].nick);
+    nicks.push(newPeerList[i].nick); /* @legacy */
+
+    users.push({
+      nick: newPeerList[i].nick,
+      trip: newPeerList[i].trip,
+      utype: newPeerList[i].uType, /* @legacy */
+      hash: newPeerList[i].userHash,
+      level: newPeerList[i].level,
+      userid: newPeerList[i].userid,
+      channel: data.channel,
+      isme: false,
+    });
   }
 
   // store user info
-  socket.uType = userInfo.uType;
+  socket.uType = userInfo.uType; /* @legacy */
   socket.nick = userInfo.nick;
-  socket.channel = data.channel;
-  socket.hash = userInfo.userHash;
+  socket.trip = userInfo.trip;
+  socket.channel = data.channel; /* @legacy */
+  socket.hash = userInfo.hash;
   socket.level = userInfo.level;
-  if (userInfo.trip !== null) socket.trip = userInfo.trip;
+  socket.userid = userInfo.userid;
 
-  nicks.push(socket.nick);
+  nicks.push(socket.nick); /* @legacy */
+  users.push({
+    nick: socket.nick,
+    trip: socket.trip,
+    utype: socket.uType,
+    hash: socket.userHash,
+    level: socket.level,
+    userid: socket.userid,
+    channel: data.channel,
+    isme: true,
+  });
 
   // reply with channel peer list
   server.reply({
     cmd: 'onlineSet',
-    nicks,
+    nicks, /* @legacy */
+    users,
   }, socket);
 
   // stats are fun

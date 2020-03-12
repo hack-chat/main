@@ -27,6 +27,24 @@ export async function run(core, server, socket, data) {
     }, socket);
   }
 
+  if (typeof data.ip === 'string') {
+    if (data.ip === '*') {
+      core.muzzledHashes = {};
+
+      return server.broadcast({
+        cmd: 'info',
+        text: `${socket.nick} unmuzzled all users`,
+      }, { level: UAC.isModerator });
+    }
+  } else if (data.hash === '*') {
+    core.muzzledHashes = {};
+
+    return server.broadcast({
+      cmd: 'info',
+      text: `${socket.nick} unmuzzled all users`,
+    }, { level: UAC.isModerator });
+  }
+
   // find target & remove mute status
   let target;
   if (typeof data.ip === 'string') {

@@ -20,8 +20,8 @@ export async function run(core, server, socket, data) {
   }
 
   // find target
-  let mode; let
-    target;
+  let mode;
+  let target;
   if (typeof data.ip === 'string') {
     mode = 'ip';
     target = data.ip;

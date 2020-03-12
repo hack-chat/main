@@ -3,6 +3,29 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.1.93 pre 2.2] - 2020-03-12
+### Added
+- (Source) `./pm2.config.js` PM2 ecosystem config handling both http-server and the websocket
+- (Source) NPM new commands:
+- "start": Starts or reloads the dev environment
+- "stop": Stops and clears the dev environment
+- "logs": Show / watch http & websocket logs for errors and events
+- "clear": Clear all logged data
+- "status": Show status of http and websocket
+- "refresh": Clears logged data and stops http and websocket
+- (Server) Numeric user levels / UAC, related to issue #86
+- (Server) `join` module password property, related to V2 protocol update
+- (Server) `users` array to `onlineSet` structure, related to V2 protocol update
+- (Server) `session` module, related to V2 protocol update
+- (Server) `/move` chat hook to `move` module
+
+### Removed
+- (Source) `./clientSource/` directory
+
+### Changed
+- (Server) Minor bug fixes
+- (Server) Increased module abstraction to remove duplicate code (thanks @MinusGix)
+
 ## [2.1.92 pre 2.2] - 2019-11-06
 ### Added
 - (Server) `./server/src/utility/` directory

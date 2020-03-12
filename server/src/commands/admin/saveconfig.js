@@ -20,7 +20,7 @@ export async function run(core, server, socket) {
   }
 
   // return success message to moderators and admins
-  server.reply({
+  server.broadcast({
     cmd: 'info',
     text: 'Config saved!',
   }, { level: UAC.isModerator });

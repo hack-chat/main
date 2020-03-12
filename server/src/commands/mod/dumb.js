@@ -66,9 +66,9 @@ export async function run(core, server, socket, data) {
 
 // module hook functions
 export function initHooks(server) {
-  server.registerHook('in', 'chat', this.chatCheck.bind(this), 25);
-  server.registerHook('in', 'invite', this.inviteCheck.bind(this), 25);
-  // TODO: add whisper hook, need hook priorities todo finished first
+  server.registerHook('in', 'chat', this.chatCheck.bind(this), 10);
+  server.registerHook('in', 'invite', this.inviteCheck.bind(this), 10);
+  server.registerHook('in', 'whisper', this.whisperCheck.bind(this), 10);
 }
 
 // hook incoming chat commands, shadow-prevent chat if they are muzzled
@@ -133,6 +133,34 @@ export function inviteCheck(core, server, socket, payload) {
 
     // send fake reply
     server.reply(Invite.createSuccessPayload(payload.nick, channel), socket);
+
+    return false;
+  }
+
+  return payload;
+}
+
+// shadow-prevent all whispers from muzzled users
+export function whisperCheck(core, server, socket, payload) {
+  if (typeof payload.nick !== 'string') {
+    return false;
+  }
+
+  if (typeof payload.text !== 'string') {
+    return false;
+  }
+
+  if (core.muzzledHashes[socket.hash]) {
+    const targetNick = payload.nick;
+
+    server.reply({
+      cmd: 'info',
+      type: 'whisper',
+      text: `You whispered to @${targetNick}: ${payload.text}`,
+    }, socket);
+
+    // blanket "spam" protection, may expose the ratelimiting lines from `chat` and use that, TODO: one day #lazydev
+    server.police.frisk(socket.address, 9);
 
     return false;
   }

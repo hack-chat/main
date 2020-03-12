@@ -68,6 +68,7 @@ export async function run(core, server, socket, data) {
     }
   }
 
+  // TODO: import from join module
   const newPeerList = server.findSockets({ channel: data.channel });
   const moveAnnouncement = {
     cmd: 'onlineAdd',

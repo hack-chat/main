@@ -22,7 +22,7 @@ const parseText = (text) => {
 // module main
 export async function run(core, server, socket, payload) {
   // check user input
-  const text = parseText(payload.text);
+  let text = parseText(payload.text);
 
   if (!text) {
     // lets not send objects or empty text, yea?
@@ -38,11 +38,15 @@ export async function run(core, server, socket, payload) {
     }, socket);
   }
 
+  if (!text.startsWith("'")) {
+    text = ` ${text}`;
+  }
+
   const newPayload = {
     cmd: 'info',
     type: 'emote',
     nick: socket.nick,
-    text: `@${socket.nick} ${text}`,
+    text: `@${socket.nick}${text}`,
   };
   if (socket.trip) {
     newPayload.trip = socket.trip;

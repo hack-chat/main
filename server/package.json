@@ -1,6 +1,6 @@
 {
   "name": "hack.chat-v2",
-  "version": "2.1.9",
+  "version": "2.1.93",
   "description": "a minimal distraction free chat application",
   "main": "main.js",
   "repository": {
@@ -21,11 +21,11 @@
     "chalk": "^3.0.0",
     "common-tags": "^1.8.0",
     "dateformat": "^3.0.3",
-    "didyoumean2": "^3.1.2",
+    "didyoumean2": "^4.0.0",
     "esm": "^3.2.25",
     "fs-extra": "^8.1.0",
     "prompt": "^1.0.0",
     "readdir-recursive": "0.0.4",
-    "ws": "^7.2.0"
+    "ws": "^7.2.3"
   }
 }

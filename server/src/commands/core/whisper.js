@@ -88,7 +88,7 @@ export function whisperCheck(core, server, socket, payload) {
     return false;
   }
 
-  if (payload.text.startsWith('/whisper')) {
+  if (payload.text.startsWith('/whisper') || payload.text.startsWith('/w ')) {
     const input = payload.text.split(' ');
 
     // If there is no nickname target parameter
@@ -147,5 +147,6 @@ export const info = {
   usage: `
     API: { cmd: 'whisper', nick: '<target name>', text: '<text to whisper>' }
     Text: /whisper <target name> <text to whisper>
+    Text: /w <target name> <text to whisper>
     Alt Text: /r <text to whisper, this will auto reply to the last person who whispered to you>`,
 };

@@ -31,7 +31,7 @@ export async function run(core, server, socket, data) {
   }
 
   // send results to moderators (which the user using this command is higher than)
-  server.reply({
+  server.broadcast({
     cmd: 'info',
     text: loadResult,
   }, { level: UAC.isModerator });

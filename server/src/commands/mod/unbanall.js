@@ -14,6 +14,8 @@ export async function run(core, server, socket) {
   // remove arrest records
   server.police.clear();
 
+  core.stats.set('users-banned', 0);
+
   console.log(`${socket.nick} [${socket.trip}] unbanned all`);
 
   // reply with success

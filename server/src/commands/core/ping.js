@@ -3,9 +3,7 @@
 */
 
 // module main
-export async function run() {
-
-}
+export async function run() { }
 
 export const info = {
   name: 'ping',

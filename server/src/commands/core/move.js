@@ -17,6 +17,13 @@ export async function run(core, server, socket, data) {
     return true;
   }
 
+  if (data.channel === '') {
+    return server.reply({
+      cmd: 'warn',
+      text: 'Cannot move to an empty channel.',
+    }, socket);
+  }
+
   if (data.channel === socket.channel) {
     // they are trying to rejoin the channel
     return true;
@@ -53,6 +60,7 @@ export async function run(core, server, socket, data) {
     }
   }
 
+  // TODO: import function from join module
   // broadcast join notice to new peers
   const newPeerList = server.findSockets({ channel: data.channel });
   const moveAnnouncement = {
@@ -82,10 +90,45 @@ export async function run(core, server, socket, data) {
   return true;
 }
 
+// module hook functions
+export function initHooks(server) {
+  server.registerHook('in', 'chat', this.moveCheck.bind(this), 29);
+}
+
+export function moveCheck(core, server, socket, payload) {
+  if (typeof payload.text !== 'string') {
+    return false;
+  }
+
+  if (payload.text.startsWith('/move ')) {
+    const input = payload.text.split(' ');
+
+    // If there is no channel target parameter
+    if (input[1] === undefined) {
+      server.reply({
+        cmd: 'warn',
+        text: 'Refer to `/help move` for instructions on how to use this command.',
+      }, socket);
+
+      return false;
+    }
+
+    this.run(core, server, socket, {
+      cmd: 'move',
+      channel: input[1],
+    });
+
+    return false;
+  }
+
+  return payload;
+}
+
 export const requiredData = ['channel'];
 export const info = {
   name: 'move',
   description: 'This will change your current channel to the new one provided',
   usage: `
-    API: { cmd: 'move', channel: '<target channel>' }`,
+    API: { cmd: 'move', channel: '<target channel>' }
+    Text: /move <new channel>`,
 };
