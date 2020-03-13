@@ -144,7 +144,7 @@ export async function run(core, server, socket, data) {
       nick: newPeerList[i].nick,
       trip: newPeerList[i].trip,
       utype: newPeerList[i].uType, /* @legacy */
-      hash: newPeerList[i].userHash,
+      hash: newPeerList[i].hash,
       level: newPeerList[i].level,
       userid: newPeerList[i].userid,
       channel: data.channel,
@@ -166,7 +166,7 @@ export async function run(core, server, socket, data) {
     nick: socket.nick,
     trip: socket.trip,
     utype: socket.uType,
-    hash: socket.userHash,
+    hash: socket.hash,
     level: socket.level,
     userid: socket.userid,
     channel: data.channel,
