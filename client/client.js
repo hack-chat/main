@@ -789,6 +789,7 @@ function userIgnore(nick) {
 
 var schemes = [
 	'android',
+	'android-white',
 	'atelier-dune',
 	'atelier-forest',
 	'atelier-heath',
