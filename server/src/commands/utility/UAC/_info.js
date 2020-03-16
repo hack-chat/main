@@ -91,6 +91,23 @@ export function isTrustedUser(level) {
 }
 
 /**
+  * Return an object containing public information about the socket
+  * @public
+  * @param {WebSocket} socket Target client
+  * @return {Object}
+  */
+export function getUserDetails(socket) {
+  return {
+    uType: socket.uType,
+    nick: socket.nick,
+    trip: socket.trip || 'null',
+    hash: socket.hash,
+    level: socket.level,
+    userid: socket.userid,
+  };
+}
+
+/**
   * Returns true if the nickname is valid
   * @public
   * @param {string} nick Nickname to verify

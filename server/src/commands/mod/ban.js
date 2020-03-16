@@ -46,12 +46,16 @@ export async function run(core, server, socket, data) {
   server.broadcast({
     cmd: 'info',
     text: `Banned ${targetNick}`,
+    user: UAC.getUserDetails(badClient),
   }, { channel: socket.channel, level: (level) => level < UAC.levels.moderator });
 
   // notify mods
   server.broadcast({
     cmd: 'info',
     text: `${socket.nick}#${socket.trip} banned ${targetNick} in ${socket.channel}, userhash: ${badClient.hash}`,
+    channel: socket.channel,
+    user: UAC.getUserDetails(badClient),
+    banner: UAC.getUserDetails(socket),
   }, { level: UAC.isModerator });
 
   // force connection closed
