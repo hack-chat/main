@@ -1,6 +1,5 @@
-/* Written by a user named Color */
 body {
-	background: #f7f7f7;
+	background: #ffffff;
 	color: #000000;
 }
 input,
@@ -8,25 +7,25 @@ textarea {
 	color: #000000;
 }
 .message {
-	border-left: 1px solid rgba(187, 187, 187, 0.5);
+	border-left: 1px solid rgb(220, 220, 220);
 }
 .refmessage {
 	border-left: 1px solid rgb(27, 27, 27);
 }
 .nick {
-	color: #7d7d7d;
+	color: #a3a3a3;
 }
 .trip {
-	color: #a9a9a9;
+	color: #dcdcdc;
 }
 .text a {
 	color: #000000;
 }
 .admin .nick {
-	color: #d3ff00;
+	color: #0387d1;
 }
 .mod .nick {
-	color: #01408d;
+	color: #0388d2;
 }
 .me .nick {
 	color: #000;
@@ -40,12 +39,12 @@ textarea {
 	color: #f55;
 }
 #footer {
-	background: #f9f9f9;
+	background: #ffffff;
 }
 #sidebar {
-	background: #f7f7f7;
-	border-color: #f7f7f7;
+	background: #ffffff;
+	border-color: #ffffff;
 }
 #chatform {
-	border-color: #d9d9d9;
+	border-color: #dcdcdc;
 }
