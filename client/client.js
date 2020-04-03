@@ -799,6 +799,7 @@ var schemes = [
 	'chalk',
 	'default',
 	'eighties',
+	'fresh-green',
 	'greenscreen',
 	'mariana',
 	'mocha',
