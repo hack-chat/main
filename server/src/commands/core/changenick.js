@@ -18,6 +18,8 @@ export async function run(core, server, socket, data) {
     return true;
   }
 
+  const previousNick = socket.nick;
+
   // make sure requested nickname meets standards
   const newNick = data.nick.trim();
   if (!UAC.verifyNickname(newNick)) {
@@ -38,10 +40,19 @@ export async function run(core, server, socket, data) {
     }, socket);
   }
 
+  if (newNick == previousNick) {
+    return server.reply({
+      cmd: 'warn',
+      text: 'You already have that name',
+    }, socket);
+  }
+
   // find any sockets that have the same nickname
   const userExists = server.findSockets({
     channel: socket.channel,
-    nick: (targetNick) => targetNick.toLowerCase() === newNick.toLowerCase(),
+    nick: (targetNick) => targetNick.toLowerCase() === newNick.toLowerCase() &&
+      // Allow them to rename themselves to a different case
+      targetNick != previousNick,
   });
 
   // return error if found
