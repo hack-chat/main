@@ -496,7 +496,7 @@ class MainServer extends WsServer {
     * @param {String} type The type of event, typically `in` (incoming) or `out` (outgoing)
     * @param {ws#WebSocket} socket Either target client or client (depends on `type`)
     * @param {Object} payload Either incoming data from client or outgoing data (depends on `type`)
-    * @private
+    * @public
     * @return {Object|Boolean}
     */
   executeHooks(type, socket, payload) {
