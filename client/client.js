@@ -320,7 +320,10 @@ function join(channel) {
 			if (location.hash) {
 				myNick = location.hash.substr(1);
 			} else {
-				myNick = prompt('Nickname:', myNick);
+				var newNick = prompt('Nickname:', myNick);
+				if (newNick !== null) {
+					myNick = newNick;
+				}
 			}
 		}
 
