@@ -1,0 +1,53 @@
+body {
+  background: #7EC9DA;
+  color: #FF4FAC;
+}
+input,
+textarea {
+  color: #FF4FAC;
+}
+.message {
+  border-left: 2px solid #FFFFFF;
+}
+.refmessage {
+  border-left 2px solid #FFFFFF;
+}
+.nick {
+  color: #F39893;
+}
+.trip {
+  color: #FFFFFF;
+}
+.text a {
+  color: #CBE9F0;
+}
+.admin .nick {
+  color: #FF1111;
+}
+.mod .nick {
+  color: #FF00FF;
+}
+.me .nick {
+  color: #FFFFFF;
+}
+.info .nick,
+.info .text {
+  color: #FFFFFF;
+}
+.warn .nick,
+.warn .text {
+  color: #FC742A;
+}
+#footer {
+  background: #7EC9DA;
+}
+#sidebar {
+  color: #FFFFFF;
+  border-color: #000000;
+}
+#chatform {
+  background:url(/imgs/pantsu-image.png) repeat;
+  background-position-x: 50%;
+  background-position-y: 15%;
+  border-color: #FFFFFF;
+}
