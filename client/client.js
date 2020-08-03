@@ -798,6 +798,7 @@ var schemes = [
 	'atelier-heath',
 	'atelier-lakeside',
 	'atelier-seaside',
+	'autumn',
 	'bright',
 	'chalk',
 	'default',
