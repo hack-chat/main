@@ -316,6 +316,7 @@ function join(channel) {
 	var wasConnected = false;
 
 	ws.onopen = function () {
+		var shouldConnect = true;
 		if (!wasConnected) {
 			if (location.hash) {
 				myNick = location.hash.substr(1);
@@ -323,11 +324,14 @@ function join(channel) {
 				var newNick = prompt('Nickname:', myNick);
 				if (newNick !== null) {
 					myNick = newNick;
+				} else {
+					// The user cancelled the prompt in some manner
+					shouldConnect = false;
 				}
 			}
 		}
 
-		if (myNick) {
+		if (myNick && shouldConnect) {
 			localStorageSet('my-nick', myNick);
 			send({ cmd: 'join', channel: channel, nick: myNick });
 		}
