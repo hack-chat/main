@@ -9,6 +9,9 @@ input,
 textarea {
   font-family: 'DejaVu Sans Mono', monospace;
   font-size: 12px;
+  tab-size: 4;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
 }
 input[type="checkbox"] {
   margin: 0;
@@ -35,6 +38,7 @@ pre {
   word-wrap: break-word;
   tab-size: 4;
   -moz-tab-size: 4;
+  -o-tab-size: 4;
 }
 a {
   color: inherit;
