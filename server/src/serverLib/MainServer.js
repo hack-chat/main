@@ -197,7 +197,7 @@ class MainServer extends WsServer {
       return;
     }
 
-    if (typeof socket.channel === 'undefined' && (payload.cmd !== 'join' && payload.cmd !== 'chat')) {
+    if (typeof socket.channel === 'undefined' && (payload.cmd !== 'join' && payload.cmd !== 'session' && payload.cmd !== 'chat')) {
       return;
     }
 

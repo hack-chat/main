@@ -17,28 +17,19 @@ const hash = (password) => {
 // returns object containing user info or string if error
 export function parseNickname(core, data) {
   const userInfo = {
-    nick: '',
+    nick: data.nick,
     uType: 'user', /* @legacy */
     trip: null,
     level: UAC.levels.default,
   };
 
-  // seperate nick from password
-  const nickArray = data.nick.split('#', 2);
-  userInfo.nick = nickArray[0].trim();
-
   if (!UAC.verifyNickname(userInfo.nick)) {
     // return error as string
+    // @todo Remove english and change to numeric id
     return 'Nickname must consist of up to 24 letters, numbers, and underscores';
   }
 
-  let password = undefined;
-  // prioritize hash in nick for password over password field
-  if (typeof nickArray[1] === 'string') {
-    password = nickArray[1];
-  } else if (typeof data.password === 'string') {
-    password = data.password;
-  }
+  let password = data.pass || false;
 
   if (hash(password + core.config.tripSalt) === core.config.adminTrip) {
     userInfo.uType = 'admin'; /* @legacy */
@@ -46,6 +37,7 @@ export function parseNickname(core, data) {
     userInfo.level = UAC.levels.admin;
   } else if (userInfo.nick.toLowerCase() === core.config.adminName.toLowerCase()) {
     // they've got the main-admin name while not being an admin
+    // @todo Remove english and change to numeric id
     return 'You are not the admin, liar!';
   } else if (password) {
     userInfo.trip = hash(password + core.config.tripSalt);
@@ -68,14 +60,18 @@ export async function run(core, server, socket, data) {
   // check for spam
   if (server.police.frisk(socket.address, 3)) {
     return server.reply({
-      cmd: 'warn',
+      cmd: 'warn', // @todo Remove english and change to numeric id
       text: 'You are joining channels too fast. Wait a moment and try again.',
     }, socket);
   }
 
   // calling socket already in a channel
+  // @todo Multichannel update
   if (typeof socket.channel !== 'undefined') {
-    return true;
+    return server.reply({
+      cmd: 'warn', // @todo Remove this
+      text: 'Joining more than one channel is not currently supported',
+    }, socket);
   }
 
   // check user input
@@ -92,7 +88,7 @@ export async function run(core, server, socket, data) {
   const userInfo = this.parseNickname(core, data);
   if (typeof userInfo === 'string') {
     return server.reply({
-      cmd: 'warn',
+      cmd: 'warn', // @todo Remove english and change to numeric id
       text: userInfo,
     }, socket);
   }
@@ -106,19 +102,17 @@ export async function run(core, server, socket, data) {
   if (userExists.length > 0) {
     // that nickname is already in that channel
     return server.reply({
-      cmd: 'warn',
+      cmd: 'warn', // @todo Remove english and change to numeric id
       text: 'Nickname taken',
     }, socket);
   }
 
+  // populate final userinfo fields
+  // @TODO: this could be move into parseNickname, changing the function name to match
   userInfo.hash = server.getSocketHash(socket);
+  userInfo.userid = socket.userid;
 
-  // assign "unique" socket ID
-  if (typeof socket.userid === 'undefined') {
-    userInfo.userid = Math.floor(Math.random() * 9999999999999);
-  }
-
-  // TODO: place this within it's own function allowing import
+  // @TODO: place this within it's own function allowing import
   // prepare to notify channel peers
   const newPeerList = server.findSockets({ channel: data.channel });
   const nicks = []; /* @legacy */
@@ -159,7 +153,6 @@ export async function run(core, server, socket, data) {
   socket.channel = data.channel; /* @legacy */
   socket.hash = userInfo.hash;
   socket.level = userInfo.level;
-  socket.userid = userInfo.userid;
 
   nicks.push(socket.nick); /* @legacy */
   users.push({
@@ -191,5 +184,5 @@ export const info = {
   name: 'join',
   description: 'Place calling socket into target channel with target nick & broadcast event to channel',
   usage: `
-    API: { cmd: 'join', nick: '<your nickname>', password: '<optional password>', channel: '<target channel>' }`,
+    API: { cmd: 'join', nick: '<your nickname>', pass: '<optional password>', channel: '<target channel>' }`,
 };

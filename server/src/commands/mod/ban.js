@@ -12,27 +12,27 @@ export async function run(core, server, socket, data) {
   }
 
   // check user input
-  if (typeof data.nick !== 'string') {
+  if (typeof data.userid !== 'number') {
     return true;
   }
 
   // find target user
-  const targetNick = data.nick;
-  let badClient = server.findSockets({ channel: socket.channel, nick: targetNick });
+  let badClient = server.findSockets({ channel: socket.channel, userid: data.userid });
 
   if (badClient.length === 0) {
     return server.reply({
-      cmd: 'warn',
+      cmd: 'warn', // @todo Remove english and change to numeric id
       text: 'Could not find user in channel',
     }, socket);
   }
 
   [badClient] = badClient;
+  const targetNick = badClient.nick;
 
   // i guess banning mods or admins isn't the best idea?
   if (badClient.level >= socket.level) {
     return server.reply({
-      cmd: 'warn',
+      cmd: 'warn', // @todo Remove english and change to numeric id
       text: 'Cannot ban other users of the same level, how rude',
     }, socket);
   }
@@ -52,8 +52,8 @@ export async function run(core, server, socket, data) {
   // notify mods
   server.broadcast({
     cmd: 'info',
-    text: `${socket.nick}#${socket.trip} banned ${targetNick} in ${socket.channel}, userhash: ${badClient.hash}`,
-    channel: socket.channel,
+    text: `${socket.nick}#${socket.trip} banned ${targetNick} in ${data.channel}, userhash: ${badClient.hash}`,
+    channel: data.channel,
     user: UAC.getUserDetails(badClient),
     banner: UAC.getUserDetails(socket),
   }, { level: UAC.isModerator });
@@ -67,7 +67,7 @@ export async function run(core, server, socket, data) {
   return true;
 }
 
-export const requiredData = ['nick'];
+//export const requiredData = ['nick'];
 export const info = {
   name: 'ban',
   description: 'Disconnects the target nickname in the same channel as calling socket & adds to ratelimiter',

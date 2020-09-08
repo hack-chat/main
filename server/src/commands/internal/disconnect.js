@@ -14,7 +14,8 @@ export async function run(core, server, socket, data) {
   if (socket.channel) {
     server.broadcast({
       cmd: 'onlineRemove',
-      nick: socket.nick,
+      userid: socket.userid,
+      nick: socket.nick, /* @legacy */
     }, { channel: socket.channel });
   }
 

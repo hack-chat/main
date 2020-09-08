@@ -10,7 +10,10 @@ export async function run(core, server, socket, data) {
   }
 
   // send warning to target socket
-  server.reply({ cmd: 'warn', text: data.text }, socket);
+  server.reply({
+    cmd: 'warn', // @todo Remove english and change to numeric id
+    text: data.text
+  }, socket);
 
   return true;
 }

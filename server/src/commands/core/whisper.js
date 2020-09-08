@@ -1,5 +1,7 @@
 /*
   Description: Display text on targets screen that only they can see
+  @todo This should be changed to it's own event type, instead of `info`
+        and accept a `userid` rather than `nick`
 */
 
 import * as UAC from '../utility/UAC/_info';
@@ -36,7 +38,7 @@ export async function run(core, server, socket, payload) {
   const score = text.length / 83 / 4;
   if (server.police.frisk(socket.address, score)) {
     return server.reply({
-      cmd: 'warn',
+      cmd: 'warn', // @todo Remove english and change to numeric id
       text: 'You are sending too much text. Wait a moment and try again.\nPress the up arrow key to restore your last message.',
     }, socket);
   }
@@ -51,7 +53,7 @@ export async function run(core, server, socket, payload) {
 
   if (targetClient.length === 0) {
     return server.reply({
-      cmd: 'warn',
+      cmd: 'warn', // @todo Remove english and change to numeric id
       text: 'Could not find user in channel',
     }, socket);
   }
@@ -94,7 +96,7 @@ export function whisperCheck(core, server, socket, payload) {
     // If there is no nickname target parameter
     if (input[1] === undefined) {
       server.reply({
-        cmd: 'warn',
+        cmd: 'warn', // @todo Remove english and change to numeric id
         text: 'Refer to `/help whisper` for instructions on how to use this command.',
       }, socket);
 
@@ -117,7 +119,7 @@ export function whisperCheck(core, server, socket, payload) {
   if (payload.text.startsWith('/r ')) {
     if (typeof socket.whisperReply === 'undefined') {
       server.reply({
-        cmd: 'warn',
+        cmd: 'warn', // @todo Remove english and change to numeric id
         text: 'Cannot reply to nobody',
       }, socket);
 

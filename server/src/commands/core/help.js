@@ -7,7 +7,7 @@ export async function run(core, server, socket, payload) {
   // check for spam
   if (server.police.frisk(socket.address, 2)) {
     return server.reply({
-      cmd: 'warn',
+      cmd: 'warn', // @todo Remove english and change to numeric id
       text: 'You are sending too much text. Wait a moment and try again.\nPress the up arrow key to restore your last message.',
     }, socket);
   }

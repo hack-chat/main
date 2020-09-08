@@ -4,7 +4,6 @@
  */
 
 import * as UAC from '../utility/UAC/_info';
-import * as Invite from '../core/invite';
 
 // module constructor
 export function init(core) {
@@ -21,16 +20,16 @@ export async function run(core, server, socket, data) {
   }
 
   // check user input
-  if (typeof data.nick !== 'string') {
+  if (typeof data.userid !== 'number') {
     return true;
   }
 
   // find target user
-  let badClient = server.findSockets({ channel: socket.channel, nick: data.nick });
+  let badClient = server.findSockets({ channel: data.channel, userid: data.userid });
 
   if (badClient.length === 0) {
     return server.reply({
-      cmd: 'warn',
+      cmd: 'warn', // @todo Remove english and change to numeric id
       text: 'Could not find user in channel',
     }, socket);
   }
@@ -40,7 +39,7 @@ export async function run(core, server, socket, data) {
   // likely dont need this, muting mods and admins is fine
   if (badClient.level >= socket.level) {
     return server.reply({
-      cmd: 'warn',
+      cmd: 'warn', // @todo Remove english and change to numeric id
       text: 'This trick wont work on users of the same level',
     }, socket);
   }
@@ -58,7 +57,7 @@ export async function run(core, server, socket, data) {
   // notify mods
   server.broadcast({
     cmd: 'info',
-    text: `${socket.nick}#${socket.trip} muzzled ${data.nick} in ${socket.channel}, userhash: ${badClient.hash}`,
+    text: `${socket.nick}#${socket.trip} muzzled ${badClient.nick} in ${data.channel}, userhash: ${badClient.hash}`,
   }, { level: UAC.isModerator });
 
   return true;
@@ -119,10 +118,11 @@ export function chatCheck(core, server, socket, payload) {
 // shadow-prevent all invites from muzzled users
 export function inviteCheck(core, server, socket, payload) {
   if (core.muzzledHashes[socket.hash]) {
-    const nickValid = Invite.checkNickname(payload.nick);
+    // @todo convert to protocol 2
+    /*const nickValid = Invite.checkNickname(payload.nick);
     if (nickValid !== null) {
       server.reply({
-        cmd: 'warn',
+        cmd: 'warn', // @todo Remove english and change to numeric id
         text: nickValid,
       }, socket);
       return false;
@@ -132,7 +132,7 @@ export function inviteCheck(core, server, socket, payload) {
     const channel = Invite.getChannel();
 
     // send fake reply
-    server.reply(Invite.createSuccessPayload(payload.nick, channel), socket);
+    server.reply(Invite.createSuccessPayload(payload.nick, channel), socket);*/
 
     return false;
   }
@@ -168,7 +168,7 @@ export function whisperCheck(core, server, socket, payload) {
   return payload;
 }
 
-export const requiredData = ['nick'];
+// export const requiredData = ['nick'];
 export const info = {
   name: 'dumb',
   description: 'Globally shadow mute a connection. Optional allies array will see muted messages.',

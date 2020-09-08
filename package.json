@@ -24,7 +24,8 @@
   "license": "WTFPL",
   "dependencies": {
     "esm": "^3.2.25",
-    "http-server": "^0.12.1",
-    "pm2": "^4.2.3"
+    "http-server": "^0.12.3",
+    "pm2": "^4.4.1",
+    "react-icons": "^3.11.0"
   }
 }

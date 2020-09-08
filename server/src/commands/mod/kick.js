@@ -12,8 +12,9 @@ export async function run(core, server, socket, data) {
   }
 
   // check user input
-  if (typeof data.nick !== 'string') {
-    if (typeof data.nick !== 'object' && !Array.isArray(data.nick)) {
+  if (typeof data.userid !== 'number') {
+    // @todo create multi-ban ui
+    if (typeof data.userid !== 'object' && !Array.isArray(data.userid)) {
       return true;
     }
   }
@@ -26,11 +27,11 @@ export async function run(core, server, socket, data) {
   }
 
   // find target user(s)
-  const badClients = server.findSockets({ channel: socket.channel, nick: data.nick });
+  const badClients = server.findSockets({ channel: data.channel, userid: data.userid });
 
   if (badClients.length === 0) {
     return server.reply({
-      cmd: 'warn',
+      cmd: 'warn', // @todo Remove english and change to numeric id
       text: 'Could not find user(s) in channel',
     }, socket);
   }
@@ -40,7 +41,7 @@ export async function run(core, server, socket, data) {
   for (let i = 0, j = badClients.length; i < j; i += 1) {
     if (badClients[i].level >= socket.level) {
       server.reply({
-        cmd: 'warn',
+        cmd: 'warn', // @todo Remove english and change to numeric id
         text: 'Cannot kick other users with the same level, how rude',
       }, socket);
     } else {
@@ -96,7 +97,7 @@ export async function run(core, server, socket, data) {
   return true;
 }
 
-export const requiredData = ['nick'];
+// export const requiredData = ['nick'];
 export const info = {
   name: 'kick',
   description: 'Silently forces target client(s) into another channel. `nick` may be string or array of strings',

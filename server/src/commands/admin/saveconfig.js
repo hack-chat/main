@@ -14,7 +14,7 @@ export async function run(core, server, socket) {
   // attempt save, notify of failure
   if (!core.configManager.save()) {
     return server.reply({
-      cmd: 'warn',
+      cmd: 'warn', // @todo Remove english and change to numeric id
       text: 'Failed to save config, check logs.',
     }, socket);
   }

@@ -25,7 +25,7 @@ export async function run(core, server, socket, data) {
 
   if (badClients.length === 0) {
     return server.reply({
-      cmd: 'warn',
+      cmd: 'warn', // @todo Remove english and change to numeric id
       text: 'Could not find user in channel',
     }, socket);
   }
@@ -34,7 +34,7 @@ export async function run(core, server, socket, data) {
 
   if (badClient.level >= socket.level) {
     return server.reply({
-      cmd: 'warn',
+      cmd: 'warn', // @todo Remove english and change to numeric id
       text: 'Cannot move other users of the same level, how rude',
     }, socket);
   }

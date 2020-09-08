@@ -8,7 +8,7 @@ import * as UAC from '../utility/UAC/_info';
 export async function run(core, server, socket, data) {
   if (server.police.frisk(socket.address, 6)) {
     return server.reply({
-      cmd: 'warn',
+      cmd: 'warn', // @todo Remove english and change to numeric id
       text: 'You are changing nicknames too fast. Wait a moment before trying again.',
     }, socket);
   }
@@ -24,7 +24,7 @@ export async function run(core, server, socket, data) {
   const newNick = data.nick.trim();
   if (!UAC.verifyNickname(newNick)) {
     return server.reply({
-      cmd: 'warn',
+      cmd: 'warn', // @todo Remove english and change to numeric id
       text: 'Nickname must consist of up to 24 letters, numbers, and underscores',
     }, socket);
   }
@@ -35,14 +35,14 @@ export async function run(core, server, socket, data) {
     server.police.frisk(socket.address, 4);
 
     return server.reply({
-      cmd: 'warn',
+      cmd: 'warn', // @todo Remove english and change to numeric id
       text: 'You are not the admin, liar!',
     }, socket);
   }
 
   if (newNick == previousNick) {
     return server.reply({
-      cmd: 'warn',
+      cmd: 'warn', // @todo Remove english and change to numeric id
       text: 'You already have that name',
     }, socket);
   }
@@ -59,7 +59,7 @@ export async function run(core, server, socket, data) {
   if (userExists.length > 0) {
     // That nickname is already in that channel
     return server.reply({
-      cmd: 'warn',
+      cmd: 'warn', // @todo Remove english and change to numeric id
       text: 'Nickname taken',
     }, socket);
   }
@@ -112,7 +112,7 @@ export function nickCheck(core, server, socket, payload) {
     // If there is no nickname target parameter
     if (input[1] === undefined) {
       server.reply({
-        cmd: 'warn',
+        cmd: 'warn', // @todo Remove english and change to numeric id
         text: 'Refer to `/help nick` for instructions on how to use this command.',
       }, socket);
 
