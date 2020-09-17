@@ -1,3 +1,5 @@
+/* eslint eqeqeq: 0 */
+
 /*
   Description: Allows calling client to change their current nickname
 */
@@ -5,7 +7,9 @@
 import * as UAC from '../utility/UAC/_info';
 
 // module main
-export async function run(core, server, socket, data) {
+export async function run({
+  core, server, socket, payload,
+}) {
   if (server.police.frisk(socket.address, 6)) {
     return server.reply({
       cmd: 'warn', // @todo Remove english and change to numeric id
@@ -14,14 +18,14 @@ export async function run(core, server, socket, data) {
   }
 
   // verify user data is string
-  if (typeof data.nick !== 'string') {
+  if (typeof payload.nick !== 'string') {
     return true;
   }
 
   const previousNick = socket.nick;
 
   // make sure requested nickname meets standards
-  const newNick = data.nick.trim();
+  const newNick = payload.nick.trim();
   if (!UAC.verifyNickname(newNick)) {
     return server.reply({
       cmd: 'warn', // @todo Remove english and change to numeric id
@@ -30,7 +34,7 @@ export async function run(core, server, socket, data) {
   }
 
   // prevent admin impersonation
-  // TODO: prevent mod impersonation
+  // @todo prevent mod impersonation
   if (newNick.toLowerCase() === core.config.adminName.toLowerCase()) {
     server.police.frisk(socket.address, 4);
 
@@ -50,9 +54,9 @@ export async function run(core, server, socket, data) {
   // find any sockets that have the same nickname
   const userExists = server.findSockets({
     channel: socket.channel,
-    nick: (targetNick) => targetNick.toLowerCase() === newNick.toLowerCase() &&
+    nick: (targetNick) => targetNick.toLowerCase() === newNick.toLowerCase()
       // Allow them to rename themselves to a different case
-      targetNick != previousNick,
+      && targetNick != previousNick,
   });
 
   // return error if found
@@ -65,7 +69,7 @@ export async function run(core, server, socket, data) {
   }
 
   // build join and leave notices
-  // TODO: this is a legacy client holdover, name changes in the future will
+  // @todo this is a legacy client holdover, name changes in the future will
   //       have thieir own event
   const leaveNotice = {
     cmd: 'onlineRemove',
@@ -90,7 +94,7 @@ export async function run(core, server, socket, data) {
   }, { channel: socket.channel });
 
   // commit change to nickname
-  socket.nick = newNick;
+  socket.nick = newNick; // eslint-disable-line no-param-reassign
 
   return true;
 }
@@ -101,7 +105,9 @@ export function initHooks(server) {
 }
 
 // hooks chat commands checking for /nick
-export function nickCheck(core, server, socket, payload) {
+export function nickCheck({
+  core, server, socket, payload,
+}) {
   if (typeof payload.text !== 'string') {
     return false;
   }
@@ -121,9 +127,14 @@ export function nickCheck(core, server, socket, payload) {
 
     const newNick = input[1].replace(/@/g, '');
 
-    this.run(core, server, socket, {
-      cmd: 'changenick',
-      nick: newNick,
+    this.run({
+      core,
+      server,
+      socket,
+      payload: {
+        cmd: 'changenick',
+        nick: newNick,
+      },
     });
 
     return false;

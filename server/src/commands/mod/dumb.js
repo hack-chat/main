@@ -1,3 +1,6 @@
+/* eslint no-param-reassign: 0 */
+/* eslint no-multi-assign: 0 */
+
 /*
  * Description: Make a user (spammer) dumb (mute)
  * Author: simple
@@ -13,19 +16,21 @@ export function init(core) {
 }
 
 // module main
-export async function run(core, server, socket, data) {
+export async function run({
+  core, server, socket, payload,
+}) {
   // increase rate limit chance and ignore if not admin or mod
   if (!UAC.isModerator(socket.level)) {
     return server.police.frisk(socket.address, 10);
   }
 
   // check user input
-  if (typeof data.userid !== 'number') {
+  if (typeof payload.userid !== 'number') {
     return true;
   }
 
   // find target user
-  let badClient = server.findSockets({ channel: data.channel, userid: data.userid });
+  let badClient = server.findSockets({ channel: payload.channel, userid: payload.userid });
 
   if (badClient.length === 0) {
     return server.reply({
@@ -50,14 +55,14 @@ export async function run(core, server, socket, data) {
   };
 
   // store allies if needed
-  if (data.allies && Array.isArray(data.allies)) {
-    record.allies = data.allies;
+  if (payload.allies && Array.isArray(payload.allies)) {
+    record.allies = payload.allies;
   }
 
   // notify mods
   server.broadcast({
     cmd: 'info',
-    text: `${socket.nick}#${socket.trip} muzzled ${badClient.nick} in ${data.channel}, userhash: ${badClient.hash}`,
+    text: `${socket.nick}#${socket.trip} muzzled ${badClient.nick} in ${payload.channel}, userhash: ${badClient.hash}`,
   }, { level: UAC.isModerator });
 
   return true;
@@ -71,7 +76,9 @@ export function initHooks(server) {
 }
 
 // hook incoming chat commands, shadow-prevent chat if they are muzzled
-export function chatCheck(core, server, socket, payload) {
+export function chatCheck({
+  core, server, socket, payload,
+}) {
   if (typeof payload.text !== 'string') {
     return false;
   }
@@ -116,10 +123,10 @@ export function chatCheck(core, server, socket, payload) {
 }
 
 // shadow-prevent all invites from muzzled users
-export function inviteCheck(core, server, socket, payload) {
+export function inviteCheck({ core, socket, payload }) {
   if (core.muzzledHashes[socket.hash]) {
     // @todo convert to protocol 2
-    /*const nickValid = Invite.checkNickname(payload.nick);
+    /* const nickValid = Invite.checkNickname(payload.nick);
     if (nickValid !== null) {
       server.reply({
         cmd: 'warn', // @todo Remove english and change to numeric id
@@ -132,7 +139,7 @@ export function inviteCheck(core, server, socket, payload) {
     const channel = Invite.getChannel();
 
     // send fake reply
-    server.reply(Invite.createSuccessPayload(payload.nick, channel), socket);*/
+    server.reply(Invite.createSuccessPayload(payload.nick, channel), socket); */
 
     return false;
   }
@@ -141,7 +148,9 @@ export function inviteCheck(core, server, socket, payload) {
 }
 
 // shadow-prevent all whispers from muzzled users
-export function whisperCheck(core, server, socket, payload) {
+export function whisperCheck({
+  core, server, socket, payload,
+}) {
   if (typeof payload.nick !== 'string') {
     return false;
   }
@@ -159,7 +168,8 @@ export function whisperCheck(core, server, socket, payload) {
       text: `You whispered to @${targetNick}: ${payload.text}`,
     }, socket);
 
-    // blanket "spam" protection, may expose the ratelimiting lines from `chat` and use that, TODO: one day #lazydev
+    // blanket "spam" protection, may expose the ratelimiting lines from
+    // `chat` and use that, @todo one day #lazydev
     server.police.frisk(socket.address, 9);
 
     return false;

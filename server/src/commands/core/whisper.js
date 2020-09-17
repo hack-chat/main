@@ -25,7 +25,7 @@ const parseText = (text) => {
 };
 
 // module main
-export async function run(core, server, socket, payload) {
+export async function run({ server, socket, payload }) {
   // check user input
   const text = parseText(payload.text);
 
@@ -85,7 +85,9 @@ export function initHooks(server) {
 }
 
 // hooks chat commands checking for /whisper
-export function whisperCheck(core, server, socket, payload) {
+export function whisperCheck({
+  core, server, socket, payload,
+}) {
   if (typeof payload.text !== 'string') {
     return false;
   }
@@ -107,10 +109,15 @@ export function whisperCheck(core, server, socket, payload) {
     input.splice(0, 2);
     const whisperText = input.join(' ');
 
-    this.run(core, server, socket, {
-      cmd: 'whisper',
-      nick: target,
-      text: whisperText,
+    this.run({
+      core,
+      server,
+      socket,
+      payload: {
+        cmd: 'whisper',
+        nick: target,
+        text: whisperText,
+      },
     });
 
     return false;
@@ -130,10 +137,15 @@ export function whisperCheck(core, server, socket, payload) {
     input.splice(0, 1);
     const whisperText = input.join(' ');
 
-    this.run(core, server, socket, {
-      cmd: 'whisper',
-      nick: socket.whisperReply,
-      text: whisperText,
+    this.run({
+      core,
+      server,
+      socket,
+      payload: {
+        cmd: 'whisper',
+        nick: socket.whisperReply,
+        text: whisperText,
+      },
     });
 
     return false;

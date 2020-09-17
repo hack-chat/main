@@ -1,3 +1,5 @@
+/* eslint no-console: 0 */
+
 /*
   Description: Removes a target ip from the ratelimiter
 */
@@ -5,14 +7,16 @@
 import * as UAC from '../utility/UAC/_info';
 
 // module main
-export async function run(core, server, socket, data) {
+export async function run({
+  core, server, socket, payload,
+}) {
   // increase rate limit chance and ignore if not admin or mod
   if (!UAC.isModerator(socket.level)) {
     return server.police.frisk(socket.address, 10);
   }
 
   // check user input
-  if (typeof data.ip !== 'string' && typeof data.hash !== 'string') {
+  if (typeof payload.ip !== 'string' && typeof payload.hash !== 'string') {
     return server.reply({
       cmd: 'warn', // @todo Remove english and change to numeric id
       text: "hash:'targethash' or ip:'1.2.3.4' is required",
@@ -22,12 +26,12 @@ export async function run(core, server, socket, data) {
   // find target
   let mode;
   let target;
-  if (typeof data.ip === 'string') {
+  if (typeof payload.ip === 'string') {
     mode = 'ip';
-    target = data.ip;
+    target = payload.ip;
   } else {
     mode = 'hash';
-    target = data.hash;
+    target = payload.hash;
   }
 
   // remove arrest record

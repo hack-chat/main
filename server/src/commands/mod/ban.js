@@ -1,3 +1,4 @@
+/* eslint no-console: 0 */
 /*
   Description: Adds the target socket's ip to the ratelimiter
 */
@@ -5,19 +6,21 @@
 import * as UAC from '../utility/UAC/_info';
 
 // module main
-export async function run(core, server, socket, data) {
+export async function run({
+  core, server, socket, payload,
+}) {
   // increase rate limit chance and ignore if not admin or mod
   if (!UAC.isModerator(socket.level)) {
     return server.police.frisk(socket.address, 10);
   }
 
   // check user input
-  if (typeof data.userid !== 'number') {
+  if (typeof payload.userid !== 'number') {
     return true;
   }
 
   // find target user
-  let badClient = server.findSockets({ channel: socket.channel, userid: data.userid });
+  let badClient = server.findSockets({ channel: socket.channel, userid: payload.userid });
 
   if (badClient.length === 0) {
     return server.reply({
@@ -52,8 +55,8 @@ export async function run(core, server, socket, data) {
   // notify mods
   server.broadcast({
     cmd: 'info',
-    text: `${socket.nick}#${socket.trip} banned ${targetNick} in ${data.channel}, userhash: ${badClient.hash}`,
-    channel: data.channel,
+    text: `${socket.nick}#${socket.trip} banned ${targetNick} in ${payload.channel}, userhash: ${badClient.hash}`,
+    channel: payload.channel,
     user: UAC.getUserDetails(badClient),
     banner: UAC.getUserDetails(socket),
   }, { level: UAC.isModerator });
@@ -67,7 +70,7 @@ export async function run(core, server, socket, data) {
   return true;
 }
 
-//export const requiredData = ['nick'];
+// export const requiredData = ['nick'];
 export const info = {
   name: 'ban',
   description: 'Disconnects the target nickname in the same channel as calling socket & adds to ratelimiter',

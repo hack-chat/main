@@ -1,3 +1,5 @@
+/* eslint no-console: 0 */
+
 import {
   basename,
   join,
@@ -98,6 +100,7 @@ class CommandManager {
           .replace(new RegExp(sep.replace('\\', '\\\\'), 'g'), '/');
       }
 
+      // eslint-disable-next-line no-param-reassign
       command.info.category = category;
 
       if (this.categories.indexOf(category) === -1) {
@@ -126,6 +129,7 @@ class CommandManager {
     * @private
     * @return {String} Module errors or null if none
     */
+  // eslint-disable-next-line class-methods-use-this
   validateCommand(object) {
     if (typeof object !== 'object') { return 'command setup is invalid'; }
     if (typeof object.run !== 'function') { return 'run function is missing'; }
@@ -253,11 +257,11 @@ class CommandManager {
     * @private
     * @return {*} Arbitrary module return data
     */
-  async execute(command, server, socket, data) {
+  async execute(command, server, socket, payload) {
     if (typeof command.requiredData !== 'undefined') {
       const missing = [];
       for (let i = 0, len = command.requiredData.length; i < len; i += 1) {
-        if (typeof data[command.requiredData[i]] === 'undefined') { missing.push(command.requiredData[i]); }
+        if (typeof payload[command.requiredData[i]] === 'undefined') { missing.push(command.requiredData[i]); }
       }
 
       if (missing.length > 0) {
@@ -278,7 +282,12 @@ class CommandManager {
     }
 
     try {
-      return await command.run(this.core, server, socket, data);
+      return await command.run({
+        core: this.core,
+        server,
+        socket,
+        payload,
+      });
     } catch (err) {
       const errText = `Failed to execute '${command.info.name}': `;
 

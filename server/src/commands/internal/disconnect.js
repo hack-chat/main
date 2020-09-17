@@ -4,8 +4,8 @@
 */
 
 // module main
-export async function run(core, server, socket, data) {
-  if (data.cmdKey !== server.cmdKey) {
+export async function run({ server, socket, payload }) {
+  if (payload.cmdKey !== server.cmdKey) {
     // internal command attempt by client, increase rate limit chance and ignore
     return server.police.frisk(socket.address, 20);
   }

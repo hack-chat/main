@@ -1,9 +1,10 @@
 /*
   Description: Changes the current channel of the calling socket
+  @deprecated This module will be removed or replaced
 */
 
 // module main
-export async function run(core, server, socket, data) {
+export async function run({ server, socket, payload }) {
   // check for spam
   if (server.police.frisk(socket.address, 6)) {
     return server.reply({
@@ -13,18 +14,18 @@ export async function run(core, server, socket, data) {
   }
 
   // check user input
-  if (typeof data.channel !== 'string') {
+  if (typeof payload.channel !== 'string') {
     return true;
   }
 
-  if (data.channel === '') {
+  if (payload.channel === '') {
     return server.reply({
       cmd: 'warn', // @todo Remove english and change to numeric id
       text: 'Cannot move to an empty channel.',
     }, socket);
   }
 
-  if (data.channel === socket.channel) {
+  if (payload.channel === socket.channel) {
     // they are trying to rejoin the channel
     return true;
   }
@@ -32,7 +33,7 @@ export async function run(core, server, socket, data) {
   // check that the nickname isn't already in target channel
   const currentNick = socket.nick.toLowerCase();
   const userExists = server.findSockets({
-    channel: data.channel,
+    channel: payload.channel,
     nick: (targetNick) => targetNick.toLowerCase() === currentNick,
   });
 
@@ -60,9 +61,9 @@ export async function run(core, server, socket, data) {
     }
   }
 
-  // TODO: import function from join module
+  // @todo import function from join module
   // broadcast join notice to new peers
-  const newPeerList = server.findSockets({ channel: data.channel });
+  const newPeerList = server.findSockets({ channel: payload.channel });
   const moveAnnouncement = {
     cmd: 'onlineAdd',
     nick: socket.nick,
@@ -85,7 +86,7 @@ export async function run(core, server, socket, data) {
   }, socket);
 
   // commit change
-  socket.channel = data.channel;
+  socket.channel = payload.channel; // eslint-disable-line no-param-reassign
 
   return true;
 }
@@ -95,7 +96,9 @@ export function initHooks(server) {
   server.registerHook('in', 'chat', this.moveCheck.bind(this), 29);
 }
 
-export function moveCheck(core, server, socket, payload) {
+export function moveCheck({
+  core, server, socket, payload,
+}) {
   if (typeof payload.text !== 'string') {
     return false;
   }
@@ -113,9 +116,14 @@ export function moveCheck(core, server, socket, payload) {
       return false;
     }
 
-    this.run(core, server, socket, {
-      cmd: 'move',
-      channel: input[1],
+    this.run({
+      core,
+      server,
+      socket,
+      payload: {
+        cmd: 'move',
+        channel: input[1],
+      },
     });
 
     return false;

@@ -5,7 +5,9 @@
 import * as UAC from '../utility/UAC/_info';
 
 // module main
-export async function run(core, server, socket, data) {
+export async function run({
+  core, server, socket, payload,
+}) {
   // increase rate limit chance and ignore if not admin
   if (!UAC.isAdmin(socket.level)) {
     return server.police.frisk(socket.address, 20);
@@ -26,8 +28,8 @@ export async function run(core, server, socket, data) {
       ${loadResult}`;
   }
 
-  if (typeof data.reason !== 'undefined') {
-    loadResult += `\nReason: ${data.reason}`;
+  if (typeof payload.reason !== 'undefined') {
+    loadResult += `\nReason: ${payload.reason}`;
   }
 
   // send results to moderators (which the user using this command is higher than)

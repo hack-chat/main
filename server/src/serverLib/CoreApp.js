@@ -1,3 +1,5 @@
+/* eslint no-console: 0 */
+
 import { join } from 'path';
 import {
   CommandManager,
@@ -90,4 +92,4 @@ class CoreApp {
   }
 }
 
-export { CoreApp };
+export { CoreApp as default };

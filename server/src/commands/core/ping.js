@@ -1,3 +1,4 @@
+/* eslint no-empty-function: 0 */
 /*
   Description: This module is only in place to supress error notices legacy sources may get
 */

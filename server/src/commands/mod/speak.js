@@ -1,3 +1,5 @@
+/* eslint no-param-reassign: 0 */
+
 /*
  * Description: Pardon a dumb user to be able to speak again
  * Author: simple
@@ -13,22 +15,24 @@ export function init(core) {
 }
 
 // module main
-export async function run(core, server, socket, data) {
+export async function run({
+  core, server, socket, payload,
+}) {
   // increase rate limit chance and ignore if not admin or mod
   if (!UAC.isModerator(socket.level)) {
     return server.police.frisk(socket.address, 10);
   }
 
   // check user input
-  if (typeof data.ip !== 'string' && typeof data.hash !== 'string') {
+  if (typeof payload.ip !== 'string' && typeof payload.hash !== 'string') {
     return server.reply({
       cmd: 'warn', // @todo Remove english and change to numeric id
       text: "hash:'targethash' or ip:'1.2.3.4' is required",
     }, socket);
   }
 
-  if (typeof data.ip === 'string') {
-    if (data.ip === '*') {
+  if (typeof payload.ip === 'string') {
+    if (payload.ip === '*') {
       core.muzzledHashes = {};
 
       return server.broadcast({
@@ -36,7 +40,7 @@ export async function run(core, server, socket, data) {
         text: `${socket.nick} unmuzzled all users`,
       }, { level: UAC.isModerator });
     }
-  } else if (data.hash === '*') {
+  } else if (payload.hash === '*') {
     core.muzzledHashes = {};
 
     return server.broadcast({
@@ -47,10 +51,10 @@ export async function run(core, server, socket, data) {
 
   // find target & remove mute status
   let target;
-  if (typeof data.ip === 'string') {
-    target = server.getSocketHash(data.ip);
+  if (typeof payload.ip === 'string') {
+    target = server.getSocketHash(payload.ip);
   } else {
-    target = data.hash;
+    target = payload.hash;
   }
 
   delete core.muzzledHashes[target];

@@ -1,3 +1,6 @@
+/* eslint global-require: 0 */
+/* eslint no-console: 0 */
+
 import {
   resolve,
   basename as _basename,
@@ -57,7 +60,7 @@ class ImportsManager {
 
         let imported;
         try {
-          imported = require(file);
+          imported = require(file); // eslint-disable-line import/no-dynamic-require
 
           if (!this.imports[dirName]) {
             this.imports[dirName] = {};

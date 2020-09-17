@@ -1,3 +1,5 @@
+/* eslint no-console: 0 */
+
 /*
   Description: Forces a change on the target(s) socket's channel, then broadcasts event
 */
@@ -5,29 +7,31 @@
 import * as UAC from '../utility/UAC/_info';
 
 // module main
-export async function run(core, server, socket, data) {
+export async function run({
+  core, server, socket, payload,
+}) {
   // increase rate limit chance and ignore if not admin or mod
   if (!UAC.isModerator(socket.level)) {
     return server.police.frisk(socket.address, 10);
   }
 
   // check user input
-  if (typeof data.userid !== 'number') {
+  if (typeof payload.userid !== 'number') {
     // @todo create multi-ban ui
-    if (typeof data.userid !== 'object' && !Array.isArray(data.userid)) {
+    if (typeof payload.userid !== 'object' && !Array.isArray(payload.userid)) {
       return true;
     }
   }
 
   let destChannel;
-  if (typeof data.to === 'string' && !!data.to.trim()) {
-    destChannel = data.to;
+  if (typeof payload.to === 'string' && !!payload.to.trim()) {
+    destChannel = payload.to;
   } else {
     destChannel = Math.random().toString(36).substr(2, 8);
   }
 
   // find target user(s)
-  const badClients = server.findSockets({ channel: data.channel, userid: data.userid });
+  const badClients = server.findSockets({ channel: payload.channel, userid: payload.userid });
 
   if (badClients.length === 0) {
     return server.reply({
@@ -75,7 +79,6 @@ export async function run(core, server, socket, data) {
 
     console.log(`${socket.nick} [${socket.trip}] kicked ${kicked[i].nick} in ${socket.channel} to ${destChannel} `);
   }
-
 
   // broadcast client leave event
   for (let i = 0, j = kicked.length; i < j; i += 1) {

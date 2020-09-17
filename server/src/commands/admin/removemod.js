@@ -5,17 +5,20 @@
 import * as UAC from '../utility/UAC/_info';
 
 // module main
-export async function run(core, server, socket, data) {
+export async function run({
+  core, server, socket, payload,
+}) {
   // increase rate limit chance and ignore if not admin
   if (!UAC.isAdmin(socket.level)) {
     return server.police.frisk(socket.address, 20);
   }
 
   // remove trip from config
-  core.config.mods = core.config.mods.filter((mod) => mod.trip !== data.trip);
+  // eslint-disable-next-line no-param-reassign
+  core.config.mods = core.config.mods.filter((mod) => mod.trip !== payload.trip);
 
   // find targets current connections
-  const targetMod = server.findSockets({ trip: data.trip });
+  const targetMod = server.findSockets({ trip: payload.trip });
   if (targetMod.length !== 0) {
     for (let i = 0, l = targetMod.length; i < l; i += 1) {
       // downgrade privilages
@@ -34,14 +37,14 @@ export async function run(core, server, socket, data) {
   server.reply({
     cmd: 'info',
     text: `Removed mod trip: ${
-      data.trip
+      payload.trip
     }, remember to run 'saveconfig' to make it permanent`,
   }, socket);
 
   // notify all mods
   server.broadcast({
     cmd: 'info',
-    text: `Removed mod: ${data.trip}`,
+    text: `Removed mod: ${payload.trip}`,
   }, { level: UAC.isModerator });
 
   return true;

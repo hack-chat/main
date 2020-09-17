@@ -22,9 +22,11 @@ const parseText = (text) => {
 };
 
 // module main
-export async function run(core, server, socket, data) {
+export async function run({
+  core, server, socket, payload,
+}) {
   // check user input
-  const text = parseText(data.text);
+  const text = parseText(payload.text);
 
   if (!text) {
     // lets not send objects or empty text, yea?
@@ -41,7 +43,7 @@ export async function run(core, server, socket, data) {
   }
 
   // build chat payload
-  const payload = {
+  const outgoingPayload = {
     cmd: 'chat',
     nick: socket.nick, /* @legacy */
     userid: socket.userid,
@@ -51,17 +53,17 @@ export async function run(core, server, socket, data) {
   };
 
   if (UAC.isAdmin(socket.level)) {
-    payload.admin = true;
+    outgoingPayload.admin = true;
   } else if (UAC.isModerator(socket.level)) {
-    payload.mod = true;
+    outgoingPayload.mod = true;
   }
 
   if (socket.trip) {
-    payload.trip = socket.trip; /* @legacy */
+    outgoingPayload.trip = socket.trip; /* @legacy */
   }
 
   // broadcast to channel peers
-  server.broadcast(payload, { channel: socket.channel });
+  server.broadcast(outgoingPayload, { channel: socket.channel });
 
   // stats are fun
   core.stats.increment('messages-sent');
@@ -76,7 +78,7 @@ export function initHooks(server) {
 }
 
 // checks for miscellaneous '/' based commands
-export function commandCheckIn(core, server, socket, payload) {
+export function commandCheckIn({ server, socket, payload }) {
   if (typeof payload.text !== 'string') {
     return false;
   }
@@ -93,7 +95,7 @@ export function commandCheckIn(core, server, socket, payload) {
   return payload;
 }
 
-export function finalCmdCheck(core, server, socket, payload) {
+export function finalCmdCheck({ server, socket, payload }) {
   if (typeof payload.text !== 'string') {
     return false;
   }
@@ -103,7 +105,7 @@ export function finalCmdCheck(core, server, socket, payload) {
   }
 
   if (payload.text.startsWith('//')) {
-    payload.text = payload.text.substr(1);
+    payload.text = payload.text.substr(1); // eslint-disable-line no-param-reassign
 
     return payload;
   }

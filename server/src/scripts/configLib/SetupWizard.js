@@ -1,3 +1,9 @@
+/* eslint no-bitwise: 0 */
+/* eslint global-require: 0 */
+/* eslint class-methods-use-this: 0 */
+/* eslint no-param-reassign: 0 */
+/* eslint no-console: 0 */
+
 import {
   start as _start,
   get,
@@ -8,6 +14,7 @@ import {
   * @author Marzavec ( https://github.com/marzavec )
   * @version v2.0.0
   * @license WTFPL ( http://www.wtfpl.net/txt/copying/ )
+  * @todo Convert to use the `enquirer` package instead
   */
 class SetupWizard {
   /**

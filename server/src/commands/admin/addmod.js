@@ -5,17 +5,19 @@
 import * as UAC from '../utility/UAC/_info';
 
 // module main
-export async function run(core, server, socket, data) {
+export async function run({
+  core, server, socket, payload,
+}) {
   // increase rate limit chance and ignore if not admin
   if (!UAC.isAdmin(socket.level)) {
     return server.police.frisk(socket.address, 20);
   }
 
   // add new trip to config
-  core.config.mods.push({ trip: data.trip });
+  core.config.mods.push({ trip: payload.trip });
 
   // find targets current connections
-  const newMod = server.findSockets({ trip: data.trip });
+  const newMod = server.findSockets({ trip: payload.trip });
   if (newMod.length !== 0) {
     for (let i = 0, l = newMod.length; i < l; i += 1) {
       // upgrade privilages
@@ -33,13 +35,13 @@ export async function run(core, server, socket, data) {
   // return success message
   server.reply({
     cmd: 'info',
-    text: `Added mod trip: ${data.trip}, remember to run 'saveconfig' to make it permanent`,
+    text: `Added mod trip: ${payload.trip}, remember to run 'saveconfig' to make it permanent`,
   }, socket);
 
   // notify all mods
   server.broadcast({
     cmd: 'info',
-    text: `Added mod: ${data.trip}`,
+    text: `Added mod: ${payload.trip}`,
   }, { level: UAC.isModerator });
 
   return true;

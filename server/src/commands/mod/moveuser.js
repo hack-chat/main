@@ -5,23 +5,23 @@
 import * as UAC from '../utility/UAC/_info';
 
 // module main
-export async function run(core, server, socket, data) {
+export async function run({ server, socket, payload }) {
   // increase rate limit chance and ignore if not admin or mod
   if (!UAC.isModerator(socket.level)) {
     return server.police.frisk(socket.address, 10);
   }
 
   // check user input
-  if (typeof data.nick !== 'string' || typeof data.channel !== 'string') {
+  if (typeof payload.nick !== 'string' || typeof payload.channel !== 'string') {
     return true;
   }
 
-  if (data.channel === socket.channel) {
+  if (payload.channel === socket.channel) {
     // moving them into the same channel? y u do this?
     return true;
   }
 
-  const badClients = server.findSockets({ channel: socket.channel, nick: data.nick });
+  const badClients = server.findSockets({ channel: socket.channel, nick: payload.nick });
 
   if (badClients.length === 0) {
     return server.reply({
@@ -41,7 +41,7 @@ export async function run(core, server, socket, data) {
 
   const currentNick = badClient.nick.toLowerCase();
   const userExists = server.findSockets({
-    channel: data.channel,
+    channel: payload.channel,
     nick: (targetNick) => targetNick.toLowerCase() === currentNick,
   });
 
@@ -68,8 +68,8 @@ export async function run(core, server, socket, data) {
     }
   }
 
-  // TODO: import from join module
-  const newPeerList = server.findSockets({ channel: data.channel });
+  // @todo import from join module
+  const newPeerList = server.findSockets({ channel: payload.channel });
   const moveAnnouncement = {
     cmd: 'onlineAdd',
     nick: badClient.nick,
@@ -90,12 +90,12 @@ export async function run(core, server, socket, data) {
     nicks,
   }, badClient);
 
-  badClient.channel = data.channel;
+  badClient.channel = payload.channel;
 
   server.broadcast({
     cmd: 'info',
-    text: `${badClient.nick} was moved into ?${data.channel}`,
-  }, { channel: data.channel });
+    text: `${badClient.nick} was moved into ?${payload.channel}`,
+  }, { channel: payload.channel });
 
   return true;
 }

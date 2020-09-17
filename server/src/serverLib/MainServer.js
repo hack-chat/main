@@ -1,3 +1,6 @@
+/* eslint no-bitwise: 0 */
+/* eslint no-console: 0 */
+
 import {
   Server as WsServer,
   OPEN as SocketReady,
@@ -189,10 +192,6 @@ class MainServer extends WsServer {
       * Issue #1: hard coded `cmd` check
       * Issue #2: hard coded `cmd` value checks
       */
-    if (typeof payload.cmd === 'undefined') {
-      return;
-    }
-
     if (typeof payload.cmd !== 'string') {
       return;
     }
@@ -509,7 +508,12 @@ class MainServer extends WsServer {
 
         for (let i = 0, j = hooks.length; i < j; i += 1) {
           try {
-            newPayload = hooks[i].run(this.core, this, socket, newPayload);
+            newPayload = hooks[i].run({
+              core: this.core,
+              server: this,
+              socket,
+              payload: newPayload,
+            });
           } catch (err) {
             const errText = `Hook failure, '${type}', '${command}': `;
             if (this.core.config.logErrDetailed === true) {

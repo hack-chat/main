@@ -3,7 +3,7 @@
 */
 
 // module main
-export async function run(core, server, socket) {
+export async function run({ core, server, socket }) {
   // gather connection and channel count
   let ips = {};
   let channels = {};

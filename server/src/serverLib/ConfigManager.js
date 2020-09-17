@@ -1,3 +1,5 @@
+/* eslint no-console: 0 */
+
 import dateFormat from 'dateformat';
 import {
   existsSync,

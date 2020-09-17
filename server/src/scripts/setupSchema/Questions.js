@@ -1,3 +1,6 @@
+/* eslint no-undef: 0 */
+/* eslint global-require: 0 */
+
 /**
   * This object contains Prompt ( https://www.npmjs.com/package/prompt ) style
   * questions that the SetupWizard will require an answer to. Questions are asked

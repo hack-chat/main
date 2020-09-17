@@ -20,7 +20,7 @@ const parseText = (text) => {
 };
 
 // module main
-export async function run(core, server, socket, payload) {
+export async function run({ server, socket, payload }) {
   // check user input
   let text = parseText(payload.text);
 
@@ -65,7 +65,9 @@ export function initHooks(server) {
 }
 
 // hooks chat commands checking for /me
-export function emoteCheck(core, server, socket, payload) {
+export function emoteCheck({
+  core, server, socket, payload,
+}) {
   if (typeof payload.text !== 'string') {
     return false;
   }
@@ -86,9 +88,14 @@ export function emoteCheck(core, server, socket, payload) {
     input.splice(0, 1);
     const actionText = input.join(' ');
 
-    this.run(core, server, socket, {
-      cmd: 'emote',
-      text: actionText,
+    this.run({
+      core,
+      server,
+      socket,
+      payload: {
+        cmd: 'emote',
+        text: actionText,
+      },
     });
 
     return false;

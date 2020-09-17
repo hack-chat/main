@@ -1,3 +1,5 @@
+/* eslint no-param-reassign: 0 */
+
 /*
   Description: Initial entry point, applies `channel` and `nick` to the calling socket
 */
@@ -29,7 +31,7 @@ export function parseNickname(core, data) {
     return 'Nickname must consist of up to 24 letters, numbers, and underscores';
   }
 
-  let password = data.pass || false;
+  const password = data.pass || false;
 
   if (hash(password + core.config.tripSalt) === core.config.adminTrip) {
     userInfo.uType = 'admin'; /* @legacy */
@@ -43,7 +45,7 @@ export function parseNickname(core, data) {
     userInfo.trip = hash(password + core.config.tripSalt);
   }
 
-  // TODO: disallow moderator impersonation
+  // @todo disallow moderator impersonation
   // for (const mod of core.config.mods) {
   core.config.mods.forEach((mod) => {
     if (userInfo.trip === mod.trip) {
@@ -56,7 +58,9 @@ export function parseNickname(core, data) {
 }
 
 // module main
-export async function run(core, server, socket, data) {
+export async function run({
+  core, server, socket, payload,
+}) {
   // check for spam
   if (server.police.frisk(socket.address, 3)) {
     return server.reply({
@@ -75,17 +79,17 @@ export async function run(core, server, socket, data) {
   }
 
   // check user input
-  if (typeof data.channel !== 'string' || typeof data.nick !== 'string') {
+  if (typeof payload.channel !== 'string' || typeof payload.nick !== 'string') {
     return true;
   }
 
-  const channel = data.channel.trim();
+  const channel = payload.channel.trim();
   if (!channel) {
     // must join a non-blank channel
     return true;
   }
 
-  const userInfo = this.parseNickname(core, data);
+  const userInfo = this.parseNickname(core, payload);
   if (typeof userInfo === 'string') {
     return server.reply({
       cmd: 'warn', // @todo Remove english and change to numeric id
@@ -95,7 +99,7 @@ export async function run(core, server, socket, data) {
 
   // check if the nickname already exists in the channel
   const userExists = server.findSockets({
-    channel: data.channel,
+    channel: payload.channel,
     nick: (targetNick) => targetNick.toLowerCase() === userInfo.nick.toLowerCase(),
   });
 
@@ -108,13 +112,13 @@ export async function run(core, server, socket, data) {
   }
 
   // populate final userinfo fields
-  // @TODO: this could be move into parseNickname, changing the function name to match
+  // @todo this could be move into parseNickname, changing the function name to match
   userInfo.hash = server.getSocketHash(socket);
   userInfo.userid = socket.userid;
 
-  // @TODO: place this within it's own function allowing import
+  // @todo place this within it's own function allowing import
   // prepare to notify channel peers
-  const newPeerList = server.findSockets({ channel: data.channel });
+  const newPeerList = server.findSockets({ channel: payload.channel });
   const nicks = []; /* @legacy */
   const users = [];
 
@@ -126,7 +130,7 @@ export async function run(core, server, socket, data) {
     hash: userInfo.hash,
     level: userInfo.level,
     userid: userInfo.userid,
-    channel: data.channel,
+    channel: payload.channel,
   };
 
   // send join announcement and prep online set
@@ -141,7 +145,7 @@ export async function run(core, server, socket, data) {
       hash: newPeerList[i].hash,
       level: newPeerList[i].level,
       userid: newPeerList[i].userid,
-      channel: data.channel,
+      channel: payload.channel,
       isme: false,
     });
   }
@@ -150,7 +154,7 @@ export async function run(core, server, socket, data) {
   socket.uType = userInfo.uType; /* @legacy */
   socket.nick = userInfo.nick;
   socket.trip = userInfo.trip;
-  socket.channel = data.channel; /* @legacy */
+  socket.channel = payload.channel; /* @legacy */
   socket.hash = userInfo.hash;
   socket.level = userInfo.level;
 
@@ -162,7 +166,7 @@ export async function run(core, server, socket, data) {
     hash: socket.hash,
     level: socket.level,
     userid: socket.userid,
-    channel: data.channel,
+    channel: payload.channel,
     isme: true,
   });
 
@@ -179,7 +183,7 @@ export async function run(core, server, socket, data) {
   return true;
 }
 
-export const requiredData = ['channel', 'nick'];
+export const requiredData = []; // ['channel', 'nick'];
 export const info = {
   name: 'join',
   description: 'Place calling socket into target channel with target nick & broadcast event to channel',

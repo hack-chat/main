@@ -1,3 +1,5 @@
+/* eslint no-param-reassign: 0 */
+
 /*
   Description: This module adjusts outgoing data, making it compatible with legacy clients
   Dear god this module is horrifying
@@ -6,7 +8,7 @@
 // import * as UAC from '../utility/UAC/_info';
 
 // module main
-export async function run(core, server, socket, data) {
+export async function run({ server, socket }) {
   return server.police.frisk(socket.address, 20);
 }
 
@@ -21,14 +23,14 @@ export function initHooks(server) {
 }
 
 // hook incoming join events, if session was not invoked, default proto to 1
-export function joinCheck(core, server, socket, payload) {
+export function joinCheck({ socket, payload }) {
   if (typeof socket.hcProtocol === 'undefined') {
     socket.hcProtocol = 1;
 
     const nickArray = payload.nick.split('#', 2);
     payload.nick = nickArray[0].trim();
     if (nickArray[1] && typeof payload.pass === 'undefined') {
-      payload.pass = nickArray[1];
+      payload.pass = nickArray[1]; // eslint-disable-line prefer-destructuring
     }
 
     // dunno how this happened on the legacy version
@@ -45,30 +47,30 @@ export function joinCheck(core, server, socket, payload) {
 }
 
 // if legacy client sent an invite, downgrade request
-export function inviteInCheck(core, server, socket, payload) {
+export function inviteInCheck({ server, socket, payload }) {
   if (socket.hcProtocol === 1) {
-    let targetClient = server.findSockets({ channel: socket.channel, nick: data.nick });
+    let targetClient = server.findSockets({ channel: socket.channel, nick: payload.nick });
 
     if (targetClient.length === 0) {
       server.reply({
         cmd: 'warn',
         text: 'Could not find user in that channel',
       }, socket);
-  
+
       return false;
     }
-  
+
     [targetClient] = targetClient;
-  
+
     payload.userid = targetClient.userid;
     payload.channel = socket.channel;
   }
-  
+
   return payload;
 }
 
-// 
-export function inviteOutCheck(core, server, socket, payload) {
+//
+export function inviteOutCheck({ server, socket, payload }) {
   if (socket.hcProtocol === 1) {
     payload.cmd = 'info';
     if (socket.userid === payload.from) {
@@ -89,59 +91,59 @@ export function inviteOutCheck(core, server, socket, payload) {
   return payload;
 }
 
-export function banCheck(core, server, socket, payload) {
+export function banCheck({ server, socket, payload }) {
   if (socket.hcProtocol === 1) {
-    let targetClient = server.findSockets({ channel: socket.channel, nick: data.nick });
+    let targetClient = server.findSockets({ channel: socket.channel, nick: payload.nick });
 
     if (targetClient.length === 0) {
       server.reply({
         cmd: 'warn',
         text: 'Could not find user in that channel',
       }, socket);
-  
+
       return false;
     }
-  
+
     [targetClient] = targetClient;
-  
+
     payload.userid = targetClient.userid;
     payload.channel = socket.channel;
   }
-  
+
   return payload;
 }
 
-export function dumbCheck(core, server, socket, payload) {
+export function dumbCheck({ server, socket, payload }) {
   if (socket.hcProtocol === 1) {
-    let targetClient = server.findSockets({ channel: socket.channel, nick: data.nick });
+    let targetClient = server.findSockets({ channel: socket.channel, nick: payload.nick });
 
     if (targetClient.length === 0) {
       server.reply({
         cmd: 'warn',
         text: 'Could not find user in that channel',
       }, socket);
-  
+
       return false;
     }
-  
+
     [targetClient] = targetClient;
-  
+
     payload.userid = targetClient.userid;
     payload.channel = socket.channel;
   }
-  
+
   return payload;
 }
 
-export function kickCheck(core, server, socket, payload) {
+export function kickCheck({ server, socket, payload }) {
   if (socket.hcProtocol === 1) {
     if (typeof payload.nick !== 'number') {
-      if (typeof payload.nick !== 'object' && !Array.isArray(data.nick)) {
+      if (typeof payload.nick !== 'object' && !Array.isArray(payload.nick)) {
         return true;
       }
     }
 
-    let targetClient = server.findSockets({ channel: socket.channel, nick: data.nick });
+    const targetClient = server.findSockets({ channel: socket.channel, nick: payload.nick });
 
     if (targetClient.length === 0) {
       return false;
@@ -151,10 +153,10 @@ export function kickCheck(core, server, socket, payload) {
     for (let i = 0, j = targetClient.length; i < j; i += 1) {
       payload.userid.push(targetClient[i].userid);
     }
-    
+
     payload.channel = socket.channel;
   }
-  
+
   return payload;
 }
 

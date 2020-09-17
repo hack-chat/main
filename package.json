@@ -18,14 +18,20 @@
     "clear": "pm2 flush",
     "status": "pm2 list",
     "refresh": "pm2 flush && pm2 stop pm2.config.js && pm2 delete pm2.config.js",
-    "postinstall": "cd ./server && npm install && npm run config"
+    "postinstall": "cd ./server && npm install && npm run config",
+    "lint": "eslint --ignore-path .gitignore -- ./server ",
+    "lint:fix": "eslint --ignore-path .gitignore --fix -- ./server "
   },
   "author": "Marzavec",
   "license": "WTFPL",
   "dependencies": {
     "esm": "^3.2.25",
     "http-server": "^0.12.3",
-    "pm2": "^4.4.1",
-    "react-icons": "^3.11.0"
+    "pm2": "^4.4.1"
+  },
+  "devDependencies": {
+    "eslint": "^7.9.0",
+    "eslint-config-airbnb-base": "^14.2.0",
+    "eslint-plugin-import": "^2.22.0"
   }
 }

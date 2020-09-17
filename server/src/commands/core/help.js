@@ -3,7 +3,9 @@
 */
 
 // module main
-export async function run(core, server, socket, payload) {
+export async function run({
+  core, server, socket, payload,
+}) {
   // check for spam
   if (server.police.frisk(socket.address, 2)) {
     return server.reply({
@@ -24,7 +26,9 @@ export async function run(core, server, socket, payload) {
     const categories = core.commands.categoriesList.sort();
     for (let i = 0, j = categories.length; i < j; i += 1) {
       reply += `|${categories[i].replace('../src/commands/', '').replace(/^\w/, (c) => c.toUpperCase())}:|`;
-      const catCommands = core.commands.all(categories[i]).sort((a, b) => a.info.name.localeCompare(b.info.name));
+      const catCommands = core.commands.all(categories[i]).sort(
+        (a, b) => a.info.name.localeCompare(b.info.name),
+      );
       reply += `${catCommands.map((c) => `${c.info.name}`).join(', ')}|\n`;
     }
 
@@ -40,6 +44,7 @@ export async function run(core, server, socket, payload) {
       reply += `|**Aliases:**|${typeof command.info.aliases !== 'undefined' ? command.info.aliases.join(', ') : 'None'}|\n`;
       reply += `|**Category:**|${command.info.category.replace('../src/commands/', '').replace(/^\w/, (c) => c.toUpperCase())}|\n`;
       reply += `|**Required Parameters:**|${command.requiredData || 'None'}|\n`;
+      // eslint-disable-next-line no-useless-escape
       reply += `|**Description:**|${command.info.description || '¯\_(ツ)_/¯'}|\n\n`;
       reply += `**Usage:** ${command.info.usage || command.info.name}`;
     }
@@ -60,7 +65,9 @@ export function initHooks(server) {
 }
 
 // hooks chat commands checking for /whisper
-export function helpCheck(core, server, socket, payload) {
+export function helpCheck({
+  core, server, socket, payload,
+}) {
   if (typeof payload.text !== 'string') {
     return false;
   }
@@ -68,9 +75,14 @@ export function helpCheck(core, server, socket, payload) {
   if (payload.text.startsWith('/help')) {
     const input = payload.text.substr(1).split(' ', 2);
 
-    this.run(core, server, socket, {
-      cmd: input[0],
-      command: input[1],
+    this.run({
+      core,
+      server,
+      socket,
+      payload: {
+        cmd: input[0],
+        command: input[1],
+      },
     });
 
     return false;

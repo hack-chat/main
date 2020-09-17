@@ -21,7 +21,7 @@ const formatTime = (time) => {
 };
 
 // module main
-export async function run(core, server, socket) {
+export async function run({ core, server, socket }) {
   // gather connection and channel count
   let ips = {};
   let channels = {};
@@ -63,14 +63,21 @@ export function initHooks(server) {
 }
 
 // hooks chat commands checking for /stats
-export function statsCheck(core, server, socket, payload) {
+export function statsCheck({
+  core, server, socket, payload,
+}) {
   if (typeof payload.text !== 'string') {
     return false;
   }
 
   if (payload.text.startsWith('/stats')) {
-    this.run(core, server, socket, {
-      cmd: 'morestats',
+    this.run({
+      core,
+      server,
+      socket,
+      payload: {
+        cmd: 'morestats',
+      },
     });
 
     return false;

@@ -1,3 +1,5 @@
+/* eslint no-console: 0 */
+
 /**
   * This script will be run before the package starts asking for the config data,
   * used to output a simple guide for the coming questions, or to spam some sexy

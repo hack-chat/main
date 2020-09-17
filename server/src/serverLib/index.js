@@ -1,3 +1,5 @@
+/* eslint global-require: 0 */
+
 export const CommandManager = require('./CommandManager').default;
 export const ConfigManager = require('./ConfigManager').default;
 export const ImportsManager = require('./ImportsManager').default;
