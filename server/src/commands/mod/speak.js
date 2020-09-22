@@ -26,7 +26,7 @@ export async function run({
   // check user input
   if (typeof payload.ip !== 'string' && typeof payload.hash !== 'string') {
     return server.reply({
-      cmd: 'warn', // @todo Remove english and change to numeric id
+      cmd: 'warn', // @todo Add numeric error code as `id`
       text: "hash:'targethash' or ip:'1.2.3.4' is required",
     }, socket);
   }

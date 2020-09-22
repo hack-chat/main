@@ -33,7 +33,7 @@ export async function run({ server, socket, payload }) {
   const score = text.length / 83 / 4;
   if (server.police.frisk(socket.address, score)) {
     return server.reply({
-      cmd: 'warn', // @todo Remove english and change to numeric id
+      cmd: 'warn', // @todo Add numeric error code as `id`
       text: 'You are sending too much text. Wait a moment and try again.\nPress the up arrow key to restore your last message.',
     }, socket);
   }
@@ -78,7 +78,7 @@ export function emoteCheck({
     // If there is no emote target parameter
     if (input[1] === undefined) {
       server.reply({
-        cmd: 'warn', // @todo Remove english and change to numeric id
+        cmd: 'warn', // @todo Add numeric error code as `id`
         text: 'Refer to `/help emote` for instructions on how to use this command.',
       }, socket);
 

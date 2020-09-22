@@ -1,5 +1,6 @@
 /*
   Description: Removes the target socket from the current channel and forces a join event in another
+  @deprecated This module will be removed or replaced
 */
 
 import * as UAC from '../utility/UAC/_info';
@@ -25,7 +26,7 @@ export async function run({ server, socket, payload }) {
 
   if (badClients.length === 0) {
     return server.reply({
-      cmd: 'warn', // @todo Remove english and change to numeric id
+      cmd: 'warn', // @todo Add numeric error code as `id`
       text: 'Could not find user in channel',
     }, socket);
   }
@@ -34,7 +35,7 @@ export async function run({ server, socket, payload }) {
 
   if (badClient.level >= socket.level) {
     return server.reply({
-      cmd: 'warn', // @todo Remove english and change to numeric id
+      cmd: 'warn', // @todo Add numeric error code as `id`
       text: 'Cannot move other users of the same level, how rude',
     }, socket);
   }

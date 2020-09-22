@@ -1,4 +1,3 @@
-// NOTE: this has been moved into /utility/ as _UAC.js
 /**
   * User Account Control information containing level constants
   * and simple helper functions related to users
@@ -7,6 +6,12 @@
   * @version v1.0.0
   * @license WTFPL ( http://www.wtfpl.net/txt/copying/ )
   */
+
+import {
+  getChannelSettings,
+} from './_Channels';
+
+const crypto = require('crypto');
 
 /**
   * Object defining labels for default permission ranges
@@ -115,5 +120,67 @@ export function getUserDetails(socket) {
   * @return {boolean}
   */
 export function verifyNickname(nick) {
+  if (typeof nick === 'undefined') return false;
+
   return /^[a-zA-Z0-9_]{1,24}$/.test(nick);
+}
+
+/**
+  * Hashes a user's password, returning a trip code
+  * or a blank string
+  * @public
+  * @param {string} pass User's password
+  * @param {string} config Server config object
+  * @param {string} channel Channel-level permissions check
+  * @return {string}
+  */
+export function getUserPerms(pass, config, channel) {
+  if (!pass) {
+    return {
+      trip: '',
+      level: levels.default,
+    };
+  }
+
+  const sha = crypto.createHash('sha256');
+  sha.update(pass + config.tripSalt);
+  const trip = sha.digest('base64').substr(0, 6);
+
+  // check if user is global admin
+  if (trip === config.adminTrip) {
+    return {
+      trip: 'Admin',
+      level: levels.admin,
+    };
+  }
+
+  // check if user is global mod
+  config.mods.forEach((mod) => { // eslint-disable-line consistent-return
+    if (trip === mod.trip) {
+      return {
+        trip,
+        level: levels.moderator,
+      };
+    }
+  });
+
+  const channelSettings = getChannelSettings(config, channel);
+  if (channelSettings.owned) {
+    // check if user is channel owner
+    // @todo channel ownership patch
+
+    // check if user is channel mod
+    // @todo channel ownership patch
+
+    // check if user is channel trusted
+    // @todo channel ownership patch
+  }
+
+  // check if user is global trusted
+  // @todo channel ownership patch
+
+  return {
+    trip,
+    level: levels.default,
+  };
 }

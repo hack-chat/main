@@ -11,7 +11,7 @@ export async function run({ server, socket, payload }) {
 
   // send warning to target socket
   server.reply({
-    cmd: 'warn', // @todo Remove english and change to numeric id
+    cmd: 'warn', // @todo Add numeric error code as `id`
     text: payload.text,
   }, socket);
 

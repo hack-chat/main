@@ -4,6 +4,12 @@
 */
 
 import * as UAC from '../utility/UAC/_info';
+import {
+  Errors,
+} from '../utility/_Constants';
+import {
+  findUser,
+} from '../utility/_Channels';
 
 // module main
 export async function run({
@@ -15,33 +21,38 @@ export async function run({
   }
 
   // check user input
-  if (typeof payload.userid !== 'number') {
+  if (socket.hcProtocol === 1) {
+    if (typeof payload.nick !== 'string') {
+      return true;
+    }
+
+    payload.channel = socket.channel; // eslint-disable-line no-param-reassign
+  } else if (typeof payload.userid !== 'number') {
     return true;
   }
 
   // find target user
-  let badClient = server.findSockets({ channel: socket.channel, userid: payload.userid });
-
-  if (badClient.length === 0) {
+  const targetUser = findUser(server, payload);
+  if (!targetUser) {
     return server.reply({
-      cmd: 'warn', // @todo Remove english and change to numeric id
-      text: 'Could not find user in channel',
+      cmd: 'warn',
+      text: 'Could not find user in that channel',
+      id: Errors.Global.UNKNOWN_USER,
     }, socket);
   }
-
-  [badClient] = badClient;
-  const targetNick = badClient.nick;
+  const targetNick = targetUser.nick;
 
   // i guess banning mods or admins isn't the best idea?
-  if (badClient.level >= socket.level) {
+  if (targetUser.level >= socket.level) {
     return server.reply({
-      cmd: 'warn', // @todo Remove english and change to numeric id
+      cmd: 'warn',
       text: 'Cannot ban other users of the same level, how rude',
+      id: Errors.Global.PERMISSION,
     }, socket);
   }
 
   // commit arrest record
-  server.police.arrest(badClient.address, badClient.hash);
+  server.police.arrest(targetUser.address, targetUser.hash);
 
   console.log(`${socket.nick} [${socket.trip}] banned ${targetNick} in ${socket.channel}`);
 
@@ -49,20 +60,20 @@ export async function run({
   server.broadcast({
     cmd: 'info',
     text: `Banned ${targetNick}`,
-    user: UAC.getUserDetails(badClient),
+    user: UAC.getUserDetails(targetUser),
   }, { channel: socket.channel, level: (level) => level < UAC.levels.moderator });
 
   // notify mods
   server.broadcast({
     cmd: 'info',
-    text: `${socket.nick}#${socket.trip} banned ${targetNick} in ${payload.channel}, userhash: ${badClient.hash}`,
+    text: `${socket.nick}#${socket.trip} banned ${targetNick} in ${payload.channel}, userhash: ${targetUser.hash}`,
     channel: payload.channel,
-    user: UAC.getUserDetails(badClient),
+    user: UAC.getUserDetails(targetUser),
     banner: UAC.getUserDetails(socket),
   }, { level: UAC.isModerator });
 
   // force connection closed
-  badClient.terminate();
+  targetUser.terminate();
 
   // stats are fun
   core.stats.increment('users-banned');

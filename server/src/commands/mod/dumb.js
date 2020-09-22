@@ -7,6 +7,12 @@
  */
 
 import * as UAC from '../utility/UAC/_info';
+import {
+  Errors,
+} from '../utility/_Constants';
+import {
+  findUser,
+} from '../utility/_Channels';
 
 // module constructor
 export function init(core) {
@@ -25,32 +31,37 @@ export async function run({
   }
 
   // check user input
-  if (typeof payload.userid !== 'number') {
+  if (socket.hcProtocol === 1) {
+    if (typeof payload.nick !== 'string') {
+      return true;
+    }
+
+    payload.channel = socket.channel;
+  } else if (typeof payload.userid !== 'number') {
     return true;
   }
 
   // find target user
-  let badClient = server.findSockets({ channel: payload.channel, userid: payload.userid });
-
-  if (badClient.length === 0) {
+  const targetUser = findUser(server, payload);
+  if (!targetUser) {
     return server.reply({
-      cmd: 'warn', // @todo Remove english and change to numeric id
-      text: 'Could not find user in channel',
+      cmd: 'warn',
+      text: 'Could not find user in that channel',
+      id: Errors.Global.UNKNOWN_USER,
     }, socket);
   }
 
-  [badClient] = badClient;
-
   // likely dont need this, muting mods and admins is fine
-  if (badClient.level >= socket.level) {
+  if (targetUser.level >= socket.level) {
     return server.reply({
-      cmd: 'warn', // @todo Remove english and change to numeric id
+      cmd: 'warn',
       text: 'This trick wont work on users of the same level',
+      id: Errors.Global.PERMISSION,
     }, socket);
   }
 
   // store hash in mute list
-  const record = core.muzzledHashes[badClient.hash] = {
+  const record = core.muzzledHashes[targetUser.hash] = {
     dumb: true,
   };
 
@@ -62,7 +73,7 @@ export async function run({
   // notify mods
   server.broadcast({
     cmd: 'info',
-    text: `${socket.nick}#${socket.trip} muzzled ${badClient.nick} in ${payload.channel}, userhash: ${badClient.hash}`,
+    text: `${socket.nick}#${socket.trip} muzzled ${targetUser.nick} in ${payload.channel}, userhash: ${targetUser.hash}`,
   }, { level: UAC.isModerator });
 
   return true;
@@ -129,7 +140,7 @@ export function inviteCheck({ core, socket, payload }) {
     /* const nickValid = Invite.checkNickname(payload.nick);
     if (nickValid !== null) {
       server.reply({
-        cmd: 'warn', // @todo Remove english and change to numeric id
+        cmd: 'warn', // @todo Add numeric error code as `id`
         text: nickValid,
       }, socket);
       return false;

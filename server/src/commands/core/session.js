@@ -53,6 +53,7 @@ export async function run({ server, socket }) {
   socket.sessionID = createSessionID();
   socket.hcProtocol = 2;
   socket.userid = Math.floor(Math.random() * 9999999999999);
+  socket.hash = server.getSocketHash(socket);
 
   // dispatch info
   server.reply({

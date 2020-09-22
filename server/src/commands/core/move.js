@@ -8,7 +8,7 @@ export async function run({ server, socket, payload }) {
   // check for spam
   if (server.police.frisk(socket.address, 6)) {
     return server.reply({
-      cmd: 'warn', // @todo Remove english and change to numeric id
+      cmd: 'warn', // @todo Add numeric error code as `id`
       text: 'You are changing channels too fast. Wait a moment before trying again.',
     }, socket);
   }
@@ -20,7 +20,7 @@ export async function run({ server, socket, payload }) {
 
   if (payload.channel === '') {
     return server.reply({
-      cmd: 'warn', // @todo Remove english and change to numeric id
+      cmd: 'warn', // @todo Add numeric error code as `id`
       text: 'Cannot move to an empty channel.',
     }, socket);
   }
@@ -109,7 +109,7 @@ export function moveCheck({
     // If there is no channel target parameter
     if (input[1] === undefined) {
       server.reply({
-        cmd: 'warn', // @todo Remove english and change to numeric id
+        cmd: 'warn', // @todo Add numeric error code as `id`
         text: 'Refer to `/help move` for instructions on how to use this command.',
       }, socket);
 

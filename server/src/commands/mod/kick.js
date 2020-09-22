@@ -5,6 +5,12 @@
 */
 
 import * as UAC from '../utility/UAC/_info';
+import {
+  Errors,
+} from '../utility/_Constants';
+import {
+  findUsers,
+} from '../utility/_Channels';
 
 // module main
 export async function run({
@@ -16,27 +22,28 @@ export async function run({
   }
 
   // check user input
-  if (typeof payload.userid !== 'number') {
+  if (socket.hcProtocol === 1) {
+    if (typeof payload.nick !== 'string') {
+      if (typeof payload.nick !== 'object' && !Array.isArray(payload.nick)) {
+        return true;
+      }
+    }
+
+    payload.channel = socket.channel; // eslint-disable-line no-param-reassign
+  } else if (typeof payload.userid !== 'number') {
     // @todo create multi-ban ui
     if (typeof payload.userid !== 'object' && !Array.isArray(payload.userid)) {
       return true;
     }
   }
 
-  let destChannel;
-  if (typeof payload.to === 'string' && !!payload.to.trim()) {
-    destChannel = payload.to;
-  } else {
-    destChannel = Math.random().toString(36).substr(2, 8);
-  }
-
   // find target user(s)
-  const badClients = server.findSockets({ channel: payload.channel, userid: payload.userid });
-
+  const badClients = findUsers(server, payload);
   if (badClients.length === 0) {
     return server.reply({
-      cmd: 'warn', // @todo Remove english and change to numeric id
-      text: 'Could not find user(s) in channel',
+      cmd: 'warn',
+      text: 'Could not find user(s) in that channel',
+      id: Errors.Global.UNKNOWN_USER,
     }, socket);
   }
 
@@ -45,8 +52,9 @@ export async function run({
   for (let i = 0, j = badClients.length; i < j; i += 1) {
     if (badClients[i].level >= socket.level) {
       server.reply({
-        cmd: 'warn', // @todo Remove english and change to numeric id
+        cmd: 'warn',
         text: 'Cannot kick other users with the same level, how rude',
+        id: Errors.Global.PERMISSION,
       }, socket);
     } else {
       kicked.push(badClients[i]);
@@ -57,6 +65,13 @@ export async function run({
     return true;
   }
 
+  let destChannel;
+  if (typeof payload.to === 'string' && !!payload.to.trim()) {
+    destChannel = payload.to;
+  } else {
+    destChannel = Math.random().toString(36).substr(2, 8);
+  }
+
   // Announce the kicked clients arrival in destChannel and that they were kicked
   // Before they arrive, so they don't see they got moved
   for (let i = 0; i < kicked.length; i += 1) {
@@ -64,12 +79,17 @@ export async function run({
       cmd: 'onlineAdd',
       nick: kicked[i].nick,
       trip: kicked[i].trip || 'null',
+      uType: 'user',
       hash: kicked[i].hash,
+      level: UAC.levels.default,
+      userid: kicked[i].userid,
+      channel: destChannel,
     }, { channel: destChannel });
   }
 
   // Move all kicked clients to the new channel
   for (let i = 0; i < kicked.length; i += 1) {
+    // @todo multi-channel update
     kicked[i].channel = destChannel;
 
     server.broadcast({
@@ -84,6 +104,7 @@ export async function run({
   for (let i = 0, j = kicked.length; i < j; i += 1) {
     server.broadcast({
       cmd: 'onlineRemove',
+      userid: kicked[i].userid,
       nick: kicked[i].nick,
     }, { channel: socket.channel });
   }

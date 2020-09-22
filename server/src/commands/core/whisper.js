@@ -38,7 +38,7 @@ export async function run({ server, socket, payload }) {
   const score = text.length / 83 / 4;
   if (server.police.frisk(socket.address, score)) {
     return server.reply({
-      cmd: 'warn', // @todo Remove english and change to numeric id
+      cmd: 'warn', // @todo Add numeric error code as `id`
       text: 'You are sending too much text. Wait a moment and try again.\nPress the up arrow key to restore your last message.',
     }, socket);
   }
@@ -53,7 +53,7 @@ export async function run({ server, socket, payload }) {
 
   if (targetClient.length === 0) {
     return server.reply({
-      cmd: 'warn', // @todo Remove english and change to numeric id
+      cmd: 'warn', // @todo Add numeric error code as `id`
       text: 'Could not find user in channel',
     }, socket);
   }
@@ -98,7 +98,7 @@ export function whisperCheck({
     // If there is no nickname target parameter
     if (input[1] === undefined) {
       server.reply({
-        cmd: 'warn', // @todo Remove english and change to numeric id
+        cmd: 'warn', // @todo Add numeric error code as `id`
         text: 'Refer to `/help whisper` for instructions on how to use this command.',
       }, socket);
 
@@ -126,7 +126,7 @@ export function whisperCheck({
   if (payload.text.startsWith('/r ')) {
     if (typeof socket.whisperReply === 'undefined') {
       server.reply({
-        cmd: 'warn', // @todo Remove english and change to numeric id
+        cmd: 'warn', // @todo Add numeric error code as `id`
         text: 'Cannot reply to nobody',
       }, socket);
 

@@ -37,7 +37,7 @@ export async function run({
   const score = text.length / 83 / 4;
   if (server.police.frisk(socket.address, score)) {
     return server.reply({
-      cmd: 'warn', // @todo Remove english and change to numeric id
+      cmd: 'warn', // @todo Add numeric error code as `id`
       text: 'You are sending too much text. Wait a moment and try again.\nPress the up arrow key to restore your last message.',
     }, socket);
   }
@@ -46,6 +46,7 @@ export async function run({
   const outgoingPayload = {
     cmd: 'chat',
     nick: socket.nick, /* @legacy */
+    uType: socket.uType, /* @legacy */
     userid: socket.userid,
     channel: socket.channel,
     text,
@@ -111,7 +112,7 @@ export function finalCmdCheck({ server, socket, payload }) {
   }
 
   server.reply({
-    cmd: 'warn', // @todo Remove english and change to numeric id
+    cmd: 'warn', // @todo Add numeric error code as `id`
     text: `Unknown command: ${payload.text}`,
   }, socket);
 
