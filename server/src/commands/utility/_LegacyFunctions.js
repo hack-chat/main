@@ -55,8 +55,8 @@ export function legacyLevelToLabel(level) {
 
 /**
   * Alter the outgoing payload to an `info` cmd and add/change missing props
-  * @param {object} payload Numeric level to find the label for
-  * @param {string} nick Numeric level to find the label for
+  * @param {object} payload Original payload
+  * @param {string} nick Sender nick
   * @return {object}
   */
 export function legacyInviteOut(payload, nick) {
@@ -73,8 +73,8 @@ export function legacyInviteOut(payload, nick) {
 
 /**
   * Alter the outgoing payload to an `info` cmd and add/change missing props
-  * @param {object} payload Numeric level to find the label for
-  * @param {string} nick Numeric level to find the label for
+  * @param {object} payload Original payload
+  * @param {string} nick Receiver nick
   * @return {object}
   */
 export function legacyInviteReply(payload, nick) {
