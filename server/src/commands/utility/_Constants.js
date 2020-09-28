@@ -29,6 +29,5 @@ exports.Errors = {
 
   Invite: {
     RATELIMIT: InviteErrors + 1,
-    INVALID_LENGTH: InviteErrors + 2,
   },
 };

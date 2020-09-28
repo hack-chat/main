@@ -42,13 +42,13 @@ export async function run({ server, socket, payload }) {
     text = ` ${text}`;
   }
 
-  // @todo Change `cmd` from `info` to it's own `emote` event
   const newPayload = {
-    cmd: 'info',
-    type: 'emote',
+    cmd: 'emote',
     nick: socket.nick,
+    userid: socket.userid,
     text: `@${socket.nick}${text}`,
   };
+
   if (socket.trip) {
     newPayload.trip = socket.trip;
   }
