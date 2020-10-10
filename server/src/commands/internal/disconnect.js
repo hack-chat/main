@@ -16,6 +16,7 @@ export async function run({ server, socket, payload }) {
       cmd: 'onlineRemove',
       userid: socket.userid,
       nick: socket.nick, /* @legacy */
+      channel: socket.channel, // @todo Multichannel
     }, { channel: socket.channel });
   }
 

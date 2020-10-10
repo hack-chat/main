@@ -14,6 +14,7 @@ export async function run({
     return server.reply({
       cmd: 'warn', // @todo Add numeric error code as `id`
       text: 'You are changing nicknames too fast. Wait a moment before trying again.',
+      channel: socket.channel, // @todo Multichannel
     }, socket);
   }
 
@@ -30,6 +31,7 @@ export async function run({
     return server.reply({
       cmd: 'warn', // @todo Add numeric error code as `id`
       text: 'Nickname must consist of up to 24 letters, numbers, and underscores',
+      channel: socket.channel, // @todo Multichannel
     }, socket);
   }
 
@@ -41,6 +43,7 @@ export async function run({
     return server.reply({
       cmd: 'warn', // @todo Add numeric error code as `id`
       text: 'You are not the admin, liar!',
+      channel: socket.channel, // @todo Multichannel
     }, socket);
   }
 
@@ -48,6 +51,7 @@ export async function run({
     return server.reply({
       cmd: 'warn', // @todo Add numeric error code as `id`
       text: 'You already have that name',
+      channel: socket.channel, // @todo Multichannel
     }, socket);
   }
 
@@ -65,6 +69,7 @@ export async function run({
     return server.reply({
       cmd: 'warn', // @todo Add numeric error code as `id`
       text: 'Nickname taken',
+      channel: socket.channel, // @todo Multichannel
     }, socket);
   }
 
@@ -74,6 +79,7 @@ export async function run({
   const leaveNotice = {
     cmd: 'onlineRemove',
     nick: socket.nick,
+    channel: socket.channel, // @todo Multichannel
   };
 
   const joinNotice = {
@@ -81,6 +87,7 @@ export async function run({
     nick: newNick,
     trip: socket.trip || 'null',
     hash: socket.hash,
+    channel: socket.channel, // @todo Multichannel
   };
 
   // broadcast remove event and join event with new name, this is to support legacy clients and bots
@@ -91,6 +98,7 @@ export async function run({
   server.broadcast({
     cmd: 'info',
     text: `${socket.nick} is now ${newNick}`,
+    channel: socket.channel, // @todo Multichannel
   }, { channel: socket.channel });
 
   // commit change to nickname
@@ -120,6 +128,7 @@ export function nickCheck({
       server.reply({
         cmd: 'warn', // @todo Add numeric error code as `id`
         text: 'Refer to `/help nick` for instructions on how to use this command.',
+        channel: socket.channel, // @todo Multichannel
       }, socket);
 
       return false;

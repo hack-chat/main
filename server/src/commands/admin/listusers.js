@@ -42,6 +42,7 @@ export async function run({ server, socket }) {
   server.reply({
     cmd: 'info',
     text: lines.join('\n'),
+    channel: socket.channel, // @todo Multichannel
   }, socket);
 
   return true;

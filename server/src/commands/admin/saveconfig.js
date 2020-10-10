@@ -16,6 +16,7 @@ export async function run({ core, server, socket }) {
     return server.reply({
       cmd: 'warn', // @todo Add numeric error code as `id`
       text: 'Failed to save config, check logs.',
+      channel: socket.channel, // @todo Multichannel
     }, socket);
   }
 
@@ -23,6 +24,7 @@ export async function run({ core, server, socket }) {
   server.broadcast({
     cmd: 'info',
     text: 'Config saved!',
+    channel: false, // @todo Multichannel
   }, { level: UAC.isModerator });
 
   return true;

@@ -44,6 +44,7 @@ export async function run({
       cmd: 'warn',
       text: 'Could not find user(s) in that channel',
       id: Errors.Global.UNKNOWN_USER,
+      channel: socket.channel, // @todo Multichannel
     }, socket);
   }
 
@@ -55,6 +56,7 @@ export async function run({
         cmd: 'warn',
         text: 'Cannot kick other users with the same level, how rude',
         id: Errors.Global.PERMISSION,
+        channel: socket.channel, // @todo Multichannel
       }, socket);
     } else {
       kicked.push(badClients[i]);
@@ -95,6 +97,7 @@ export async function run({
     server.broadcast({
       cmd: 'info',
       text: `${kicked[i].nick} was banished to ?${destChannel}`,
+      channel: socket.channel, // @todo Multichannel
     }, { channel: socket.channel, level: UAC.isModerator });
 
     console.log(`${socket.nick} [${socket.trip}] kicked ${kicked[i].nick} in ${socket.channel} to ${destChannel} `);
@@ -106,6 +109,7 @@ export async function run({
       cmd: 'onlineRemove',
       userid: kicked[i].userid,
       nick: kicked[i].nick,
+      channel: socket.channel, // @todo Multichannel
     }, { channel: socket.channel });
   }
 
@@ -113,6 +117,7 @@ export async function run({
   server.broadcast({
     cmd: 'info',
     text: `Kicked ${kicked.map((k) => k.nick).join(', ')}`,
+    channel: socket.channel, // @todo Multichannel
   }, { channel: socket.channel, level: (level) => level < UAC.levels.moderator });
 
   // stats are fun

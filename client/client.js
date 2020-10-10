@@ -368,6 +368,11 @@ var COMMANDS = {
 	info: function (args) {
 		args.nick = '*';
 		pushMessage(args);
+  },
+
+  emote: function (args) {
+		args.nick = '*';
+		pushMessage(args);
 	},
 
 	warn: function (args) {

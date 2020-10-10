@@ -36,6 +36,7 @@ export async function run({
   server.broadcast({
     cmd: 'info',
     text: loadResult,
+    channel: false, // @todo Multichannel, false for global
   }, { level: UAC.isModerator });
 
   return true;

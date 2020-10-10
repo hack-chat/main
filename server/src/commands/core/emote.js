@@ -35,6 +35,7 @@ export async function run({ server, socket, payload }) {
     return server.reply({
       cmd: 'warn', // @todo Add numeric error code as `id`
       text: 'You are sending too much text. Wait a moment and try again.\nPress the up arrow key to restore your last message.',
+      channel: socket.channel, // @todo Multichannel
     }, socket);
   }
 
@@ -47,6 +48,7 @@ export async function run({ server, socket, payload }) {
     nick: socket.nick,
     userid: socket.userid,
     text: `@${socket.nick}${text}`,
+    channel: socket.channel, // @todo Multichannel
   };
 
   if (socket.trip) {
@@ -80,6 +82,7 @@ export function emoteCheck({
       server.reply({
         cmd: 'warn', // @todo Add numeric error code as `id`
         text: 'Refer to `/help emote` for instructions on how to use this command.',
+        channel: socket.channel, // @todo Multichannel
       }, socket);
 
       return false;

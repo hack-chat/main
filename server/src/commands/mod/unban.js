@@ -20,6 +20,7 @@ export async function run({
     return server.reply({
       cmd: 'warn', // @todo Add numeric error code as `id`
       text: "hash:'targethash' or ip:'1.2.3.4' is required",
+      channel: socket.channel, // @todo Multichannel
     }, socket);
   }
 
@@ -47,12 +48,14 @@ export async function run({
   server.reply({
     cmd: 'info',
     text: `Unbanned ${target}`,
+    channel: socket.channel, // @todo Multichannel
   }, socket);
 
   // notify mods
   server.broadcast({
     cmd: 'info',
     text: `${socket.nick}#${socket.trip} unbanned: ${target}`,
+    channel: false, // @todo Multichannel, false for global
   }, { level: UAC.isModerator });
 
   // stats are fun

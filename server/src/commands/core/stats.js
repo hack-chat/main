@@ -25,6 +25,7 @@ export async function run({ core, server, socket }) {
   server.reply({
     cmd: 'info',
     text: `${uniqueClientCount} unique IPs in ${uniqueChannels} channels`,
+    channel: socket.channel, // @todo Multichannel
   }, socket);
 
   // stats are fun

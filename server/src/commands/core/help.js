@@ -11,6 +11,7 @@ export async function run({
     return server.reply({
       cmd: 'warn', // @todo Add numeric error code as `id`
       text: 'You are sending too much text. Wait a moment and try again.\nPress the up arrow key to restore your last message.',
+      channel: socket.channel, // @todo Multichannel
     }, socket);
   }
 
@@ -54,6 +55,7 @@ export async function run({
   server.reply({
     cmd: 'info',
     text: reply,
+    channel: socket.channel, // @todo Multichannel
   }, socket);
 
   return true;

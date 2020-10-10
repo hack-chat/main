@@ -29,6 +29,7 @@ export async function run({
       cmd: 'warn',
       text: 'You are joining channels too fast. Wait a moment and try again.',
       id: Errors.Join.RATELIMIT,
+      channel: false, // @todo Multichannel, false for global event
     }, socket);
   }
 
@@ -47,6 +48,7 @@ export async function run({
       cmd: 'warn',
       text: 'You may not join that channel.',
       id: mayJoin,
+      channel: false, // @todo Multichannel, false for global event
     }, socket);
   }
 
@@ -57,6 +59,7 @@ export async function run({
       cmd: 'warn', // @todo Remove this
       text: 'Joining more than one channel is not currently supported',
       id: Errors.Join.ALREADY_JOINED,
+      channel: false, // @todo Multichannel, false for global event
     }, socket);
   }
   // end todo
@@ -68,6 +71,7 @@ export async function run({
       cmd: 'warn',
       text: 'Nickname must consist of up to 24 letters, numbers, and underscores',
       id: Errors.Join.INVALID_NICK,
+      channel: false, // @todo Multichannel, false for global event
     }, socket);
   }
 
@@ -103,6 +107,7 @@ export async function run({
       cmd: 'warn',
       text: 'Nickname taken',
       id: Errors.Join.NAME_TAKEN,
+      channel: false, // @todo Multichannel, false for global event
     }, socket);
   }
 
@@ -146,6 +151,7 @@ export async function run({
     cmd: 'onlineSet',
     nicks, /* @legacy */
     users,
+    channel, // @todo Multichannel (?)
   }, socket);
 
   // stats are fun

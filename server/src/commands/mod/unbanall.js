@@ -24,12 +24,14 @@ export async function run({ core, server, socket }) {
   server.reply({
     cmd: 'info',
     text: 'Unbanned all ip addresses',
+    channel: socket.channel, // @todo Multichannel
   }, socket);
 
   // notify mods
   server.broadcast({
     cmd: 'info',
     text: `${socket.nick}#${socket.trip} unbanned all ip addresses`,
+    channel: false, // @todo Multichannel, false for global
   }, { level: UAC.isModerator });
 
   return true;

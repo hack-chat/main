@@ -38,6 +38,7 @@ export async function run({
       cmd: 'warn',
       text: 'Could not find user in that channel',
       id: Errors.Global.UNKNOWN_USER,
+      channel: socket.channel, // @todo Multichannel
     }, socket);
   }
   const targetNick = targetUser.nick;
@@ -48,6 +49,7 @@ export async function run({
       cmd: 'warn',
       text: 'Cannot ban other users of the same level, how rude',
       id: Errors.Global.PERMISSION,
+      channel: socket.channel, // @todo Multichannel
     }, socket);
   }
 
@@ -61,13 +63,15 @@ export async function run({
     cmd: 'info',
     text: `Banned ${targetNick}`,
     user: UAC.getUserDetails(targetUser),
+    channel: socket.channel, // @todo Multichannel
   }, { channel: socket.channel, level: (level) => level < UAC.levels.moderator });
 
   // notify mods
   server.broadcast({
     cmd: 'info',
     text: `${socket.nick}#${socket.trip} banned ${targetNick} in ${payload.channel}, userhash: ${targetUser.hash}`,
-    channel: payload.channel,
+    channel: socket.channel, // @todo Multichannel
+    inChannel: payload.channel,
     user: UAC.getUserDetails(targetUser),
     banner: UAC.getUserDetails(socket),
   }, { level: UAC.isModerator });

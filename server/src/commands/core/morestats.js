@@ -51,6 +51,7 @@ export async function run({ core, server, socket }) {
                        users-kicked: ${(core.stats.get('users-kicked') || 0)}
                        stats-requested: ${(core.stats.get('stats-requested') || 0)}
                        server-uptime: ${formatTime(process.hrtime(core.stats.get('start-time')))}`,
+    channel: socket.channel, // @todo Multichannel
   }, socket);
 
   // stats are fun

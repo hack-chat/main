@@ -48,6 +48,7 @@ export async function run({
       cmd: 'warn',
       text: 'Could not find user in that channel',
       id: Errors.Global.UNKNOWN_USER,
+      channel: socket.channel, // @todo Multichannel
     }, socket);
   }
 
@@ -57,6 +58,7 @@ export async function run({
       cmd: 'warn',
       text: 'This trick wont work on users of the same level',
       id: Errors.Global.PERMISSION,
+      channel: socket.channel, // @todo Multichannel
     }, socket);
   }
 
@@ -74,6 +76,7 @@ export async function run({
   server.broadcast({
     cmd: 'info',
     text: `${socket.nick}#${socket.trip} muzzled ${targetUser.nick} in ${payload.channel}, userhash: ${targetUser.hash}`,
+    channel: false, // @todo Multichannel, false for global
   }, { level: UAC.isModerator });
 
   return true;
@@ -100,6 +103,7 @@ export function chatCheck({
       cmd: 'chat',
       nick: socket.nick,
       text: payload.text,
+      channel: socket.channel, // @todo Multichannel
     };
 
     if (socket.trip) {
@@ -142,6 +146,7 @@ export function inviteCheck({ core, socket, payload }) {
       server.reply({
         cmd: 'warn', // @todo Add numeric error code as `id`
         text: nickValid,
+        channel: socket.channel, // @todo Multichannel
       }, socket);
       return false;
     }
@@ -177,6 +182,7 @@ export function whisperCheck({
       cmd: 'info',
       type: 'whisper',
       text: `You whispered to @${targetNick}: ${payload.text}`,
+      channel: socket.channel, // @todo Multichannel
     }, socket);
 
     // blanket "spam" protection, may expose the ratelimiting lines from

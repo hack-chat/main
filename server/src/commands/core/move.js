@@ -10,6 +10,7 @@ export async function run({ server, socket, payload }) {
     return server.reply({
       cmd: 'warn', // @todo Add numeric error code as `id`
       text: 'You are changing channels too fast. Wait a moment before trying again.',
+      channel: socket.channel, // @todo Multichannel
     }, socket);
   }
 
@@ -22,6 +23,7 @@ export async function run({ server, socket, payload }) {
     return server.reply({
       cmd: 'warn', // @todo Add numeric error code as `id`
       text: 'Cannot move to an empty channel.',
+      channel: socket.channel, // @todo Multichannel
     }, socket);
   }
 
@@ -50,12 +52,14 @@ export async function run({ server, socket, payload }) {
       server.reply({
         cmd: 'onlineRemove',
         nick: peerList[i].nick,
+        channel: socket.channel, // @todo Multichannel
       }, socket);
 
       if (socket.nick !== peerList[i].nick) {
         server.reply({
           cmd: 'onlineRemove',
           nick: socket.nick,
+          channel: socket.channel, // @todo Multichannel
         }, peerList[i]);
       }
     }
@@ -83,6 +87,7 @@ export async function run({ server, socket, payload }) {
   server.reply({
     cmd: 'onlineSet',
     nicks,
+    channel: socket.channel, // @todo Multichannel (!)
   }, socket);
 
   // commit change
@@ -111,6 +116,7 @@ export function moveCheck({
       server.reply({
         cmd: 'warn', // @todo Add numeric error code as `id`
         text: 'Refer to `/help move` for instructions on how to use this command.',
+        channel: socket.channel, // @todo Multichannel
       }, socket);
 
       return false;

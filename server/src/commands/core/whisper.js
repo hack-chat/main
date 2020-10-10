@@ -40,6 +40,7 @@ export async function run({ server, socket, payload }) {
     return server.reply({
       cmd: 'warn', // @todo Add numeric error code as `id`
       text: 'You are sending too much text. Wait a moment and try again.\nPress the up arrow key to restore your last message.',
+      channel: socket.channel, // @todo Multichannel
     }, socket);
   }
 
@@ -55,6 +56,7 @@ export async function run({ server, socket, payload }) {
     return server.reply({
       cmd: 'warn', // @todo Add numeric error code as `id`
       text: 'Could not find user in channel',
+      channel: socket.channel, // @todo Multichannel
     }, socket);
   }
 
@@ -66,6 +68,7 @@ export async function run({ server, socket, payload }) {
     from: socket.nick,
     trip: socket.trip || 'null',
     text: `${socket.nick} whispered: ${text}`,
+    channel: socket.channel, // @todo Multichannel
   }, targetClient);
 
   targetClient.whisperReply = socket.nick;
@@ -74,6 +77,7 @@ export async function run({ server, socket, payload }) {
     cmd: 'info',
     type: 'whisper',
     text: `You whispered to @${targetNick}: ${text}`,
+    channel: socket.channel, // @todo Multichannel
   }, socket);
 
   return true;
@@ -100,6 +104,7 @@ export function whisperCheck({
       server.reply({
         cmd: 'warn', // @todo Add numeric error code as `id`
         text: 'Refer to `/help whisper` for instructions on how to use this command.',
+        channel: socket.channel, // @todo Multichannel
       }, socket);
 
       return false;
@@ -128,6 +133,7 @@ export function whisperCheck({
       server.reply({
         cmd: 'warn', // @todo Add numeric error code as `id`
         text: 'Cannot reply to nobody',
+        channel: socket.channel, // @todo Multichannel
       }, socket);
 
       return false;

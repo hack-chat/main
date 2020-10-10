@@ -28,6 +28,7 @@ export async function run({
     return server.reply({
       cmd: 'warn', // @todo Add numeric error code as `id`
       text: "hash:'targethash' or ip:'1.2.3.4' is required",
+      channel: socket.channel, // @todo Multichannel
     }, socket);
   }
 
@@ -38,6 +39,7 @@ export async function run({
       return server.broadcast({
         cmd: 'info',
         text: `${socket.nick} unmuzzled all users`,
+        channel: false, // @todo Multichannel, false for global
       }, { level: UAC.isModerator });
     }
   } else if (payload.hash === '*') {
@@ -46,6 +48,7 @@ export async function run({
     return server.broadcast({
       cmd: 'info',
       text: `${socket.nick} unmuzzled all users`,
+      channel: false, // @todo Multichannel, false for global
     }, { level: UAC.isModerator });
   }
 
@@ -63,6 +66,7 @@ export async function run({
   server.broadcast({
     cmd: 'info',
     text: `${socket.nick}#${socket.trip} unmuzzled : ${target}`,
+    channel: false, // @todo Multichannel, false for global
   }, { level: UAC.isModerator });
 
   return true;

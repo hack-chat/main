@@ -15,6 +15,7 @@ export async function run({ server, socket, payload }) {
   server.broadcast({
     cmd: 'info',
     text: `Server Notice: ${payload.text}`,
+    channel: false, // @todo Multichannel, false for global
   }, {});
 
   return true;

@@ -67,6 +67,7 @@ export function legacyInviteOut(payload, nick) {
       type: 'invite',
       from: nick,
       text: `${nick} invited you to ?${payload.inviteChannel}`,
+      channel: payload.channel, // @todo Multichannel
     },
   };
 }
@@ -85,6 +86,7 @@ export function legacyInviteReply(payload, nick) {
       type: 'invite',
       from: '',
       text: `You invited ${nick} to ?${payload.inviteChannel}`,
+      channel: payload.channel, // @todo Multichannel
     },
   };
 }

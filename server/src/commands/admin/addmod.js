@@ -28,6 +28,7 @@ export async function run({
       server.send({
         cmd: 'info',
         text: 'You are now a mod.',
+        channel: newMod[i].channel, // @todo Multichannel
       }, newMod[i]);
     }
   }
@@ -36,12 +37,14 @@ export async function run({
   server.reply({
     cmd: 'info',
     text: `Added mod trip: ${payload.trip}, remember to run 'saveconfig' to make it permanent`,
+    channel: socket.channel, // @todo Multichannel
   }, socket);
 
   // notify all mods
   server.broadcast({
     cmd: 'info',
     text: `Added mod: ${payload.trip}`,
+    channel: false, // @todo Multichannel, false for global info
   }, { level: UAC.isModerator });
 
   return true;

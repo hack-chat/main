@@ -36,6 +36,7 @@ export async function run({
       cmd: 'warn',
       text: 'You are sending invites too fast. Wait a moment before trying again.',
       id: Errors.Invite.RATELIMIT,
+      channel: socket.channel, // @todo Multichannel
     }, socket);
   }
 
@@ -59,6 +60,7 @@ export async function run({
       cmd: 'warn',
       text: 'Could not find user in that channel',
       id: Errors.Global.UNKNOWN_USER,
+      channel: socket.channel, // @todo Multichannel
     }, socket);
   }
 

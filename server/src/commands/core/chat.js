@@ -39,6 +39,7 @@ export async function run({
     return server.reply({
       cmd: 'warn', // @todo Add numeric error code as `id`
       text: 'You are sending too much text. Wait a moment and try again.\nPress the up arrow key to restore your last message.',
+      channel: socket.channel, // @todo Multichannel
     }, socket);
   }
 
@@ -88,6 +89,7 @@ export function commandCheckIn({ server, socket, payload }) {
     server.reply({
       cmd: 'info',
       text: `Your hash: ${socket.hash}`,
+      channel: socket.channel, // @todo Multichannel
     }, socket);
 
     return false;
@@ -114,6 +116,7 @@ export function finalCmdCheck({ server, socket, payload }) {
   server.reply({
     cmd: 'warn', // @todo Add numeric error code as `id`
     text: `Unknown command: ${payload.text}`,
+    channel: socket.channel, // @todo Multichannel
   }, socket);
 
   return false;

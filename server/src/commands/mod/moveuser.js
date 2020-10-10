@@ -28,6 +28,7 @@ export async function run({ server, socket, payload }) {
     return server.reply({
       cmd: 'warn', // @todo Add numeric error code as `id`
       text: 'Could not find user in channel',
+      channel: socket.channel, // @todo Multichannel
     }, socket);
   }
 
@@ -37,6 +38,7 @@ export async function run({ server, socket, payload }) {
     return server.reply({
       cmd: 'warn', // @todo Add numeric error code as `id`
       text: 'Cannot move other users of the same level, how rude',
+      channel: socket.channel, // @todo Multichannel
     }, socket);
   }
 
@@ -58,12 +60,14 @@ export async function run({ server, socket, payload }) {
       server.reply({
         cmd: 'onlineRemove',
         nick: peerList[i].nick,
+        channel: socket.channel, // @todo Multichannel
       }, badClient);
 
       if (badClient.nick !== peerList[i].nick) {
         server.reply({
           cmd: 'onlineRemove',
           nick: badClient.nick,
+          channel: socket.channel, // @todo Multichannel
         }, peerList[i]);
       }
     }
@@ -89,6 +93,7 @@ export async function run({ server, socket, payload }) {
   server.reply({
     cmd: 'onlineSet',
     nicks,
+    channel: socket.channel, // @todo Multichannel (!)
   }, badClient);
 
   badClient.channel = payload.channel;
@@ -96,6 +101,7 @@ export async function run({ server, socket, payload }) {
   server.broadcast({
     cmd: 'info',
     text: `${badClient.nick} was moved into ?${payload.channel}`,
+    channel: socket.channel, // @todo Multichannel
   }, { channel: payload.channel });
 
   return true;

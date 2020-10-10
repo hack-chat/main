@@ -13,6 +13,7 @@ export async function run({ server, socket, payload }) {
   server.reply({
     cmd: 'warn', // @todo Add numeric error code as `id`
     text: payload.text,
+    channel: socket.channel || false, // @todo Multichannel
   }, socket);
 
   return true;
