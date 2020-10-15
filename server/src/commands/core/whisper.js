@@ -4,7 +4,16 @@
         and accept a `userid` rather than `nick`
 */
 
-import * as UAC from '../utility/UAC/_info';
+import {
+  findUser,
+} from '../utility/_Channels';
+import {
+  Errors,
+} from '../utility/_Constants';
+import {
+  legacyWhisperOut,
+  legacyWhisperReply,
+} from '../utility/_LegacyFunctions';
 
 // module support functions
 
@@ -26,7 +35,12 @@ const parseText = (text) => {
 
 // module main
 export async function run({ server, socket, payload }) {
-  // check user input
+  // if this is a legacy client add missing params to payload
+  if (socket.hcProtocol === 1) {
+    payload.channel = socket.channel; // eslint-disable-line no-param-reassign
+  }
+
+  // verify user input
   const text = parseText(payload.text);
 
   if (!text) {
@@ -44,41 +58,37 @@ export async function run({ server, socket, payload }) {
     }, socket);
   }
 
-  const targetNick = payload.nick;
-  if (!UAC.verifyNickname(targetNick)) {
-    return true;
-  }
-
-  // find target user
-  let targetClient = server.findSockets({ channel: socket.channel, nick: targetNick });
-
-  if (targetClient.length === 0) {
+  const targetUser = findUser(server, payload);
+  if (!targetUser) {
     return server.reply({
-      cmd: 'warn', // @todo Add numeric error code as `id`
-      text: 'Could not find user in channel',
+      cmd: 'warn',
+      text: 'Could not find user in that channel',
+      id: Errors.Global.UNKNOWN_USER,
       channel: socket.channel, // @todo Multichannel
     }, socket);
   }
 
-  [targetClient] = targetClient;
-
-  server.reply({
-    cmd: 'info',
-    type: 'whisper',
-    from: socket.nick,
-    trip: socket.trip || 'null',
-    text: `${socket.nick} whispered: ${text}`,
+  const outgoingPayload = {
+    cmd: 'whisper',
     channel: socket.channel, // @todo Multichannel
-  }, targetClient);
+    from: socket.userid,
+    to: targetUser.userid,
+    text,
+  };
 
-  targetClient.whisperReply = socket.nick;
+  // send invite notice to target client
+  if (targetUser.hcProtocol === 1) {
+    server.reply(legacyWhisperOut(outgoingPayload, socket), targetUser);
+  } else {
+    server.reply(outgoingPayload, targetUser);
+  }
 
-  server.reply({
-    cmd: 'info',
-    type: 'whisper',
-    text: `You whispered to @${targetNick}: ${text}`,
-    channel: socket.channel, // @todo Multichannel
-  }, socket);
+  // send invite notice to this client
+  if (socket.hcProtocol === 1) {
+    server.reply(legacyWhisperReply(outgoingPayload, targetUser.nick), socket);
+  } else {
+    server.reply(outgoingPayload, socket);
+  }
 
   return true;
 }
@@ -120,6 +130,7 @@ export function whisperCheck({
       socket,
       payload: {
         cmd: 'whisper',
+        channel: socket.channel, // @todo Multichannel
         nick: target,
         text: whisperText,
       },

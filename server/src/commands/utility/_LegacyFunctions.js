@@ -59,7 +59,7 @@ export function legacyLevelToLabel(level) {
   * @param {string} nick Sender nick
   * @return {object}
   */
-export function legacyInviteOut(payload, nick) {
+ export function legacyInviteOut(payload, nick) {
   return {
     ...payload,
     ...{
@@ -87,6 +87,42 @@ export function legacyInviteReply(payload, nick) {
       from: '',
       text: `You invited ${nick} to ?${payload.inviteChannel}`,
       channel: payload.channel, // @todo Multichannel
+    },
+  };
+}
+
+/**
+  * Alter the outgoing payload to a `whisper` cmd and add/change missing props
+  * @param {object} payload Original payload
+  * @param {string} nick Sender nick
+  * @return {object}
+  */
+ export function legacyWhisperOut(payload, from) {
+  return {
+    ...payload,
+    ...{
+      cmd: 'info',
+      type: 'whisper',
+      from: from.nick,
+      trip: from.trip || 'null',
+      text: `${from.nick} whispered: ${payload.text}`,
+    },
+  };
+}
+
+/**
+  * Alter the outgoing payload to a `whisper` cmd and add/change missing props
+  * @param {object} payload Original payload
+  * @param {string} nick Receiver nick
+  * @return {object}
+  */
+export function legacyWhisperReply(payload, nick) {
+  return {
+    ...payload,
+    ...{
+      cmd: 'info',
+      type: 'whisper',
+      text: `You whispered to @${nick}: ${payload.text}`,
     },
   };
 }

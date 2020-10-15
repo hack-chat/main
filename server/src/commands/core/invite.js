@@ -70,7 +70,7 @@ export async function run({
   // build invite
   const outgoingPayload = {
     cmd: 'invite',
-    channel: socket.channel,
+    channel: socket.channel, // @todo Multichannel
     from: socket.userid,
     to: targetUser.userid,
     inviteChannel: channel,
