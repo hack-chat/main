@@ -14,7 +14,7 @@ const createSessionID = () => {
 };
 
 // module main
-export async function run({ server, socket }) {
+export async function run({ server, socket, payload }) {
   // gather connection and channel count
   let ips = {};
   let channels = {};
@@ -54,6 +54,7 @@ export async function run({ server, socket }) {
   socket.hcProtocol = 2;
   socket.userid = Math.floor(Math.random() * 9999999999999);
   socket.hash = server.getSocketHash(socket);
+  socket.isBot = payload.isBot || false;
 
   // dispatch info
   server.reply({

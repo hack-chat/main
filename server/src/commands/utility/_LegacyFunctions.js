@@ -19,8 +19,9 @@ export function upgradeLegacyJoin(server, socket, payload) {
   // `join` is the legacy entry point, so apply protocol version
   socket.hcProtocol = 1;
 
-  // this would have been applied in the `session` module, apply it now
+  // these would have been applied in the `session` module, apply it now
   socket.hash = server.getSocketHash(socket);
+  socket.isBot = false;
 
   // pull the password from the nick
   const nickArray = payload.nick.split('#', 2);

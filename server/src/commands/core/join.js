@@ -131,6 +131,7 @@ export async function run({
       userid: newPeerList[i].userid,
       channel,
       isme: false,
+      isBot: newPeerList[i].isBot,
     });
   }
 
@@ -144,7 +145,7 @@ export async function run({
   // socket.channels.push(channel);
 
   nicks.push(userInfo.nick); /* @legacy */
-  users.push({ ...{ isme: true }, ...userInfo });
+  users.push({ ...{ isme: true, isBot: socket.isBot }, ...userInfo });
 
   // reply with channel peer list
   server.reply({
