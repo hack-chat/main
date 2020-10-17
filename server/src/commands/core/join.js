@@ -65,8 +65,7 @@ export async function run({
   // end todo
 
   // validates the user input for `nick`
-  const validName = verifyNickname(nick, socket);
-  if (validName !== true) {
+  if (verifyNickname(nick, socket) !== true) {
     return server.reply({
       cmd: 'warn',
       text: 'Nickname must consist of up to 24 letters, numbers, and underscores',
