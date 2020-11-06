@@ -22,6 +22,7 @@ export function upgradeLegacyJoin(server, socket, payload) {
   // these would have been applied in the `session` module, apply it now
   socket.hash = server.getSocketHash(socket);
   socket.isBot = false;
+  socket.color = false;
 
   // pull the password from the nick
   const nickArray = payload.nick.split('#', 2);

@@ -4,17 +4,22 @@
   Description: Allows calling client to change their current nickname
 */
 
-import * as UAC from '../utility/UAC/_info';
+import {
+  verifyNickname,
+  getUserDetails,
+} from '../utility/_UAC';
 
 // module main
 export async function run({
   core, server, socket, payload,
 }) {
+  const channel = socket.channel;
+
   if (server.police.frisk(socket.address, 6)) {
     return server.reply({
       cmd: 'warn', // @todo Add numeric error code as `id`
       text: 'You are changing nicknames too fast. Wait a moment before trying again.',
-      channel: socket.channel, // @todo Multichannel
+      channel, // @todo Multichannel
     }, socket);
   }
 
@@ -27,11 +32,11 @@ export async function run({
 
   // make sure requested nickname meets standards
   const newNick = payload.nick.trim();
-  if (!UAC.verifyNickname(newNick)) {
+  if (!verifyNickname(newNick)) {
     return server.reply({
       cmd: 'warn', // @todo Add numeric error code as `id`
       text: 'Nickname must consist of up to 24 letters, numbers, and underscores',
-      channel: socket.channel, // @todo Multichannel
+      channel, // @todo Multichannel
     }, socket);
   }
 
@@ -43,7 +48,7 @@ export async function run({
     return server.reply({
       cmd: 'warn', // @todo Add numeric error code as `id`
       text: 'You are not the admin, liar!',
-      channel: socket.channel, // @todo Multichannel
+      channel, // @todo Multichannel
     }, socket);
   }
 
@@ -51,13 +56,13 @@ export async function run({
     return server.reply({
       cmd: 'warn', // @todo Add numeric error code as `id`
       text: 'You already have that name',
-      channel: socket.channel, // @todo Multichannel
+      channel, // @todo Multichannel
     }, socket);
   }
 
   // find any sockets that have the same nickname
   const userExists = server.findSockets({
-    channel: socket.channel,
+    channel,
     nick: (targetNick) => targetNick.toLowerCase() === newNick.toLowerCase()
       // Allow them to rename themselves to a different case
       && targetNick != previousNick,
@@ -69,37 +74,57 @@ export async function run({
     return server.reply({
       cmd: 'warn', // @todo Add numeric error code as `id`
       text: 'Nickname taken',
-      channel: socket.channel, // @todo Multichannel
+      channel, // @todo Multichannel
     }, socket);
   }
 
-  // build join and leave notices
-  // @todo this is a legacy client holdover, name changes in the future will
-  //       have thieir own event
+  // build update notice with new nickname
+  const updateNotice = {
+    ...getUserDetails(socket),
+    ...{
+      cmd: 'updateUser',
+      nick: newNick,
+      channel, // @todo Multichannel
+    }
+  };
+
+  // build join and leave notices for legacy clients
   const leaveNotice = {
     cmd: 'onlineRemove',
+    userid: socket.userid,
     nick: socket.nick,
-    channel: socket.channel, // @todo Multichannel
+    channel, // @todo Multichannel
   };
 
   const joinNotice = {
-    cmd: 'onlineAdd',
-    nick: newNick,
-    trip: socket.trip || 'null',
-    hash: socket.hash,
-    channel: socket.channel, // @todo Multichannel
+    ...getUserDetails(socket),
+    ...{
+      cmd: 'onlineAdd',
+      nick: newNick,
+      channel, // @todo Multichannel
+    },
   };
 
-  // broadcast remove event and join event with new name, this is to support legacy clients and bots
-  server.broadcast(leaveNotice, { channel: socket.channel });
-  server.broadcast(joinNotice, { channel: socket.channel });
+  // gather channel peers
+  const peerList = server.findSockets({ channel });
+  for (let i = 0, l = peerList.length; i < l; i += 1) {
+    if (peerList[i].hcProtocol === 1) {
+      // send join/leave to legacy clients
+      server.send(leaveNotice, peerList[i]);
+      server.send(joinNotice, peerList[i]);
+    } else {
+      // send update info
+      // @todo this should be sent to every channel the client is in
+      server.send(updateNotice, peerList[i]);
+    }
+  }
 
   // notify channel that the user has changed their name
   server.broadcast({
     cmd: 'info',
     text: `${socket.nick} is now ${newNick}`,
-    channel: socket.channel, // @todo Multichannel
-  }, { channel: socket.channel });
+    channel, // @todo Multichannel
+  }, { channel });
 
   // commit change to nickname
   socket.nick = newNick; // eslint-disable-line no-param-reassign

@@ -55,6 +55,7 @@ export async function run({ server, socket, payload }) {
   socket.userid = Math.floor(Math.random() * 9999999999999);
   socket.hash = server.getSocketHash(socket);
   socket.isBot = payload.isBot || false;
+  socket.color = false;
 
   // dispatch info
   server.reply({

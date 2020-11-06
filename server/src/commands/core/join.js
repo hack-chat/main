@@ -4,7 +4,6 @@
   Description: Adds requested channel into the calling clients "subscribed channels"
 */
 
-// import * as UAC from '../utility/UAC/_info';
 import {
   canJoinChannel,
 } from '../utility/_Channels';
@@ -18,6 +17,7 @@ import {
 import {
   verifyNickname,
   getUserPerms,
+  getUserDetails,
 } from '../utility/_UAC';
 
 // module main
@@ -76,6 +76,7 @@ export async function run({
 
   // get trip and level
   const { trip, level } = getUserPerms(pass, core.config, channel);
+  
   // store the user values
   const userInfo = {
     nick,
@@ -84,6 +85,8 @@ export async function run({
     hash: socket.hash,
     level,
     userid: socket.userid,
+    isBot: socket.isBot,
+    color: socket.color,
     channel,
   };
 
@@ -119,18 +122,14 @@ export async function run({
   // send join announcement and prep online set reply
   for (let i = 0, l = newPeerList.length; i < l; i += 1) {
     server.reply(joinAnnouncement, newPeerList[i]);
+    
     nicks.push(newPeerList[i].nick); /* @legacy */
-
     users.push({
-      nick: newPeerList[i].nick,
-      trip: newPeerList[i].trip,
-      uType: newPeerList[i].uType, /* @legacy */
-      hash: newPeerList[i].hash,
-      level: newPeerList[i].level,
-      userid: newPeerList[i].userid,
-      channel,
-      isme: false,
-      isBot: newPeerList[i].isBot,
+      ...{
+        channel,
+        isme: false,
+      },
+      ...getUserDetails(newPeerList[i]),
     });
   }
 

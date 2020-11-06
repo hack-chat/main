@@ -2,6 +2,11 @@
   Description: Changes the current channel of the calling socket
   @deprecated This module will be removed or replaced
 */
+import {
+  verifyNickname,
+  getUserPerms,
+  getUserDetails,
+} from '../utility/_UAC';
 
 // module main
 export async function run({ server, socket, payload }) {
@@ -27,7 +32,7 @@ export async function run({ server, socket, payload }) {
     }, socket);
   }
 
-  if (payload.channel === socket.channel) {
+  if (payload.channel === socket.channel) { // @todo Multichannel update
     // they are trying to rejoin the channel
     return true;
   }
@@ -52,41 +57,61 @@ export async function run({ server, socket, payload }) {
       server.reply({
         cmd: 'onlineRemove',
         nick: peerList[i].nick,
+        userid: peerList[i].userid,
         channel: socket.channel, // @todo Multichannel
       }, socket);
 
-      if (socket.nick !== peerList[i].nick) {
+      if (socket.userid !== peerList[i].userid) {
         server.reply({
           cmd: 'onlineRemove',
           nick: socket.nick,
+          userid: socket.userid,
           channel: socket.channel, // @todo Multichannel
         }, peerList[i]);
       }
     }
   }
 
-  // @todo import function from join module
   // broadcast join notice to new peers
   const newPeerList = server.findSockets({ channel: payload.channel });
   const moveAnnouncement = {
-    cmd: 'onlineAdd',
-    nick: socket.nick,
-    trip: socket.trip || 'null',
-    hash: socket.hash,
+    ...{
+      cmd: 'onlineAdd',
+      channel: payload.channel, // @todo Multichannel
+    },
+    ...getUserDetails(socket),
   };
+
   const nicks = [];
+  const users = [];
 
   for (let i = 0, l = newPeerList.length; i < l; i += 1) {
     server.reply(moveAnnouncement, newPeerList[i]);
-    nicks.push(newPeerList[i].nick);
+
+    nicks.push(newPeerList[i].nick); /* @legacy */
+    users.push({
+      ...{
+        channel: payload.channel,
+        isme: false,
+      },
+      ...getUserDetails(newPeerList[i]),
+    });
   }
 
-  nicks.push(socket.nick);
+  nicks.push(socket.nick); /* @legacy */
+  users.push({
+    ...{
+      channel: payload.channel,
+      isme: true,
+    },
+    ...getUserDetails(socket)
+  });
 
   // reply with new user list
   server.reply({
     cmd: 'onlineSet',
     nicks,
+    users,
     channel: socket.channel, // @todo Multichannel (!)
   }, socket);
 

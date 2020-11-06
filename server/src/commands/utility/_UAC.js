@@ -104,12 +104,14 @@ export function isTrustedUser(level) {
   */
 export function getUserDetails(socket) {
   return {
-    uType: socket.uType,
     nick: socket.nick,
-    trip: socket.trip || 'null',
+    trip: socket.trip || '',
+    uType: socket.uType,
     hash: socket.hash,
     level: socket.level,
     userid: socket.userid,
+    isBot: socket.isBot,
+    color: socket.color,
   };
 }
 
@@ -154,13 +156,12 @@ export function getUserPerms(pass, config, channel) {
     };
   }
 
+  let level = levels.default;
+
   // check if user is global mod
   config.mods.forEach((mod) => { // eslint-disable-line consistent-return
     if (trip === mod.trip) {
-      return {
-        trip,
-        level: levels.moderator,
-      };
+      level = levels.moderator;
     }
   });
 
@@ -181,6 +182,6 @@ export function getUserPerms(pass, config, channel) {
 
   return {
     trip,
-    level: levels.default,
+    level,
   };
 }

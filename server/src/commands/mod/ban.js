@@ -3,7 +3,11 @@
   Description: Adds the target socket's ip to the ratelimiter
 */
 
-import * as UAC from '../utility/UAC/_info';
+import {
+  isModerator,
+  getUserDetails,
+  levels,
+} from '../utility/_UAC';
 import {
   Errors,
 } from '../utility/_Constants';
@@ -16,7 +20,7 @@ export async function run({
   core, server, socket, payload,
 }) {
   // increase rate limit chance and ignore if not admin or mod
-  if (!UAC.isModerator(socket.level)) {
+  if (!isModerator(socket.level)) {
     return server.police.frisk(socket.address, 10);
   }
 
@@ -62,9 +66,9 @@ export async function run({
   server.broadcast({
     cmd: 'info',
     text: `Banned ${targetNick}`,
-    user: UAC.getUserDetails(targetUser),
+    user: getUserDetails(targetUser),
     channel: socket.channel, // @todo Multichannel
-  }, { channel: socket.channel, level: (level) => level < UAC.levels.moderator });
+  }, { channel: socket.channel, level: (level) => level < levels.moderator });
 
   // notify mods
   server.broadcast({
@@ -72,9 +76,9 @@ export async function run({
     text: `${socket.nick}#${socket.trip} banned ${targetNick} in ${payload.channel}, userhash: ${targetUser.hash}`,
     channel: socket.channel, // @todo Multichannel
     inChannel: payload.channel,
-    user: UAC.getUserDetails(targetUser),
-    banner: UAC.getUserDetails(socket),
-  }, { level: UAC.isModerator });
+    user: getUserDetails(targetUser),
+    banner: getUserDetails(socket),
+  }, { level: isModerator });
 
   // force connection closed
   targetUser.terminate();

@@ -2,14 +2,19 @@
   Description: Adds the target trip to the mod list then elevates the uType
 */
 
-import * as UAC from '../utility/UAC/_info';
+import {
+  isAdmin,
+  isModerator,
+  levels,
+  getUserDetails,
+} from '../utility/_UAC';
 
 // module main
 export async function run({
   core, server, socket, payload,
 }) {
   // increase rate limit chance and ignore if not admin
-  if (!UAC.isAdmin(socket.level)) {
+  if (!isAdmin(socket.level)) {
     return server.police.frisk(socket.address, 20);
   }
 
@@ -19,10 +24,20 @@ export async function run({
   // find targets current connections
   const newMod = server.findSockets({ trip: payload.trip });
   if (newMod.length !== 0) {
+    // build update notice with new privileges
+    const updateNotice = {
+      ...getUserDetails(newMod[0]),
+      ...{
+        cmd: 'updateUser',
+        uType: 'mod', // @todo use legacyLevelToLabel from _LegacyFunctions.js
+        level: levels.moderator,
+      },
+    };
+
     for (let i = 0, l = newMod.length; i < l; i += 1) {
       // upgrade privilages
-      newMod[i].uType = 'mod';
-      newMod[i].level = UAC.levels.moderator;
+      newMod[i].uType = 'mod'; // @todo use legacyLevelToLabel from _LegacyFunctions.js
+      newMod[i].level = levels.moderator;
 
       // inform new mod
       server.send({
@@ -30,6 +45,14 @@ export async function run({
         text: 'You are now a mod.',
         channel: newMod[i].channel, // @todo Multichannel
       }, newMod[i]);
+
+      // notify channel
+      server.broadcast({
+        ...updateNotice,
+        ...{
+          channel: newMod[i].channel,
+        },
+      }, { channel: newMod[i].channel });
     }
   }
 
@@ -45,7 +68,7 @@ export async function run({
     cmd: 'info',
     text: `Added mod: ${payload.trip}`,
     channel: false, // @todo Multichannel, false for global info
-  }, { level: UAC.isModerator });
+  }, { level: isModerator });
 
   return true;
 }

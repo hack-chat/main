@@ -5,7 +5,9 @@
  * Author: simple
  */
 
-import * as UAC from '../utility/UAC/_info';
+import {
+  isModerator,
+} from '../utility/_UAC';
 
 // module constructor
 export function init(core) {
@@ -19,7 +21,7 @@ export async function run({
   core, server, socket, payload,
 }) {
   // increase rate limit chance and ignore if not admin or mod
-  if (!UAC.isModerator(socket.level)) {
+  if (!isModerator(socket.level)) {
     return server.police.frisk(socket.address, 10);
   }
 
@@ -40,7 +42,7 @@ export async function run({
         cmd: 'info',
         text: `${socket.nick} unmuzzled all users`,
         channel: false, // @todo Multichannel, false for global
-      }, { level: UAC.isModerator });
+      }, { level: isModerator });
     }
   } else if (payload.hash === '*') {
     core.muzzledHashes = {};
@@ -49,7 +51,7 @@ export async function run({
       cmd: 'info',
       text: `${socket.nick} unmuzzled all users`,
       channel: false, // @todo Multichannel, false for global
-    }, { level: UAC.isModerator });
+    }, { level: isModerator });
   }
 
   // find target & remove mute status
@@ -67,7 +69,7 @@ export async function run({
     cmd: 'info',
     text: `${socket.nick}#${socket.trip} unmuzzled : ${target}`,
     channel: false, // @todo Multichannel, false for global
-  }, { level: UAC.isModerator });
+  }, { level: isModerator });
 
   return true;
 }

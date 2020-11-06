@@ -6,7 +6,9 @@
  * Author: simple
  */
 
-import * as UAC from '../utility/UAC/_info';
+import {
+  isModerator,
+} from '../utility/_UAC';
 import {
   Errors,
 } from '../utility/_Constants';
@@ -26,7 +28,7 @@ export async function run({
   core, server, socket, payload,
 }) {
   // increase rate limit chance and ignore if not admin or mod
-  if (!UAC.isModerator(socket.level)) {
+  if (!isModerator(socket.level)) {
     return server.police.frisk(socket.address, 10);
   }
 
@@ -77,7 +79,7 @@ export async function run({
     cmd: 'info',
     text: `${socket.nick}#${socket.trip} muzzled ${targetUser.nick} in ${payload.channel}, userhash: ${targetUser.hash}`,
     channel: false, // @todo Multichannel, false for global
-  }, { level: UAC.isModerator });
+  }, { level: isModerator });
 
   return true;
 }

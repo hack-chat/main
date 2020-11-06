@@ -2,14 +2,18 @@
   Description: Removes target trip from the config as a mod and downgrades the socket type
 */
 
-import * as UAC from '../utility/UAC/_info';
+import {
+  isAdmin,
+  isModerator,
+  levels,
+} from '../utility/_UAC';
 
 // module main
 export async function run({
   core, server, socket, payload,
 }) {
   // increase rate limit chance and ignore if not admin
-  if (!UAC.isAdmin(socket.level)) {
+  if (!isAdmin(socket.level)) {
     return server.police.frisk(socket.address, 20);
   }
 
@@ -23,7 +27,7 @@ export async function run({
     for (let i = 0, l = targetMod.length; i < l; i += 1) {
       // downgrade privilages
       targetMod[i].uType = 'user';
-      targetMod[i].level = UAC.levels.default;
+      targetMod[i].level = levels.default;
 
       // inform ex-mod
       server.send({
@@ -48,7 +52,7 @@ export async function run({
     cmd: 'info',
     text: `Removed mod: ${payload.trip}`,
     channel: false, // @todo Multichannel, false for global
-  }, { level: UAC.isModerator });
+  }, { level: isModerator });
 
   return true;
 }

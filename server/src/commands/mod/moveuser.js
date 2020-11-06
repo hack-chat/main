@@ -3,12 +3,15 @@
   @deprecated This module will be removed or replaced
 */
 
-import * as UAC from '../utility/UAC/_info';
+import {
+  isModerator,
+  getUserDetails,
+} from '../utility/_UAC';
 
 // module main
 export async function run({ server, socket, payload }) {
   // increase rate limit chance and ignore if not admin or mod
-  if (!UAC.isModerator(socket.level)) {
+  if (!isModerator(socket.level)) {
     return server.police.frisk(socket.address, 10);
   }
 
@@ -59,6 +62,7 @@ export async function run({ server, socket, payload }) {
     for (let i = 0, l = peerList.length; i < l; i += 1) {
       server.reply({
         cmd: 'onlineRemove',
+        userid: peerList[i].userid,
         nick: peerList[i].nick,
         channel: socket.channel, // @todo Multichannel
       }, badClient);
@@ -66,6 +70,7 @@ export async function run({ server, socket, payload }) {
       if (badClient.nick !== peerList[i].nick) {
         server.reply({
           cmd: 'onlineRemove',
+          userid: badClient.userid,
           nick: badClient.nick,
           channel: socket.channel, // @todo Multichannel
         }, peerList[i]);
@@ -73,27 +78,43 @@ export async function run({ server, socket, payload }) {
     }
   }
 
-  // @todo import from join module
+
   const newPeerList = server.findSockets({ channel: payload.channel });
   const moveAnnouncement = {
-    cmd: 'onlineAdd',
-    nick: badClient.nick,
-    trip: badClient.trip || 'null',
-    hash: server.getSocketHash(badClient),
+    ...getUserDetails(badClient),
+    ...{
+      cmd: 'onlineAdd',
+      channel: payload.channel, // @todo Multichannel
+    },
   };
   const nicks = [];
-
+  const users = [];
   for (let i = 0, l = newPeerList.length; i < l; i += 1) {
     server.reply(moveAnnouncement, newPeerList[i]);
-    nicks.push(newPeerList[i].nick);
+
+    nicks.push(newPeerList[i].nick); /* @legacy */
+    users.push({
+      ...{
+        channel,
+        isme: false,
+      },
+      ...getUserDetails(newPeerList[i]),
+    });
   }
 
-  nicks.push(badClient.nick);
+  nicks.push(badClient.nick); /* @legacy */
+  users.push({
+    ...{
+      isme: true,
+    },
+    ...getUserDetails(badClient),
+  });
 
   server.reply({
     cmd: 'onlineSet',
-    nicks,
-    channel: socket.channel, // @todo Multichannel (!)
+    nicks, /* @legacy */
+    users,
+    channel, // @todo Multichannel (?)
   }, badClient);
 
   badClient.channel = payload.channel;
@@ -101,7 +122,7 @@ export async function run({ server, socket, payload }) {
   server.broadcast({
     cmd: 'info',
     text: `${badClient.nick} was moved into ?${payload.channel}`,
-    channel: socket.channel, // @todo Multichannel
+    channel: payload.channel, // @todo Multichannel
   }, { channel: payload.channel });
 
   return true;

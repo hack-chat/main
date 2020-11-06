@@ -4,12 +4,14 @@
   Description: Clears all bans and ratelimits
 */
 
-import * as UAC from '../utility/UAC/_info';
+import {
+  isModerator,
+} from '../utility/_UAC';
 
 // module main
 export async function run({ core, server, socket }) {
   // increase rate limit chance and ignore if not admin or mod
-  if (!UAC.isModerator(socket.level)) {
+  if (!isModerator(socket.level)) {
     return server.police.frisk(socket.address, 10);
   }
 
@@ -32,7 +34,7 @@ export async function run({ core, server, socket }) {
     cmd: 'info',
     text: `${socket.nick}#${socket.trip} unbanned all ip addresses`,
     channel: false, // @todo Multichannel, false for global
-  }, { level: UAC.isModerator });
+  }, { level: isModerator });
 
   return true;
 }

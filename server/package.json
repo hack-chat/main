@@ -18,6 +18,7 @@
   "author": "Marzavec",
   "license": "WTFPL",
   "dependencies": {
+    "ascii-captcha": "0.0.3",
     "chalk": "^3.0.0",
     "common-tags": "^1.8.0",
     "dateformat": "^3.0.3",

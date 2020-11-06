@@ -4,14 +4,16 @@
   Description: Removes a target ip from the ratelimiter
 */
 
-import * as UAC from '../utility/UAC/_info';
+import {
+  isModerator,
+} from '../utility/_UAC';
 
 // module main
 export async function run({
   core, server, socket, payload,
 }) {
   // increase rate limit chance and ignore if not admin or mod
-  if (!UAC.isModerator(socket.level)) {
+  if (!isModerator(socket.level)) {
     return server.police.frisk(socket.address, 10);
   }
 
@@ -56,7 +58,7 @@ export async function run({
     cmd: 'info',
     text: `${socket.nick}#${socket.trip} unbanned: ${target}`,
     channel: false, // @todo Multichannel, false for global
-  }, { level: UAC.isModerator });
+  }, { level: isModerator });
 
   // stats are fun
   core.stats.decrement('users-banned');

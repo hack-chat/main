@@ -90,6 +90,8 @@ export async function run({ server, socket, payload }) {
     server.reply(outgoingPayload, socket);
   }
 
+  targetUser.whisperReply = socket.nick;
+
   return true;
 }
 
@@ -161,6 +163,7 @@ export function whisperCheck({
       payload: {
         cmd: 'whisper',
         nick: socket.whisperReply,
+        channel: socket.channel, // @todo Multichannel
         text: whisperText,
       },
     });

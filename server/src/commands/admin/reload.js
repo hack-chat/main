@@ -2,14 +2,17 @@
   Description: Clears and resets the command modules, outputting any errors
 */
 
-import * as UAC from '../utility/UAC/_info';
+import {
+  isAdmin,
+  isModerator,
+} from '../utility/_UAC';
 
 // module main
 export async function run({
   core, server, socket, payload,
 }) {
   // increase rate limit chance and ignore if not admin
-  if (!UAC.isAdmin(socket.level)) {
+  if (!isAdmin(socket.level)) {
     return server.police.frisk(socket.address, 20);
   }
 
@@ -37,7 +40,7 @@ export async function run({
     cmd: 'info',
     text: loadResult,
     channel: false, // @todo Multichannel, false for global
-  }, { level: UAC.isModerator });
+  }, { level: isModerator });
 
   return true;
 }

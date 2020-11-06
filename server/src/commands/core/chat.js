@@ -2,7 +2,10 @@
   Description: Rebroadcasts any `text` to all clients in a `channel`
 */
 
-import * as UAC from '../utility/UAC/_info';
+import {
+  isAdmin,
+  isModerator,
+} from '../utility/_UAC';
 
 // module support functions
 const parseText = (text) => {
@@ -54,14 +57,18 @@ export async function run({
     level: socket.level,
   };
 
-  if (UAC.isAdmin(socket.level)) {
+  if (isAdmin(socket.level)) {
     outgoingPayload.admin = true;
-  } else if (UAC.isModerator(socket.level)) {
+  } else if (isModerator(socket.level)) {
     outgoingPayload.mod = true;
   }
 
   if (socket.trip) {
     outgoingPayload.trip = socket.trip; /* @legacy */
+  }
+
+  if (socket.color) {
+    outgoingPayload.color = socket.color;
   }
 
   // broadcast to channel peers

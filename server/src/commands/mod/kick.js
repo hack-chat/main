@@ -4,7 +4,11 @@
   Description: Forces a change on the target(s) socket's channel, then broadcasts event
 */
 
-import * as UAC from '../utility/UAC/_info';
+import {
+  isModerator,
+  levels,
+  getUserDetails,
+} from '../utility/_UAC';
 import {
   Errors,
 } from '../utility/_Constants';
@@ -17,7 +21,7 @@ export async function run({
   core, server, socket, payload,
 }) {
   // increase rate limit chance and ignore if not admin or mod
-  if (!UAC.isModerator(socket.level)) {
+  if (!isModerator(socket.level)) {
     return server.police.frisk(socket.address, 10);
   }
 
@@ -76,17 +80,15 @@ export async function run({
 
   // Announce the kicked clients arrival in destChannel and that they were kicked
   // Before they arrive, so they don't see they got moved
-  for (let i = 0; i < kicked.length; i += 1) {
-    server.broadcast({
+  const moveAnnouncement = {
+    ...getUserDetails(socket),
+    ...{
       cmd: 'onlineAdd',
-      nick: kicked[i].nick,
-      trip: kicked[i].trip || 'null',
-      uType: 'user',
-      hash: kicked[i].hash,
-      level: UAC.levels.default,
-      userid: kicked[i].userid,
-      channel: destChannel,
-    }, { channel: destChannel });
+      channel: destChannel, // @todo Multichannel
+    },
+  };
+  for (let i = 0; i < kicked.length; i += 1) {
+    server.broadcast(moveAnnouncement, { channel: destChannel });
   }
 
   // Move all kicked clients to the new channel
@@ -98,7 +100,7 @@ export async function run({
       cmd: 'info',
       text: `${kicked[i].nick} was banished to ?${destChannel}`,
       channel: socket.channel, // @todo Multichannel
-    }, { channel: socket.channel, level: UAC.isModerator });
+    }, { channel: socket.channel, level: isModerator });
 
     console.log(`${socket.nick} [${socket.trip}] kicked ${kicked[i].nick} in ${socket.channel} to ${destChannel} `);
   }
@@ -118,7 +120,7 @@ export async function run({
     cmd: 'info',
     text: `Kicked ${kicked.map((k) => k.nick).join(', ')}`,
     channel: socket.channel, // @todo Multichannel
-  }, { channel: socket.channel, level: (level) => level < UAC.levels.moderator });
+  }, { channel: socket.channel, level: (level) => level < levels.moderator });
 
   // stats are fun
   core.stats.increment('users-kicked', kicked.length);

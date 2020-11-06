@@ -6,12 +6,14 @@
   Description: Outputs all current channels and their user nicks
 */
 
-import * as UAC from '../utility/UAC/_info';
+import {
+  isAdmin,
+} from '../utility/_UAC';
 
 // module main
 export async function run({ server, socket }) {
   // increase rate limit chance and ignore if not admin
-  if (!UAC.isAdmin(socket.level)) {
+  if (!isAdmin(socket.level)) {
     return server.police.frisk(socket.address, 20);
   }
 
