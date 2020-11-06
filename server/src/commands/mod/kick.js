@@ -80,15 +80,14 @@ export async function run({
 
   // Announce the kicked clients arrival in destChannel and that they were kicked
   // Before they arrive, so they don't see they got moved
-  const moveAnnouncement = {
-    ...getUserDetails(socket),
-    ...{
-      cmd: 'onlineAdd',
-      channel: destChannel, // @todo Multichannel
-    },
-  };
   for (let i = 0; i < kicked.length; i += 1) {
-    server.broadcast(moveAnnouncement, { channel: destChannel });
+    server.broadcast({
+      ...getUserDetails(kicked[i]),
+      ...{
+        cmd: 'onlineAdd',
+        channel: destChannel, // @todo Multichannel
+      },
+    }, { channel: destChannel });
   }
 
   // Move all kicked clients to the new channel
