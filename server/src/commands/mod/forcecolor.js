@@ -84,14 +84,6 @@ export async function run({
   // @todo this should be sent to every channel the user is in (multichannel)
   server.broadcast(updateNotice, { channel: socket.channel });
 
-  // mod perks
-  // TODO: Change this uType to use level / uac
-  if (socket.uType !== 'user') {
-    if (typeof server.police.records[socket.address] !== 'undefined') {
-      server.police.records[socket.address].score = -50;
-    }
-  }
-
   return true;
 }
 
