@@ -353,7 +353,9 @@ function join(channel) {
 		var args = JSON.parse(message.data);
 		var cmd = args.cmd;
 		var command = COMMANDS[cmd];
-		command.call(null, args);
+		if (command) {
+			command.call(null, args);
+		}
 	}
 }
 
@@ -368,9 +370,9 @@ var COMMANDS = {
 	info: function (args) {
 		args.nick = '*';
 		pushMessage(args);
-  },
+	},
 
-  emote: function (args) {
+	emote: function (args) {
 		args.nick = '*';
 		pushMessage(args);
 	},
@@ -410,6 +412,30 @@ var COMMANDS = {
 		if ($('#joined-left').checked) {
 			pushMessage({ nick: '*', text: nick + " left" });
 		}
+	},
+
+	captcha: function (args) {
+		var messageEl = document.createElement('div');
+		messageEl.classList.add('info');
+
+
+		var nickSpanEl = document.createElement('span');
+		nickSpanEl.classList.add('nick');
+		messageEl.appendChild(nickSpanEl);
+
+		var nickLinkEl = document.createElement('a');
+		nickLinkEl.textContent = '#';
+		nickSpanEl.appendChild(nickLinkEl);
+
+		var textEl = document.createElement('pre');
+		textEl.style.fontSize = '4px';
+		textEl.classList.add('text');
+		textEl.innerHTML = args.text;
+
+		messageEl.appendChild(textEl);
+		$('#messages').appendChild(messageEl);
+
+		window.scrollTo(0, document.body.scrollHeight);
 	}
 }
 
@@ -447,7 +473,13 @@ function pushMessage(args) {
 
 	if (args.trip) {
 		var tripEl = document.createElement('span');
-		tripEl.textContent = args.trip + " ";
+
+		if (args.mod) {
+			tripEl.textContent = String.fromCodePoint(11088) + " " + args.trip + " ";
+		} else {
+			tripEl.textContent = args.trip + " ";
+		}
+
 		tripEl.classList.add('trip');
 		nickSpanEl.appendChild(tripEl);
 	}
@@ -455,6 +487,10 @@ function pushMessage(args) {
 	if (args.nick) {
 		var nickLinkEl = document.createElement('a');
 		nickLinkEl.textContent = args.nick;
+
+		if (args.color && /(^[0-9A-F]{6}$)|(^[0-9A-F]{3}$)/i.test(args.color)) {
+			nickLinkEl.setAttribute('style', 'color:#' + args.color + ' !important');
+		}
 
 		nickLinkEl.onclick = function () {
 			insertAtCursor("@" + args.nick + " ");

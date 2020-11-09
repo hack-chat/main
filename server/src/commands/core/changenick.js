@@ -85,7 +85,7 @@ export async function run({
       cmd: 'updateUser',
       nick: newNick,
       channel, // @todo Multichannel
-    }
+    },
   };
 
   // build join and leave notices for legacy clients
@@ -114,7 +114,7 @@ export async function run({
       server.send(joinNotice, peerList[i]);
     } else {
       // send update info
-      // @todo this should be sent to every channel the client is in
+      // @todo this should be sent to every channel the client is in (multichannel)
       server.send(updateNotice, peerList[i]);
     }
   }

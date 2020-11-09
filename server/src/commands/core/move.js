@@ -3,8 +3,6 @@
   @deprecated This module will be removed or replaced
 */
 import {
-  verifyNickname,
-  getUserPerms,
   getUserDetails,
 } from '../utility/_UAC';
 
@@ -104,7 +102,7 @@ export async function run({ server, socket, payload }) {
       channel: payload.channel,
       isme: true,
     },
-    ...getUserDetails(socket)
+    ...getUserDetails(socket),
   });
 
   // reply with new user list

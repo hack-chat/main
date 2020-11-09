@@ -61,7 +61,7 @@ export function legacyLevelToLabel(level) {
   * @param {string} nick Sender nick
   * @return {object}
   */
- export function legacyInviteOut(payload, nick) {
+export function legacyInviteOut(payload, nick) {
   return {
     ...payload,
     ...{
@@ -99,7 +99,7 @@ export function legacyInviteReply(payload, nick) {
   * @param {string} nick Sender nick
   * @return {object}
   */
- export function legacyWhisperOut(payload, from) {
+export function legacyWhisperOut(payload, from) {
   return {
     ...payload,
     ...{

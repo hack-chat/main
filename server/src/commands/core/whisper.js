@@ -16,7 +16,6 @@ import {
 } from '../utility/_LegacyFunctions';
 
 // module support functions
-
 const parseText = (text) => {
   // verifies user input is text
   if (typeof text !== 'string') {

@@ -2,12 +2,16 @@
   Description: Allows calling client to change their nickname color
 */
 
+import {
+  getUserDetails,
+} from '../utility/_UAC';
+
 // module support functions
 const verifyColor = (color) => /(^[0-9A-F]{6}$)|(^[0-9A-F]{3}$)/i.test(color);
 
 // module main
 export async function run({
-  core, server, socket, payload,
+  server, socket, payload,
 }) {
   const channel = socket.channel;
 
@@ -35,9 +39,9 @@ export async function run({
   }
 
   if (newColor === 'RESET') {
-    socket.color = false;
+    socket.color = false; // eslint-disable-line no-param-reassign
   } else {
-    socket.color = newColor;
+    socket.color = newColor; // eslint-disable-line no-param-reassign
   }
 
   // build update notice with new color
@@ -46,7 +50,7 @@ export async function run({
     ...{
       cmd: 'updateUser',
       channel: socket.channel, // @todo Multichannel
-    }
+    },
   };
 
   // notify channel that the user has changed their name

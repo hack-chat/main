@@ -6,6 +6,7 @@ import {
   isAdmin,
   isModerator,
   levels,
+  getUserDetails,
 } from '../utility/_UAC';
 
 // module main
@@ -24,6 +25,16 @@ export async function run({
   // find targets current connections
   const targetMod = server.findSockets({ trip: payload.trip });
   if (targetMod.length !== 0) {
+    // build update notice with new privileges
+    const updateNotice = {
+      ...getUserDetails(targetMod[0]),
+      ...{
+        cmd: 'updateUser',
+        uType: 'user', // @todo use legacyLevelToLabel from _LegacyFunctions.js
+        level: levels.default,
+      },
+    };
+
     for (let i = 0, l = targetMod.length; i < l; i += 1) {
       // downgrade privilages
       targetMod[i].uType = 'user';
@@ -35,6 +46,14 @@ export async function run({
         text: 'You are now a user.',
         channel: targetMod[i].channel, // @todo Multichannel
       }, targetMod[i]);
+
+      // notify channel
+      server.broadcast({
+        ...updateNotice,
+        ...{
+          channel: targetMod[i].channel,
+        },
+      }, { channel: targetMod[i].channel });
     }
   }
 

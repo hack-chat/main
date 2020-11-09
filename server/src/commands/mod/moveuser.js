@@ -78,7 +78,6 @@ export async function run({ server, socket, payload }) {
     }
   }
 
-
   const newPeerList = server.findSockets({ channel: payload.channel });
   const moveAnnouncement = {
     ...getUserDetails(badClient),
@@ -95,7 +94,7 @@ export async function run({ server, socket, payload }) {
     nicks.push(newPeerList[i].nick); /* @legacy */
     users.push({
       ...{
-        channel,
+        channel: payload.channel,
         isme: false,
       },
       ...getUserDetails(newPeerList[i]),
@@ -114,7 +113,7 @@ export async function run({ server, socket, payload }) {
     cmd: 'onlineSet',
     nicks, /* @legacy */
     users,
-    channel, // @todo Multichannel (?)
+    channel: payload.channel, // @todo Multichannel (?)
   }, badClient);
 
   badClient.channel = payload.channel;

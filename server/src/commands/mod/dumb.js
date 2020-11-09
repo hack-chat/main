@@ -10,11 +10,44 @@ import {
   isModerator,
 } from '../utility/_UAC';
 import {
+  findUser,
+} from '../utility/_Channels';
+import {
   Errors,
 } from '../utility/_Constants';
 import {
-  findUser,
-} from '../utility/_Channels';
+  legacyInviteReply,
+  legacyWhisperReply,
+} from '../utility/_LegacyFunctions';
+
+// module support functions
+/**
+  * Returns the channel that should be invited to.
+  * @param {any} channel
+  * @return {string}
+  */
+export function getChannel(channel = undefined) {
+  if (typeof channel === 'string') {
+    return channel;
+  }
+  return Math.random().toString(36).substr(2, 8);
+}
+
+const parseText = (text) => {
+  // verifies user input is text
+  if (typeof text !== 'string') {
+    return false;
+  }
+
+  let sanitizedText = text;
+
+  // strip newlines from beginning and end
+  sanitizedText = sanitizedText.replace(/^\s*\n|^\s+$|\n\s*$/g, '');
+  // replace 3+ newlines with just 2 newlines
+  sanitizedText = sanitizedText.replace(/\n{3,}/g, '\n\n');
+
+  return sanitizedText;
+};
 
 // module constructor
 export function init(core) {
@@ -101,24 +134,31 @@ export function chatCheck({
 
   if (core.muzzledHashes[socket.hash]) {
     // build fake chat payload
-    const mutedPayload = {
+    const outgoingPayload = {
       cmd: 'chat',
-      nick: socket.nick,
+      nick: socket.nick, /* @legacy */
+      uType: socket.uType, /* @legacy */
+      userid: socket.userid,
+      channel: socket.channel,
       text: payload.text,
-      channel: socket.channel, // @todo Multichannel
+      level: socket.level,
     };
 
     if (socket.trip) {
-      mutedPayload.trip = socket.trip;
+      outgoingPayload.trip = socket.trip;
+    }
+
+    if (socket.color) {
+      outgoingPayload.color = socket.color;
     }
 
     // broadcast to any duplicate connections in channel
-    server.broadcast(mutedPayload, { channel: socket.channel, hash: socket.hash });
+    server.broadcast(outgoingPayload, { channel: socket.channel, hash: socket.hash });
 
     // broadcast to allies, if any
     if (core.muzzledHashes[socket.hash].allies) {
       server.broadcast(
-        mutedPayload,
+        outgoingPayload,
         {
           channel: socket.channel,
           nick: core.muzzledHashes[socket.hash].allies,
@@ -140,24 +180,62 @@ export function chatCheck({
 }
 
 // shadow-prevent all invites from muzzled users
-export function inviteCheck({ core, socket, payload }) {
+export function inviteCheck({
+  core, server, socket, payload,
+}) {
   if (core.muzzledHashes[socket.hash]) {
-    // @todo convert to protocol 2
-    /* const nickValid = Invite.checkNickname(payload.nick);
-    if (nickValid !== null) {
-      server.reply({
-        cmd: 'warn', // @todo Add numeric error code as `id`
-        text: nickValid,
+    // check for spam
+    if (server.police.frisk(socket.address, 2)) {
+      return server.reply({
+        cmd: 'warn',
+        text: 'You are sending invites too fast. Wait a moment before trying again.',
+        id: Errors.Invite.RATELIMIT,
         channel: socket.channel, // @todo Multichannel
       }, socket);
-      return false;
+    }
+
+    // verify user input
+    // if this is a legacy client add missing params to payload
+    if (socket.hcProtocol === 1) {
+      if (typeof socket.channel === 'undefined' || typeof payload.nick !== 'string') {
+        return true;
+      }
+
+      payload.channel = socket.channel; // eslint-disable-line no-param-reassign
+    } else if (typeof payload.userid !== 'number' || typeof payload.channel !== 'string') {
+      return true;
+    }
+
+    // @todo Verify this socket is part of payload.channel - multichannel patch
+    // find target user
+    const targetUser = findUser(server, payload);
+    if (!targetUser) {
+      return server.reply({
+        cmd: 'warn',
+        text: 'Could not find user in that channel',
+        id: Errors.Global.UNKNOWN_USER,
+        channel: socket.channel, // @todo Multichannel
+      }, socket);
     }
 
     // generate common channel
-    const channel = Invite.getChannel();
+    const channel = getChannel(payload.to);
 
-    // send fake reply
-    server.reply(Invite.createSuccessPayload(payload.nick, channel), socket); */
+    // build invite
+    const outgoingPayload = {
+      cmd: 'invite',
+      channel: socket.channel, // @todo Multichannel
+      from: socket.userid,
+      to: targetUser.userid,
+      inviteChannel: channel,
+    };
+
+    // send invite notice to this client
+    if (socket.hcProtocol === 1) {
+      server.reply(legacyInviteReply(outgoingPayload, targetUser.nick), socket);
+    } else {
+      server.reply(outgoingPayload, socket);
+    }
 
     return false;
   }
@@ -169,27 +247,56 @@ export function inviteCheck({ core, socket, payload }) {
 export function whisperCheck({
   core, server, socket, payload,
 }) {
-  if (typeof payload.nick !== 'string') {
-    return false;
-  }
-
-  if (typeof payload.text !== 'string') {
-    return false;
-  }
-
   if (core.muzzledHashes[socket.hash]) {
-    const targetNick = payload.nick;
+    // if this is a legacy client add missing params to payload
+    if (socket.hcProtocol === 1) {
+      payload.channel = socket.channel; // eslint-disable-line no-param-reassign
+    }
 
-    server.reply({
-      cmd: 'info',
-      type: 'whisper',
-      text: `You whispered to @${targetNick}: ${payload.text}`,
+    // verify user input
+    const text = parseText(payload.text);
+
+    if (!text) {
+      // lets not send objects or empty text, yea?
+      return server.police.frisk(socket.address, 13);
+    }
+
+    // check for spam
+    const score = text.length / 83 / 4;
+    if (server.police.frisk(socket.address, score)) {
+      return server.reply({
+        cmd: 'warn', // @todo Add numeric error code as `id`
+        text: 'You are sending too much text. Wait a moment and try again.\nPress the up arrow key to restore your last message.',
+        channel: socket.channel, // @todo Multichannel
+      }, socket);
+    }
+
+    const targetUser = findUser(server, payload);
+    if (!targetUser) {
+      return server.reply({
+        cmd: 'warn',
+        text: 'Could not find user in that channel',
+        id: Errors.Global.UNKNOWN_USER,
+        channel: socket.channel, // @todo Multichannel
+      }, socket);
+    }
+
+    const outgoingPayload = {
+      cmd: 'whisper',
       channel: socket.channel, // @todo Multichannel
-    }, socket);
+      from: socket.userid,
+      to: targetUser.userid,
+      text,
+    };
 
-    // blanket "spam" protection, may expose the ratelimiting lines from
-    // `chat` and use that, @todo one day #lazydev
-    server.police.frisk(socket.address, 9);
+    // send invite notice to this client
+    if (socket.hcProtocol === 1) {
+      server.reply(legacyWhisperReply(outgoingPayload, targetUser.nick), socket);
+    } else {
+      server.reply(outgoingPayload, socket);
+    }
+
+    targetUser.whisperReply = socket.nick;
 
     return false;
   }

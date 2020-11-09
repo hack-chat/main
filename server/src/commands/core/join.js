@@ -76,7 +76,7 @@ export async function run({
 
   // get trip and level
   const { trip, level } = getUserPerms(pass, core.config, channel);
-  
+
   // store the user values
   const userInfo = {
     nick,
@@ -122,7 +122,7 @@ export async function run({
   // send join announcement and prep online set reply
   for (let i = 0, l = newPeerList.length; i < l; i += 1) {
     server.reply(joinAnnouncement, newPeerList[i]);
-    
+
     nicks.push(newPeerList[i].nick); /* @legacy */
     users.push({
       ...{
