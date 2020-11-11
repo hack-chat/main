@@ -181,5 +181,6 @@ export const info = {
     API: { cmd: 'whisper', nick: '<target name>', text: '<text to whisper>' }
     Text: /whisper <target name> <text to whisper>
     Text: /w <target name> <text to whisper>
+    Alt Text: /reply <text to whisper, this will auto reply to the last person who whispered to you>
     Alt Text: /r <text to whisper, this will auto reply to the last person who whispered to you>`,
 };
