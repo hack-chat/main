@@ -107,7 +107,7 @@ export function whisperCheck({
     return false;
   }
 
-  if (payload.text.startsWith('/whisper') || payload.text.startsWith('/w ')) {
+  if (payload.text.startsWith('/whisper ') || payload.text.startsWith('/w ')) {
     const input = payload.text.split(' ');
 
     // If there is no nickname target parameter
@@ -140,7 +140,7 @@ export function whisperCheck({
     return false;
   }
 
-  if (payload.text.startsWith('/r ')) {
+  if (payload.text.startsWith('/reply ') || payload.text.startsWith('/r ')) {
     if (typeof socket.whisperReply === 'undefined') {
       server.reply({
         cmd: 'warn', // @todo Add numeric error code as `id`
