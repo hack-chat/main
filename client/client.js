@@ -169,7 +169,7 @@ var notifySwitch = document.getElementById("notify-switch")
 var notifySetting = localStorageGet("notify-api")
 var notifyPermissionExplained = 0; // 1 = granted msg shown, -1 = denied message shown
 
-// Inital request for notifications permission
+// Initial request for notifications permission
 function RequestNotifyPermission() {
 	try {
 		var notifyPromise = Notification.requestPermission();
@@ -916,7 +916,7 @@ $('#highlight-selector').onchange = function (e) {
 	setHighlight(e.target.value);
 }
 
-// Load sidebar configaration values from local storage if available
+// Load sidebar configuration values from local storage if available
 if (localStorageGet('scheme')) {
 	setScheme(localStorageGet('scheme'));
 }

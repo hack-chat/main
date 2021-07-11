@@ -289,7 +289,7 @@ class MainServer extends WsServer {
       if (socket.readyState === SocketReady) {
         socket.send(JSON.stringify(outgoingPayload));
       }
-    } catch (e) { /* yolo */ }
+    } catch (e) { console.error(e); }
   }
 
   /**
