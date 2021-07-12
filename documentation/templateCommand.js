@@ -1,6 +1,6 @@
 /*
   Description: This is a template module that should not be user in a production
-               enviroment
+               environment
 */
 
 // you can require() modules here
@@ -56,7 +56,7 @@ exports.initHooks = (server) => {
       `in`: a hook function registered as `in` will be called before the client
           request is passed to the module they are attempting to call. Note: socket
           in this context is the client that sent the data
-      `out`: a hook function registerd as `out` will be called before the data is
+      `out`: a hook function registered as `out` will be called before the data is
           sent to any clients. Note: `socket` in this context is the socket that
           will be sent the data.
 
@@ -89,6 +89,6 @@ exports.requiredData = ['echo'];
 exports.info = {
   name: 'showcase', // actual command name
   aliases: ['templateModule'], // optional, an array of other names this module can be executed by
-  usage: 'showcase {echo}', // used for help output, can be ommited if no parameters are required
+  usage: 'showcase {echo}', // used for help output, can be omitted if no parameters are required
   description: 'Simple command module template & info' // used for help output
 };
