@@ -822,6 +822,7 @@ var schemes = [
 	'pop',
 	'railscasts',
 	'solarized',
+	'tk-night',
 	'tomorrow'
 ];
 
