@@ -2,39 +2,39 @@
   display: block;
   overflow-x: auto;
   padding: 0.5em;
-  color: #abb2bf;
+  color: #252930;
   background: #282c34;
 }
 .hljs-comment,
 .hljs-quote {
-  color: #5c6370;
+  color: #f7297f;
   font-style: italic;
 }
 .hljs-doctag,
 .hljs-keyword,
 .hljs-formula {
-  color: #c678dd;
+  color: #ad6fe7;
 }
 .hljs-section,
 .hljs-name,
 .hljs-selector-tag,
 .hljs-deletion,
 .hljs-subst {
-  color: #e06c75;
+  color: #e44855;
 }
 .hljs-literal {
-  color: #56b6c2;
+  color: #46c2d3;
 }
 .hljs-string,
 .hljs-regexp,
 .hljs-addition,
 .hljs-attribute,
 .hljs-meta-string {
-  color: #98c379;
+  color: #797bf0;
 }
 .hljs-built_in,
 .hljs-class .hljs-title {
-  color: #e6c07b;
+  color: #c0e068;
 }
 .hljs-attr,
 .hljs-variable,
@@ -44,7 +44,7 @@
 .hljs-selector-attr,
 .hljs-selector-pseudo,
 .hljs-number {
-  color: #d19a66;
+  color: #ffc760;
 }
 .hljs-symbol,
 .hljs-bullet,
@@ -52,7 +52,7 @@
 .hljs-meta,
 .hljs-selector-id,
 .hljs-title {
-  color: #61aeee;
+  color: #59b4ff;
 }
 .hljs-emphasis {
   font-style: italic;
