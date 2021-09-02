@@ -822,7 +822,6 @@ var schemes = [
 	'pop',
 	'railscasts',
 	'solarized',
-	'tk-night',
 	'tomorrow'
 ];
 
@@ -833,7 +832,6 @@ var highlights = [
 	'darcula',
 	'github',
 	'rainbow',
-	'tk-night',
 	'tomorrow',
 	'xcode',
 	'zenburn'
