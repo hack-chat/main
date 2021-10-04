@@ -823,7 +823,8 @@ var schemes = [
 	'railscasts',
 	'solarized',
 	'tk-night',
-	'tomorrow'
+	'tomorrow',
+	'carrot'
 ];
 
 var highlights = [
