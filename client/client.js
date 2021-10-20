@@ -824,7 +824,8 @@ var schemes = [
 	'solarized',
 	'tk-night',
 	'tomorrow',
-	'carrot'
+	'carrot',
+	'lax'
 ];
 
 var highlights = [
