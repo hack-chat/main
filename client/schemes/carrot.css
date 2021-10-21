@@ -4,7 +4,7 @@ body {
 }
 input,
 textarea {
-  color: #000000;
+  color: #ee600d;
 }
   
 .message {
@@ -48,8 +48,8 @@ textarea {
   background: #000000;
   border-color: #000000;
 }
-  
+    
 #chatform {
-  border-color: #000000;
+  border-color: #ee600d;
 }
   
