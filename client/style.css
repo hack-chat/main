@@ -212,6 +212,14 @@ img {
   max-height: 800px;
 }
 
+ul, ol {
+  padding: 0;
+  margin: 0;
+}
+ul ul, ol ol {
+  padding-left: 2em;
+}
+
 @media only screen and (max-width: 600px) {
   .messages {
     border: none;
