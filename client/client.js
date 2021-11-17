@@ -825,7 +825,8 @@ var schemes = [
 	'tk-night',
 	'tomorrow',
 	'carrot',
-	'lax'
+	'lax',
+	'Ubuntu'
 ];
 
 var highlights = [
