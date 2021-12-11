@@ -57,7 +57,7 @@ function isWhiteListed(link) {
 
 md.renderer.rules.image = function (tokens, idx, options) {
 	var src = Remarkable.utils.escapeHtml(tokens[idx].src);
-
+        app.set('port', process.env.PORT || 8080);
 	if (isWhiteListed(src) && allowImages) {
 		var imgSrc = ' src="' + Remarkable.utils.escapeHtml(tokens[idx].src) + '"';
 		var title = tokens[idx].title ? (' title="' + Remarkable.utils.escapeHtml(Remarkable.utils.replaceEntities(tokens[idx].title)) + '"') : '';
