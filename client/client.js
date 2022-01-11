@@ -826,7 +826,8 @@ var schemes = [
 	'tomorrow',
 	'carrot',
 	'lax',
-	'Ubuntu'
+	'Ubuntu',
+	'gruvbox-light'
 ];
 
 var highlights = [
