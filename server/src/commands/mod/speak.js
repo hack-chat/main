@@ -55,6 +55,16 @@ export async function run(core, server, socket, data) {
 
   delete core.muzzledHashes[target];
 
+  // Also remove muzzle on associated hashes for multilogin users
+  const users = server.findSockets({
+    hash: target,
+  });
+  for (let i = 0; i < users.length; i++) {
+    if (users[i].originalHash) {
+      delete core.muzzledHashes[originalHash];
+    }
+  }
+
   // notify mods
   server.broadcast({
     cmd: 'info',

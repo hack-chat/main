@@ -56,15 +56,17 @@ export async function run(core, server, socket, payload) {
     }, socket);
   }
 
-  [targetClient] = targetClient;
-
-  server.reply({
-    cmd: 'info',
-    type: 'whisper',
-    from: socket.nick,
-    trip: socket.trip || 'null',
-    text: `${socket.nick} whispered: ${text}`,
-  }, targetClient);
+  const targetText = `${socket.nick} whispered: ${text}`;
+  for (let i = 0; i < targetClient.length; i++) {
+    const target = targetClient[i];
+    server.reply({
+      cmd: 'info',
+      type: 'whisper',
+      from: socket.nick,
+      trip: socket.trip || 'null',
+      text: targetText,
+    }, target);
+  }
 
   targetClient.whisperReply = socket.nick;
 

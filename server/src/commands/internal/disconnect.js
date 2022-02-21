@@ -12,6 +12,16 @@ export async function run(core, server, socket, data) {
 
   // send leave notice to client peers
   if (socket.channel) {
+    const users = server.findSockets({
+      userid: socket.userid,
+    });
+
+    // TODO: We could do some shenanigans to unlink the original id if that was the one that dced
+    // If there is still a user after a dc, then that means they are still on
+    if (users.length > 0) {
+      return false;
+    }
+
     server.broadcast({
       cmd: 'onlineRemove',
       nick: socket.nick,

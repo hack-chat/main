@@ -54,44 +54,52 @@ export async function run(core, server, socket, data) {
 
   // Announce the kicked clients arrival in destChannel and that they were kicked
   // Before they arrive, so they don't see they got moved
+  const seenNicks = [];
   for (let i = 0; i < kicked.length; i += 1) {
-    server.broadcast({
-      cmd: 'onlineAdd',
-      nick: kicked[i].nick,
-      trip: kicked[i].trip || 'null',
-      hash: kicked[i].hash,
-    }, { channel: destChannel });
+    // Only send this information for each unique user so multilogin users don't appear twice
+    if (!seenNicks.includes(kicked[i].nick)) {
+      server.broadcast({
+        cmd: 'onlineAdd',
+        nick: kicked[i].nick,
+        trip: kicked[i].trip || 'null',
+        hash: kicked[i].hash,
+      }, { channel: destChannel });
+      seenNicks.push(kicked[i].nick);
+    }
+  }
+
+  for (let i = 0; i < kicked.length; i++) {
+    kicked[i].channel = destChannel;
   }
 
   // Move all kicked clients to the new channel
-  for (let i = 0; i < kicked.length; i += 1) {
-    kicked[i].channel = destChannel;
-
+  for (let i = 0; i < seenNicks.length; i++) {
     server.broadcast({
       cmd: 'info',
-      text: `${kicked[i].nick} was banished to ?${destChannel}`,
+      text: `${seenNicks[i]} was banished to ?${destChannel}`,
     }, { channel: socket.channel, level: UAC.isModerator });
 
-    console.log(`${socket.nick} [${socket.trip}] kicked ${kicked[i].nick} in ${socket.channel} to ${destChannel} `);
+    console.log(`${socket.nick} [${socket.trip}] kicked ${seenNicks[i]} in ${socket.channel} to ${destChannel} `);
+
   }
 
 
   // broadcast client leave event
-  for (let i = 0, j = kicked.length; i < j; i += 1) {
+  for (let i = 0, j = seenNicks.length; i < j; i += 1) {
     server.broadcast({
       cmd: 'onlineRemove',
-      nick: kicked[i].nick,
+      nick: seenNicks[i],
     }, { channel: socket.channel });
   }
 
   // publicly broadcast kick event
   server.broadcast({
     cmd: 'info',
-    text: `Kicked ${kicked.map((k) => k.nick).join(', ')}`,
+    text: `Kicked ${seenNicks.join(', ')}`,
   }, { channel: socket.channel, level: (level) => level < UAC.levels.moderator });
 
   // stats are fun
-  core.stats.increment('users-kicked', kicked.length);
+  core.stats.increment('users-kicked', seenNicks.length);
 
   return true;
 }

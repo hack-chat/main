@@ -79,13 +79,20 @@ export async function run(core, server, socket, data) {
   nicks.push(socket.nick);
 
   // reply with new user list
-  server.reply({
+  server.broadcast({
     cmd: 'onlineSet',
     nicks,
-  }, socket);
+  }, {
+    userid: socket.userid,
+  });
 
-  // commit change
-  socket.channel = data.channel;
+  const users = server.findSockets({
+    userid: socket.userid,
+  });
+  for (let i = 0; i < users; i++) {
+    // commit change
+    users[i].channel = data.channel;
+  }
 
   return true;
 }

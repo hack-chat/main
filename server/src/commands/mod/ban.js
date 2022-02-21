@@ -18,19 +18,17 @@ export async function run(core, server, socket, data) {
 
   // find target user
   const targetNick = data.nick;
-  let badClient = server.findSockets({ channel: socket.channel, nick: targetNick });
+  let badClients = server.findSockets({ channel: socket.channel, nick: targetNick });
 
-  if (badClient.length === 0) {
+  if (badClients.length === 0) {
     return server.reply({
       cmd: 'warn',
       text: 'Could not find user in channel',
     }, socket);
   }
 
-  [badClient] = badClient;
-
   // i guess banning mods or admins isn't the best idea?
-  if (badClient.level >= socket.level) {
+  if (badClients[0].level >= socket.level) {
     return server.reply({
       cmd: 'warn',
       text: 'Cannot ban other users of the same level, how rude',
@@ -38,7 +36,9 @@ export async function run(core, server, socket, data) {
   }
 
   // commit arrest record
-  server.police.arrest(badClient.address, badClient.hash);
+  for (let i = 0; i < badClients.length; i++) {
+    server.police.arrest(badClients[i].address, badClients[i].originalHash || badClients[i].hash);
+  }
 
   console.log(`${socket.nick} [${socket.trip}] banned ${targetNick} in ${socket.channel}`);
 
@@ -46,20 +46,23 @@ export async function run(core, server, socket, data) {
   server.broadcast({
     cmd: 'info',
     text: `Banned ${targetNick}`,
-    user: UAC.getUserDetails(badClient),
+    user: UAC.getUserDetails(badClients[0]),
   }, { channel: socket.channel, level: (level) => level < UAC.levels.moderator });
 
+  const hashes = badClients.map(x => x.originalHash || x.hash).join(", ");
   // notify mods
   server.broadcast({
     cmd: 'info',
-    text: `${socket.nick}#${socket.trip} banned ${targetNick} in ${socket.channel}, userhash: ${badClient.hash}`,
+    text: `${socket.nick}#${socket.trip} banned ${targetNick} in ${socket.channel}, userhash: ${hashes}`,
     channel: socket.channel,
-    user: UAC.getUserDetails(badClient),
+    user: UAC.getUserDetails(badClients[0]),
     banner: UAC.getUserDetails(socket),
   }, { level: UAC.isModerator });
 
-  // force connection closed
-  badClient.terminate();
+  for (let i = 0; i < badClients.length; i++) {
+    // force connection closed
+    badClients[i].terminate();
+  }
 
   // stats are fun
   core.stats.increment('users-banned');

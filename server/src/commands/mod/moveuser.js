@@ -30,6 +30,7 @@ export async function run(core, server, socket, data) {
     }, socket);
   }
 
+  // The potentially-multi client that we look at
   const badClient = badClients[0];
 
   if (badClient.level >= socket.level) {
@@ -53,17 +54,22 @@ export async function run(core, server, socket, data) {
   const peerList = server.findSockets({ channel: socket.channel });
 
   if (peerList.length > 1) {
+    const seenNicks = [];
     for (let i = 0, l = peerList.length; i < l; i += 1) {
-      server.reply({
-        cmd: 'onlineRemove',
-        nick: peerList[i].nick,
-      }, badClient);
-
-      if (badClient.nick !== peerList[i].nick) {
+      if (!seenNicks.includes(peerList[i].nick)) {
         server.reply({
           cmd: 'onlineRemove',
-          nick: badClient.nick,
-        }, peerList[i]);
+          nick: peerList[i].nick,
+        }, badClient);
+
+        if (badClient.nick !== peerList[i].nick) {
+          server.reply({
+            cmd: 'onlineRemove',
+            nick: badClient.nick,
+          }, peerList[i]);
+        }
+
+        seenNicks.push(peerList[i].nick);
       }
     }
   }
@@ -74,7 +80,7 @@ export async function run(core, server, socket, data) {
     cmd: 'onlineAdd',
     nick: badClient.nick,
     trip: badClient.trip || 'null',
-    hash: server.getSocketHash(badClient),
+    hash: badClient.hash,
   };
   const nicks = [];
 
@@ -85,12 +91,14 @@ export async function run(core, server, socket, data) {
 
   nicks.push(badClient.nick);
 
-  server.reply({
-    cmd: 'onlineSet',
-    nicks,
-  }, badClient);
+  for (let i = 0; i < badClients.length; i++) {
+    server.reply({
+      cmd: 'onlineSet',
+      nicks,
+    }, badClients[i]);
 
-  badClient.channel = data.channel;
+    badClients[i].channel = data.channel;
+  }
 
   server.broadcast({
     cmd: 'info',

@@ -26,16 +26,16 @@ export async function run(core, server, socket, data) {
   }
 
   // find target user
-  let badClient = server.findSockets({ channel: socket.channel, nick: data.nick });
+  let badClients = server.findSockets({ channel: socket.channel, nick: data.nick });
 
-  if (badClient.length === 0) {
+  if (badClients.length === 0) {
     return server.reply({
       cmd: 'warn',
       text: 'Could not find user in channel',
     }, socket);
   }
 
-  [badClient] = badClient;
+  const badClient = badClients[0];
 
   // likely dont need this, muting mods and admins is fine
   if (badClient.level >= socket.level) {
@@ -49,6 +49,15 @@ export async function run(core, server, socket, data) {
   const record = core.muzzledHashes[badClient.hash] = {
     dumb: true,
   };
+
+  // Mute any alternative hashes too
+  for (let i = 0; i < badClients.length; i++) {
+    if (badClients[i].originalHash) {
+      core.muzzledHashes[badClients[i].originalHash] = {
+        dumb: true,
+      };
+    }
+  }
 
   // store allies if needed
   if (data.allies && Array.isArray(data.allies)) {

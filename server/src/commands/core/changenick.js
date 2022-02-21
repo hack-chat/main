@@ -53,6 +53,8 @@ export async function run(core, server, socket, data) {
     nick: (targetNick) => targetNick.toLowerCase() === newNick.toLowerCase() &&
       // Allow them to rename themselves to a different case
       targetNick != previousNick,
+    // Skip over multi-login versions of themselves
+    userid: (targetId) => targetId != socket.userid,
   });
 
   // return error if found
@@ -89,8 +91,15 @@ export async function run(core, server, socket, data) {
     text: `${socket.nick} is now ${newNick}`,
   }, { channel: socket.channel });
 
-  // commit change to nickname
-  socket.nick = newNick;
+  // Find any multi-login versions of themself to also update
+  // This will also include this socket
+  const users = server.findSockets({
+    userid: socket.userid,
+  });
+
+  for (let i = 0; i < users.length; i++) {
+    users[i].nick = newNick;
+  }
 
   return true;
 }

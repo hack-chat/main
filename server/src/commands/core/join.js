@@ -63,6 +63,50 @@ export function parseNickname(core, data) {
   return userInfo;
 }
 
+function makeOnlineSet(newPeerList, socket) {
+  const nicks = []; /* @legacy */
+  const users = [];
+
+  // send join announcement and prep online set
+  for (let i = 0, l = newPeerList.length; i < l; i += 1) {
+    if (!nicks.includes(newPeerList[i].nick)) {
+      nicks.push(newPeerList[i].nick); /* @legacy */
+
+      users.push({
+        nick: newPeerList[i].nick,
+        trip: newPeerList[i].trip,
+        utype: newPeerList[i].uType, /* @legacy */
+        hash: newPeerList[i].hash,
+        level: newPeerList[i].level,
+        userid: newPeerList[i].userid,
+        channel: socket.channel,
+        isme: false,
+      });
+    }
+  }
+
+  if (!nicks.includes(socket.nick)) {
+    // Add self to list
+    nicks.push(socket.nick); /* @legacy */
+    users.push({
+      nick: socket.nick,
+      trip: socket.trip,
+      utype: socket.uType,
+      hash: socket.hash,
+      level: socket.level,
+      userid: socket.userid,
+      channel: socket.channel,
+      isme: true,
+    });
+  }
+
+  return {
+    cmd: 'onlineSet',
+    nicks, /* @legacy */
+    users,
+  };
+}
+
 // module main
 export async function run(core, server, socket, data) {
   // check for spam
@@ -104,6 +148,39 @@ export async function run(core, server, socket, data) {
   });
 
   if (userExists.length > 0) {
+    // If the user already exists, then we should check if their trip is the same
+    const targetUser = userExists[0];
+    if (targetUser.trip && userInfo.trip && targetUser.trip === userInfo.trip) {
+      // The user has the same name (from userExists) and the same trip
+      // This means that we will silently let them send messages as the original
+
+      // We store the `hash` field that is often used as the original hash
+      //  this is to maintain compatibility with existing commands without too much issue
+      //  since it would be breaking for various clients (mostly bots) to have multiple hashes
+      //  per logged in user
+      // but we keep the originalHash around so that it can be used for commands that act
+      // on hashes rather than just transmitting them.
+      socket.originalHash = server.getSocketHash(socket);
+      socket.hash = targetUser.hash;
+
+      // UserId is per join, so we simply copy the original userid since we haven't
+      // *really* joined.
+      socket.userid = targetUser.userid;
+
+      // Copy remaining user info
+      socket.uType = userInfo.uType;
+      socket.nick = userInfo.nick;
+      socket.trip = userInfo.trip;
+      socket.channel = data.channel;
+      socket.level = userInfo.level;
+
+      // Display online users to them
+      const newPeerList = server.findSockets({ channel: data.channel });
+      server.reply(makeOnlineSet(newPeerList, socket), socket);
+
+      return true;
+    }
+
     // that nickname is already in that channel
     return server.reply({
       cmd: 'warn',
@@ -118,11 +195,7 @@ export async function run(core, server, socket, data) {
     userInfo.userid = Math.floor(Math.random() * 9999999999999);
   }
 
-  // TODO: place this within it's own function allowing import
-  // prepare to notify channel peers
   const newPeerList = server.findSockets({ channel: data.channel });
-  const nicks = []; /* @legacy */
-  const users = [];
 
   const joinAnnouncement = {
     cmd: 'onlineAdd',
@@ -135,22 +208,11 @@ export async function run(core, server, socket, data) {
     channel: data.channel,
   };
 
-  // send join announcement and prep online set
+  // send join announcement
   for (let i = 0, l = newPeerList.length; i < l; i += 1) {
     server.reply(joinAnnouncement, newPeerList[i]);
-    nicks.push(newPeerList[i].nick); /* @legacy */
-
-    users.push({
-      nick: newPeerList[i].nick,
-      trip: newPeerList[i].trip,
-      utype: newPeerList[i].uType, /* @legacy */
-      hash: newPeerList[i].hash,
-      level: newPeerList[i].level,
-      userid: newPeerList[i].userid,
-      channel: data.channel,
-      isme: false,
-    });
   }
+
 
   // store user info
   socket.uType = userInfo.uType; /* @legacy */
@@ -161,24 +223,8 @@ export async function run(core, server, socket, data) {
   socket.level = userInfo.level;
   socket.userid = userInfo.userid;
 
-  nicks.push(socket.nick); /* @legacy */
-  users.push({
-    nick: socket.nick,
-    trip: socket.trip,
-    utype: socket.uType,
-    hash: socket.hash,
-    level: socket.level,
-    userid: socket.userid,
-    channel: data.channel,
-    isme: true,
-  });
-
   // reply with channel peer list
-  server.reply({
-    cmd: 'onlineSet',
-    nicks, /* @legacy */
-    users,
-  }, socket);
+  server.reply(makeOnlineSet(newPeerList, socket), socket);
 
   // stats are fun
   core.stats.increment('users-joined');
