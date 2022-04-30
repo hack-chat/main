@@ -1,0 +1,71 @@
+body {
+  background: #111;
+  color: #ccc;
+}
+input,
+textarea {
+  color: #a6a28c;
+}
+.message {
+  border-left: 1px solid rgba(125, 122, 104, 0.5) !important;
+}
+.refmessage {
+  border-left: 1px solid rgba(125, 122, 104, 1) !important;
+}
+.nick {
+  background: linear-gradient(to right, #6666ff, #0099ff , #00ff00, #ff3399, #6666ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: rainbow_animation 6s ease-in-out infinite;
+  background-size: 400% 100%;
+}
+.trip {
+  color: #777;
+}
+.text a {
+  color: #e8e4cf;
+}
+.admin .nick {
+  background: linear-gradient(to right, #6666ff, #0099ff , #00ff00, #ff3399, #6666ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: rainbow_animation 6s ease-in-out infinite;
+  background-size: 400% 100%;
+}
+.mod .nick {
+  background: linear-gradient(to right, #6666ff, #0099ff , #00ff00, #ff3399, #6666ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: rainbow_animation 6s ease-in-out infinite;
+  background-size: 400% 100%;
+}
+.me .nick {
+  background: linear-gradient(to right, #6666ff, #0099ff , #00ff00, #ff3399, #6666ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: rainbow_animation 6s ease-in-out infinite;
+  background-size: 400% 100%;
+}
+.info .nick,
+.info .text {
+  color: #60ac39;
+}
+.warn .nick,
+.warn .text {
+  color: #cfb017;
+}
+#footer {
+  background: #111;
+}
+#sidebar {
+  background: #111;
+  border-color: #777;
+}
+#chatform {
+  border-color: #777;
+}
+
