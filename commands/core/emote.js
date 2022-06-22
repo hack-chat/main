@@ -1,8 +1,18 @@
-/*
-  Description: Broadcasts an emote to the current channel
-*/
+/**
+  * @author Marzavec ( https://github.com/marzavec )
+  * @summary Emote / action text
+  * @version 1.0.0
+  * @description Broadcasts an emote to the current channel
+  * @module emote
+  */
 
-// module support functions
+/**
+  * Check and trim string provided by remote client
+  * @param {string} text - Subject string
+  * @private
+  * @todo Move into utility module
+  * @return {string|boolean}
+  */
 const parseText = (text) => {
   // verifies user input is text
   if (typeof text !== 'string') {
@@ -19,7 +29,12 @@ const parseText = (text) => {
   return sanitizedText;
 };
 
-// module main
+/**
+  * Executes when invoked by a remote client
+  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @public
+  * @return {void}
+  */
 export async function run({ server, socket, payload }) {
   // check user input
   let text = parseText(payload.text);
@@ -61,12 +76,25 @@ export async function run({ server, socket, payload }) {
   return true;
 }
 
-// module hook functions
+/**
+  * Automatically executes once after server is ready to register this modules hooks
+  * @param {Object} server - Reference to server enviroment object
+  * @public
+  * @return {void}
+  */
 export function initHooks(server) {
   server.registerHook('in', 'chat', this.emoteCheck.bind(this), 30);
 }
 
-// hooks chat commands checking for /me
+/**
+  * Executes every time an incoming chat command is invoked;
+  * hooks chat commands checking for /me
+  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @public
+  * @return {{Object|boolean|string}} Object = same/altered payload,
+  * false = suppress action,
+  * string = error
+  */
 export function emoteCheck({
   core, server, socket, payload,
 }) {
@@ -107,10 +135,27 @@ export function emoteCheck({
   return payload;
 }
 
+/**
+  * The following payload properties are required to invoke this module:
+  * "text"
+  * @public
+  * @typedef {Array} emote/requiredData
+  */
 export const requiredData = ['text'];
+
+/**
+  * Module meta information
+  * @public
+  * @typedef {Object} emote/info
+  * @property {string} name - Module command name
+  * @property {string} category - Module category name
+  * @property {string} description - Information about module
+  * @property {string} usage - Information about module usage
+  */
 export const info = {
   name: 'emote',
-  description: 'Typical emote / action text',
+  category: 'core',
+  description: 'Broadcasts an emote to the current channel',
   usage: `
     API: { cmd: 'emote', text: '<emote/action text>' }
     Text: /me <emote/action text>`,

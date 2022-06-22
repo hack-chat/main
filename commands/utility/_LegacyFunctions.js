@@ -1,9 +1,17 @@
 /* eslint no-param-reassign: 0 */
 
+/**
+  * @author Marzavec ( https://github.com/marzavec )
+  * @summary Support functions for old clients
+  * @version 1.0.0
+  * @description Functions to bridge the older v1 clients with the latest protocol
+  * @module LegacyFunctions
+  */
+
 import {
   isAdmin,
   isModerator,
-} from './_UAC';
+} from './_UAC.js';
 
 /**
   * Marks the socket as using the legacy protocol and

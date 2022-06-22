@@ -1,19 +1,28 @@
 /* eslint eqeqeq: 0 */
 
-/*
-  Description: Allows calling client to change their current nickname
-*/
+/**
+  * @author Marzavec ( https://github.com/marzavec )
+  * @summary Update nickname
+  * @version 1.0.0
+  * @description Allows calling client to change their current nickname
+  * @module changenick
+  */
 
 import {
   verifyNickname,
   getUserDetails,
-} from '../utility/_UAC';
+} from '../utility/_UAC.js';
 
-// module main
+/**
+  * Executes when invoked by a remote client
+  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @public
+  * @return {void}
+  */
 export async function run({
-  core, server, socket, payload,
+  server, socket, payload,
 }) {
-  const channel = socket.channel;
+  const { channel } = socket;
 
   if (server.police.frisk(socket.address, 6)) {
     return server.reply({
@@ -36,18 +45,6 @@ export async function run({
     return server.reply({
       cmd: 'warn', // @todo Add numeric error code as `id`
       text: 'Nickname must consist of up to 24 letters, numbers, and underscores',
-      channel, // @todo Multichannel
-    }, socket);
-  }
-
-  // prevent admin impersonation
-  // @todo prevent mod impersonation
-  if (newNick.toLowerCase() === core.config.adminName.toLowerCase()) {
-    server.police.frisk(socket.address, 4);
-
-    return server.reply({
-      cmd: 'warn', // @todo Add numeric error code as `id`
-      text: 'You are not the admin, liar!',
       channel, // @todo Multichannel
     }, socket);
   }
@@ -132,12 +129,24 @@ export async function run({
   return true;
 }
 
-// module hook functions
+/**
+  * Automatically executes once after server is ready to register this modules hooks
+  * @param {Object} server - Reference to server enviroment object
+  * @public
+  * @return {void}
+  */
 export function initHooks(server) {
   server.registerHook('in', 'chat', this.nickCheck.bind(this), 29);
 }
 
-// hooks chat commands checking for /nick
+/**
+  * Executes every time an incoming chat command is invoked
+  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @public
+  * @return {{Object|boolean|string}} Object = same/altered payload,
+  * false = suppress action,
+  * string = error
+  */
 export function nickCheck({
   core, server, socket, payload,
 }) {
@@ -149,7 +158,7 @@ export function nickCheck({
     const input = payload.text.split(' ');
 
     // If there is no nickname target parameter
-    if (input[1] === undefined) {
+    if (!input[1]) {
       server.reply({
         cmd: 'warn', // @todo Add numeric error code as `id`
         text: 'Refer to `/help nick` for instructions on how to use this command.',
@@ -177,10 +186,27 @@ export function nickCheck({
   return payload;
 }
 
+/**
+  * The following payload properties are required to invoke this module:
+  * "nick"
+  * @public
+  * @typedef {Array} changenick/requiredData
+  */
 export const requiredData = ['nick'];
+
+/**
+  * Module meta information
+  * @public
+  * @typedef {Object} changenick/info
+  * @property {string} name - Module command name
+  * @property {string} category - Module category name
+  * @property {string} description - Information about module
+  * @property {string} usage - Information about module usage
+  */
 export const info = {
   name: 'changenick',
-  description: 'This will change your current connections nickname',
+  category: 'core',
+  description: 'Allows calling client to change their current nickname',
   usage: `
     API: { cmd: 'changenick', nick: '<new nickname>' }
     Text: /nick <new nickname>`,

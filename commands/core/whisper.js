@@ -1,21 +1,31 @@
-/*
-  Description: Display text on targets screen that only they can see
-  @todo This should be changed to it's own event type, instead of `info`
+/**
+  * @author Marzavec ( https://github.com/marzavec )
+  * @summary Send whisper
+  * @version 1.0.0
+  * @description Display text on target users screen that only they can see
+  * @module whisper
+  * @todo This should be changed to it's own event type, instead of `info`
         and accept a `userid` rather than `nick`
-*/
+  */
 
 import {
   findUser,
-} from '../utility/_Channels';
+} from '../utility/_Channels.js';
 import {
   Errors,
-} from '../utility/_Constants';
+} from '../utility/_Constants.js';
 import {
   legacyWhisperOut,
   legacyWhisperReply,
-} from '../utility/_LegacyFunctions';
+} from '../utility/_LegacyFunctions.js';
 
-// module support functions
+/**
+  * Check and trim string provided by remote client
+  * @param {string} text - Subject string
+  * @private
+  * @todo Move into utility module
+  * @return {string|boolean}
+  */
 const parseText = (text) => {
   // verifies user input is text
   if (typeof text !== 'string') {
@@ -32,7 +42,12 @@ const parseText = (text) => {
   return sanitizedText;
 };
 
-// module main
+/**
+  * Executes when invoked by a remote client
+  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @public
+  * @return {void}
+  */
 export async function run({ server, socket, payload }) {
   // if this is a legacy client add missing params to payload
   if (socket.hcProtocol === 1) {
@@ -94,12 +109,25 @@ export async function run({ server, socket, payload }) {
   return true;
 }
 
-// module hook functions
+/**
+  * Automatically executes once after server is ready to register this modules hooks
+  * @param {Object} server - Reference to server enviroment object
+  * @public
+  * @return {void}
+  */
 export function initHooks(server) {
   server.registerHook('in', 'chat', this.whisperCheck.bind(this), 20);
 }
 
-// hooks chat commands checking for /whisper
+/**
+  * Executes every time an incoming chat command is invoked;
+  * hooks chat commands checking for /whisper
+  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @public
+  * @return {{Object|boolean|string}} Object = same/altered payload,
+  * false = suppress action,
+  * string = error
+  */
 export function whisperCheck({
   core, server, socket, payload,
 }) {
@@ -111,7 +139,7 @@ export function whisperCheck({
     const input = payload.text.split(' ');
 
     // If there is no nickname target parameter
-    if (input[1] === undefined) {
+    if (!input[1]) {
       server.reply({
         cmd: 'warn', // @todo Add numeric error code as `id`
         text: 'Refer to `/help whisper` for instructions on how to use this command.',
@@ -173,10 +201,27 @@ export function whisperCheck({
   return payload;
 }
 
+/**
+  * The following payload properties are required to invoke this module:
+  * "nick", "text"
+  * @public
+  * @typedef {Array} whisper/requiredData
+  */
 export const requiredData = ['nick', 'text'];
+
+/**
+  * Module meta information
+  * @public
+  * @typedef {Object} whisper/info
+  * @property {string} name - Module command name
+  * @property {string} category - Module category name
+  * @property {string} description - Information about module
+  * @property {string} usage - Information about module usage
+  */
 export const info = {
   name: 'whisper',
-  description: 'Display text on targets screen that only they can see',
+  category: 'core',
+  description: 'Display text on target users screen that only they can see',
   usage: `
     API: { cmd: 'whisper', nick: '<target name>', text: '<text to whisper>' }
     Text: /whisper <target name> <text to whisper>

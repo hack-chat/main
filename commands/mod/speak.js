@@ -1,22 +1,35 @@
 /* eslint no-param-reassign: 0 */
 
-/*
- * Description: Pardon a dumb user to be able to speak again
- * Author: simple
- */
+/**
+  * @author OpSimple ( https://github.com/OpSimple )
+  * @summary Unmuzzle a user
+  * @version 1.0.0
+  * @description Pardon a dumb user to be able to speak again
+  * @module speak
+  */
 
 import {
   isModerator,
-} from '../utility/_UAC';
+} from '../utility/_UAC.js';
 
-// module constructor
+/**
+  * Automatically executes once after server is ready
+  * @param {Object} core - Reference to core enviroment object
+  * @public
+  * @return {void}
+  */
 export function init(core) {
   if (typeof core.muzzledHashes === 'undefined') {
     core.muzzledHashes = {};
   }
 }
 
-// module main
+/**
+  * Executes when invoked by a remote client
+  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @public
+  * @return {void}
+  */
 export async function run({
   core, server, socket, payload,
 }) {
@@ -74,10 +87,20 @@ export async function run({
   return true;
 }
 
+/**
+  * Module meta information
+  * @public
+  * @typedef {Object} speak/info
+  * @property {string} name - Module command name
+  * @property {string} category - Module category name
+  * @property {string} description - Information about module
+  * @property {string} usage - Information about module usage
+  */
 export const info = {
   name: 'speak',
+  category: 'moderators',
   description: 'Pardon a dumb user to be able to speak again',
+  aliases: ['unmuzzle', 'unmute'],
   usage: `
     API: { cmd: 'speak', ip/hash: '<target ip or hash' }`,
 };
-info.aliases = ['unmuzzle', 'unmute'];

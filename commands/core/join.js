@@ -1,29 +1,44 @@
 /* eslint no-param-reassign: 0 */
+/* eslint import/no-cycle: [0, { ignoreExternal: true }] */
 
-/*
-  Description: Adds requested channel into the calling clients "subscribed channels"
-*/
+/**
+  * @author Marzavec ( https://github.com/marzavec )
+  * @summary Join target channel
+  * @version 1.0.0
+  * @description Join the target channel using the supplied nick and password
+  * @module join
+  */
 
+import {
+  getSession,
+} from './session.js';
 import {
   canJoinChannel,
-} from '../utility/_Channels';
+  socketInChannel,
+} from '../utility/_Channels.js';
 import {
   Errors,
-} from '../utility/_Constants';
+} from '../utility/_Constants.js';
 import {
   upgradeLegacyJoin,
   legacyLevelToLabel,
-} from '../utility/_LegacyFunctions';
+} from '../utility/_LegacyFunctions.js';
 import {
   verifyNickname,
   getUserPerms,
   getUserDetails,
-} from '../utility/_UAC';
+} from '../utility/_UAC.js';
 
-// module main
+/**
+  * Executes when invoked by a remote client
+  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @public
+  * @return {void}
+  */
 export async function run({
   core, server, socket, payload,
-}) { // check for spam
+}) {
+  // check for spam
   if (server.police.frisk(socket.address, 3)) {
     return server.reply({
       cmd: 'warn',
@@ -75,7 +90,7 @@ export async function run({
   }
 
   // get trip and level
-  const { trip, level } = getUserPerms(pass, core.config, channel);
+  const { trip, level } = getUserPerms(pass, core.saltKey, core.appConfig.data, channel);
 
   // store the user values
   const userInfo = {
@@ -89,13 +104,6 @@ export async function run({
     color: socket.color,
     channel,
   };
-
-  // prevent admin impersonation
-  if (nick.toLowerCase() === core.config.adminName.toLowerCase()) {
-    if (userInfo.trip !== 'Admin') {
-      userInfo.nick = `Fake${userInfo.nick}`;
-    }
-  }
 
   // check if the nickname already exists in the channel
   const userExists = server.findSockets({
@@ -141,6 +149,7 @@ export async function run({
   socket.channel = channel; /* @legacy */
   // @todo multi-channel patch
   // socket.channels.push(channel);
+  socket.channels = [channel];
 
   nicks.push(userInfo.nick); /* @legacy */
   users.push({ ...{ isme: true, isBot: socket.isBot }, ...userInfo });
@@ -153,15 +162,110 @@ export async function run({
     channel, // @todo Multichannel (?)
   }, socket);
 
+  // update client with new session info
+  server.reply({
+    cmd: 'session',
+    restored: false,
+    token: getSession(socket, core),
+    channels: socket.channels,
+  }, socket);
+
   // stats are fun
   core.stats.increment('users-joined');
 
   return true;
 }
 
-export const requiredData = []; // ['channel', 'nick'];
+export function restoreJoin({
+  server, socket, channel,
+}) {
+  // check if a client is able to join target channel
+  const mayJoin = canJoinChannel(channel, socket);
+  if (mayJoin !== true) {
+    return server.reply({
+      cmd: 'warn',
+      text: 'You may not join that channel.',
+      id: mayJoin,
+      channel: false, // @todo Multichannel, false for global event
+    }, socket);
+  }
+
+  // store the user values
+  const userInfo = {
+    nick: socket.nick,
+    trip: socket.trip,
+    uType: legacyLevelToLabel(socket.level),
+    hash: socket.hash,
+    level: socket.level,
+    userid: socket.userid,
+    isBot: socket.isBot,
+    color: socket.color,
+    channel,
+  };
+
+  // prepare to notify channel peers
+  const newPeerList = server.findSockets({ channel });
+  const nicks = []; /* @legacy */
+  const users = [];
+  const joinAnnouncement = { ...{ cmd: 'onlineAdd' }, ...userInfo };
+  // build update notice with new privileges
+  const updateAnnouncement = {
+    ...getUserDetails(socket),
+    ...{
+      cmd: 'updateUser',
+      online: true,
+    },
+  };
+
+  const isDuplicate = socketInChannel(server, channel, socket);
+
+  // send join announcement and prep online set reply
+  for (let i = 0, l = newPeerList.length; i < l; i += 1) {
+    if (isDuplicate) {
+      server.reply(updateAnnouncement, newPeerList[i]);
+    } else {
+      server.reply(joinAnnouncement, newPeerList[i]);
+    }
+
+    nicks.push(newPeerList[i].nick); /* @legacy */
+    users.push({
+      ...{
+        channel,
+        isme: false,
+      },
+      ...getUserDetails(newPeerList[i]),
+    });
+  }
+
+  nicks.push(userInfo.nick); /* @legacy */
+  users.push({ ...{ isme: true, isBot: socket.isBot }, ...userInfo });
+
+  // reply with channel peer list
+  server.reply({
+    cmd: 'onlineSet',
+    nicks, /* @legacy */
+    users,
+    channel, // @todo Multichannel (?)
+  }, socket);
+
+  socket.channel = channel; /* @legacy */
+  socket.channels.push(channel);
+
+  return true;
+}
+
+/**
+  * Module meta information
+  * @public
+  * @typedef {Object} join/info
+  * @property {string} name - Module command name
+  * @property {string} category - Module category name
+  * @property {string} description - Information about module
+  * @property {string} usage - Information about module usage
+  */
 export const info = {
   name: 'join',
+  category: 'core',
   description: 'Join the target channel using the supplied nick and password',
   usage: `
     API: { cmd: 'join', nick: '<your nickname>', pass: '<optional password>', channel: '<target channel>' }`,

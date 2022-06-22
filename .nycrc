@@ -1,0 +1,29 @@
+{
+  "check-coverage": true,
+  "per-file": true,
+  "lines": 80,
+  "statements": 80,
+  "functions": 80,
+  "branches": 80,
+  "include": [
+    "commands/**/*.js"
+  ],
+  "exclude": [
+    "commands/**/*.spec.js"
+  ],
+  "ignore-class-method": "methodToIgnore",
+  "reporter": [
+    "html",
+    "lcov",
+    "text",
+    "text-summary"
+  ],
+  "require": [
+    "dotenv/config"
+  ],
+  "extension": [],
+  "cache": true,
+  "all": true,
+  "temp-dir": "",
+  "report-dir": "./.coverage"
+}

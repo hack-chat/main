@@ -1,22 +1,26 @@
-/*
-  Description: Generates a semi-unique channel name then broadcasts it to each client
-*/
+/**
+  * @author Marzavec ( https://github.com/marzavec )
+  * @summary Send an invite
+  * @version 1.0.0
+  * @description Sends an invite to the target client with the provided channel, or a random channel
+  * @module invite
+  */
 
 import {
   findUser,
-} from '../utility/_Channels';
+} from '../utility/_Channels.js';
 import {
   Errors,
-} from '../utility/_Constants';
+} from '../utility/_Constants.js';
 import {
   legacyInviteOut,
   legacyInviteReply,
-} from '../utility/_LegacyFunctions';
+} from '../utility/_LegacyFunctions.js';
 
-// module support functions
 /**
   * Returns the channel that should be invited to.
   * @param {any} channel
+  * @private
   * @return {string}
   */
 export function getChannel(channel = undefined) {
@@ -26,7 +30,12 @@ export function getChannel(channel = undefined) {
   return Math.random().toString(36).substr(2, 8);
 }
 
-// module main
+/**
+  * Executes when invoked by a remote client
+  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @public
+  * @return {void}
+  */
 export async function run({
   core, server, socket, payload,
 }) {
@@ -96,9 +105,18 @@ export async function run({
   return true;
 }
 
-export const requiredData = []; // ['nick'];
+/**
+  * Module meta information
+  * @public
+  * @typedef {Object} invite/info
+  * @property {string} name - Module command name
+  * @property {string} category - Module category name
+  * @property {string} description - Information about module
+  * @property {string} usage - Information about module usage
+  */
 export const info = {
   name: 'invite',
+  category: 'core',
   description: 'Sends an invite to the target client with the provided channel, or a random channel.',
   usage: `
     API: { cmd: 'invite', nick: '<target nickname>', to: '<optional destination channel>' }`,

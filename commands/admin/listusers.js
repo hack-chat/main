@@ -2,15 +2,24 @@
 /* eslint no-restricted-syntax: 0 */
 /* eslint guard-for-in: 0 */
 
-/*
-  Description: Outputs all current channels and their user nicks
-*/
+/**
+  * @author Marzavec ( https://github.com/marzavec )
+  * @summary Show users and channels
+  * @version 1.0.0
+  * @description Outputs all current channels and sockets in those channels
+  * @module listusers
+  */
 
 import {
   isAdmin,
-} from '../utility/_UAC';
+} from '../utility/_UAC.js';
 
-// module main
+/**
+  * Executes when invoked by a remote client
+  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @public
+  * @return {void}
+  */
 export async function run({ server, socket }) {
   // increase rate limit chance and ignore if not admin
   if (!isAdmin(socket.level)) {
@@ -50,8 +59,18 @@ export async function run({ server, socket }) {
   return true;
 }
 
+/**
+  * Module meta information
+  * @public
+  * @typedef {Object} listusers/info
+  * @property {string} name - Module command name
+  * @property {string} category - Module category name
+  * @property {string} description - Information about module
+  * @property {string} usage - Information about module usage
+  */
 export const info = {
   name: 'listusers',
+  category: 'admin',
   description: 'Outputs all current channels and sockets in those channels',
   usage: `
     API: { cmd: 'listusers' }`,

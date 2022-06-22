@@ -1,13 +1,22 @@
-/*
-  Description: Clears and resets the command modules, outputting any errors
-*/
+/**
+  * @author Marzavec ( https://github.com/marzavec )
+  * @summary Refresh modules
+  * @version 1.0.0
+  * @description Allows a remote user to clear and re-import the server command modules
+  * @module reload
+  */
 
 import {
   isAdmin,
   isModerator,
-} from '../utility/_UAC';
+} from '../utility/_UAC.js';
 
-// module main
+/**
+  * Executes when invoked by a remote client
+  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @public
+  * @return {void}
+  */
 export async function run({
   core, server, socket, payload,
 }) {
@@ -17,8 +26,7 @@ export async function run({
   }
 
   // do command reload and store results
-  let loadResult = core.dynamicImports.reloadDirCache();
-  loadResult += core.commands.loadCommands();
+  let loadResult = await core.commands.reloadCommands();
 
   // clear and rebuild all module hooks
   server.loadHooks();
@@ -45,9 +53,19 @@ export async function run({
   return true;
 }
 
+/**
+  * Module meta information
+  * @public
+  * @typedef {Object} reload/info
+  * @property {string} name - Module command name
+  * @property {string} category - Module category name
+  * @property {string} description - Information about module
+  * @property {string} usage - Information about module usage
+  */
 export const info = {
   name: 'reload',
-  description: '(Re)loads any new commands into memory, outputs errors if any',
+  category: 'admin',
+  description: 'Allows a remote user to clear and re-import the server command modules',
   usage: `
     API: { cmd: 'reload', reason: '<optional reason append>' }`,
 };

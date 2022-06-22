@@ -1,8 +1,17 @@
-/*
-  Description: Outputs the current command module list or command categories
-*/
+/**
+  * @author Marzavec ( https://github.com/marzavec )
+  * @summary Get help
+  * @version 1.0.0
+  * @description Outputs information about the servers current protocol
+  * @module help
+  */
 
-// module main
+/**
+  * Executes when invoked by a remote client
+  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @public
+  * @return {void}
+  */
 export async function run({
   core, server, socket, payload,
 }) {
@@ -61,12 +70,25 @@ export async function run({
   return true;
 }
 
-// module hook functions
+/**
+  * Automatically executes once after server is ready to register this modules hooks
+  * @param {Object} server - Reference to server enviroment object
+  * @public
+  * @return {void}
+  */
 export function initHooks(server) {
   server.registerHook('in', 'chat', this.helpCheck.bind(this), 28);
 }
 
-// hooks chat commands checking for /whisper
+/**
+  * Executes every time an incoming chat command is invoked;
+  * hooks chat commands checking for /help
+  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @public
+  * @return {{Object|boolean|string}} Object = same/altered payload,
+  * false = suppress action,
+  * string = error
+  */
 export function helpCheck({
   core, server, socket, payload,
 }) {
@@ -93,8 +115,18 @@ export function helpCheck({
   return payload;
 }
 
+/**
+  * Module meta information
+  * @public
+  * @typedef {Object} help/info
+  * @property {string} name - Module command name
+  * @property {string} category - Module category name
+  * @property {string} description - Information about module
+  * @property {string} usage - Information about module usage
+  */
 export const info = {
   name: 'help',
+  category: 'core',
   description: 'Outputs information about the servers current protocol',
   usage: `
     API: { cmd: 'help', command: '<optional command name>' }

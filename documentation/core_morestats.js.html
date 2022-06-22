@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: core/morestats.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: core/morestats.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+  * @author Marzavec ( https://github.com/marzavec )
+  * @summary Get stats
+  * @version 1.0.0
+  * @description Sends back current server stats to the calling client
+  * @module morestats
+  */
+
+/**
+  * Format input time into string
+  * @param {Date} time - Subject date
+  * @private
+  * @return {string}
+  */
+const formatTime = (time) => {
+  let seconds = time[0] + time[1] / 1e9;
+
+  let minutes = Math.floor(seconds / 60);
+  seconds %= 60;
+
+  let hours = Math.floor(minutes / 60);
+  minutes %= 60;
+
+  const days = Math.floor(hours / 24);
+  hours %= 24;
+
+  return `${days.toFixed(0)}d ${hours.toFixed(0)}h ${minutes.toFixed(0)}m ${seconds.toFixed(0)}s`;
+};
+
+/**
+  * Executes when invoked by a remote client
+  * @param {Object} env - Enviroment object with references to core, server, socket &amp; payload
+  * @public
+  * @return {void}
+  */
+export async function run({ core, server, socket }) {
+  // gather connection and channel count
+  const ips = {};
+  const channels = {};
+  // @todo use public channel flag
+  const publicChanCounts = {
+    lounge: 0,
+    meta: 0,
+    math: 0,
+    physics: 0,
+    chemistry: 0,
+    technology: 0,
+    programming: 0,
+    games: 0,
+    banana: 0,
+    chinese: 0,
+  };
+
+  // @todo code resuage between here and `session`; should share exported function
+  server.clients.forEach((client) => {
+    if (client.channel) {
+      channels[client.channel] = true;
+      ips[client.address] = true;
+      if (typeof publicChanCounts[client.channel] !== 'undefined') {
+        publicChanCounts[client.channel] += 1;
+      }
+    }
+  });
+
+  const uniqueClientCount = Object.keys(ips).length;
+  const uniqueChannels = Object.keys(channels).length;
+  const joins = core.stats.get('users-joined') || 0;
+  const invites = core.stats.get('invites-sent') || 0;
+  const messages = core.stats.get('messages-sent') || 0;
+  const banned = core.stats.get('users-banned') || 0;
+  const kicked = core.stats.get('users-kicked') || 0;
+  const stats = core.stats.get('stats-requested') || 0;
+  const uptime = formatTime(process.hrtime(core.stats.get('start-time')));
+
+  // dispatch info
+  server.reply({
+    cmd: 'info',
+    users: uniqueClientCount,
+    chans: uniqueChannels,
+    joins,
+    invites,
+    messages,
+    banned,
+    kicked,
+    stats,
+    uptime,
+    public: publicChanCounts,
+    text: `current-connections: ${uniqueClientCount}
+current-channels: ${uniqueChannels}
+users-joined: ${joins}
+invites-sent: ${invites}
+messages-sent: ${messages}
+users-banned: ${banned}
+users-kicked: ${kicked}
+stats-requested: ${stats}
+server-uptime: ${uptime}`,
+    channel: socket.channel, // @todo Multichannel
+  }, socket);
+
+  // stats are fun
+  core.stats.increment('stats-requested');
+
+  return true;
+}
+
+/**
+  * Automatically executes once after server is ready to register this modules hooks
+  * @param {Object} server - Reference to server enviroment object
+  * @public
+  * @return {void}
+  */
+export function initHooks(server) {
+  server.registerHook('in', 'chat', this.statsCheck.bind(this), 26);
+}
+
+/**
+  * Executes every time an incoming chat command is invoked;
+  * hooks chat commands checking for /stats
+  * @param {Object} env - Enviroment object with references to core, server, socket &amp; payload
+  * @public
+  * @return {{Object|boolean|string}} Object = same/altered payload,
+  * false = suppress action,
+  * string = error
+  */
+export function statsCheck({
+  core, server, socket, payload,
+}) {
+  if (typeof payload.text !== 'string') {
+    return false;
+  }
+
+  if (payload.text.startsWith('/stats')) {
+    this.run({
+      core,
+      server,
+      socket,
+      payload: {
+        cmd: 'morestats',
+      },
+    });
+
+    return false;
+  }
+
+  return payload;
+}
+
+/**
+  * Module meta information
+  * @public
+  * @typedef {Object} morestats/info
+  * @property {string} name - Module command name
+  * @property {string} category - Module category name
+  * @property {string} description - Information about module
+  * @property {string} usage - Information about module usage
+  */
+export const info = {
+  name: 'morestats',
+  category: 'core',
+  description: 'Sends back current server stats to the calling client',
+  usage: `
+    API: { cmd: 'morestats' }
+    Text: /stats`,
+};
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-addmod.html">addmod</a></li><li><a href="module-ban.html">ban</a></li><li><a href="module-changecolor.html">changecolor</a></li><li><a href="module-changenick.html">changenick</a></li><li><a href="module-chat.html">chat</a></li><li><a href="module-disconnect.html">disconnect</a></li><li><a href="module-dumb.html">dumb</a></li><li><a href="module-emote.html">emote</a></li><li><a href="module-forcecolor.html">forcecolor</a></li><li><a href="module-help.html">help</a></li><li><a href="module-invite.html">invite</a></li><li><a href="module-join.html">join</a></li><li><a href="module-kick.html">kick</a></li><li><a href="module-listusers.html">listusers</a></li><li><a href="module-morestats.html">morestats</a></li><li><a href="module-ping.html">ping</a></li><li><a href="module-reload.html">reload</a></li><li><a href="module-removemod.html">removemod</a></li><li><a href="module-saveconfig.html">saveconfig</a></li><li><a href="module-session.html">session</a></li><li><a href="module-shout.html">shout</a></li><li><a href="module-socketreply.html">socketreply</a></li><li><a href="module-speak.html">speak</a></li><li><a href="module-stats.html">stats</a></li><li><a href="module-unban.html">unban</a></li><li><a href="module-unbanall.html">unbanall</a></li><li><a href="module-whisper.html">whisper</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Wed Jun 22 2022 10:04:25 GMT-0500 (Central Daylight Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

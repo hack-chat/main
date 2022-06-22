@@ -1,22 +1,29 @@
-/* eslint no-console: 0 */
-
-/*
-  Description: Forces a change on the target(s) socket's channel, then broadcasts event
-*/
+/**
+  * @author Marzavec ( https://github.com/marzavec )
+  * @summary Give da boot
+  * @version 1.0.0
+  * @description Silently forces target client(s) into another channel
+  * @module kick
+  */
 
 import {
   isModerator,
   levels,
   getUserDetails,
-} from '../utility/_UAC';
+} from '../utility/_UAC.js';
 import {
   Errors,
-} from '../utility/_Constants';
+} from '../utility/_Constants.js';
 import {
   findUsers,
-} from '../utility/_Channels';
+} from '../utility/_Channels.js';
 
-// module main
+/**
+  * Executes when invoked by a remote client
+  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @public
+  * @return {void}
+  */
 export async function run({
   core, server, socket, payload,
 }) {
@@ -127,9 +134,18 @@ export async function run({
   return true;
 }
 
-// export const requiredData = ['nick'];
+/**
+  * Module meta information
+  * @public
+  * @typedef {Object} kick/info
+  * @property {string} name - Module command name
+  * @property {string} category - Module category name
+  * @property {string} description - Information about module
+  * @property {string} usage - Information about module usage
+  */
 export const info = {
   name: 'kick',
+  category: 'moderators',
   description: 'Silently forces target client(s) into another channel. `nick` may be string or array of strings',
   usage: `
     API: { cmd: 'kick', nick: '<target nick>', to: '<optional target channel>' }`,

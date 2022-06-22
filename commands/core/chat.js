@@ -1,13 +1,23 @@
-/*
-  Description: Rebroadcasts any `text` to all clients in a `channel`
-*/
+/**
+  * @author Marzavec ( https://github.com/marzavec )
+  * @summary Send chat messages
+  * @version 1.0.0
+  * @description Broadcasts passed `text` field to the calling users channel
+  * @module chat
+  */
 
 import {
   isAdmin,
   isModerator,
-} from '../utility/_UAC';
+} from '../utility/_UAC.js';
 
-// module support functions
+/**
+  * Check and trim string provided by remote client
+  * @param {string} text - Subject string
+  * @private
+  * @todo Move into utility module
+  * @return {string|boolean}
+  */
 const parseText = (text) => {
   // verifies user input is text
   if (typeof text !== 'string') {
@@ -24,7 +34,12 @@ const parseText = (text) => {
   return sanitizedText;
 };
 
-// module main
+/**
+  * Executes when invoked by a remote client
+  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @public
+  * @return {void}
+  */
 export async function run({
   core, server, socket, payload,
 }) {
@@ -80,13 +95,26 @@ export async function run({
   return true;
 }
 
-// module hook functions
+/**
+  * Automatically executes once after server is ready to register this modules hooks
+  * @param {Object} server - Reference to server enviroment object
+  * @public
+  * @return {void}
+  */
 export function initHooks(server) {
   server.registerHook('in', 'chat', this.commandCheckIn.bind(this), 20);
   server.registerHook('in', 'chat', this.finalCmdCheck.bind(this), 254);
 }
 
-// checks for miscellaneous '/' based commands
+/**
+  * Executes every time an incoming chat command is invoked;
+  * checks for miscellaneous '/' based commands
+  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @public
+  * @return {{Object|boolean|string}} Object = same/altered payload,
+  * false = suppress action,
+  * string = error
+  */
 export function commandCheckIn({ server, socket, payload }) {
   if (typeof payload.text !== 'string') {
     return false;
@@ -105,6 +133,15 @@ export function commandCheckIn({ server, socket, payload }) {
   return payload;
 }
 
+/**
+  * Executes every time an incoming chat command is invoked;
+  * assumes a failed chat command invocation and will reject with notice
+  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @public
+  * @return {{Object|boolean|string}} Object = same/altered payload,
+  * false = suppress action,
+  * string = error
+  */
 export function finalCmdCheck({ server, socket, payload }) {
   if (typeof payload.text !== 'string') {
     return false;
@@ -129,9 +166,26 @@ export function finalCmdCheck({ server, socket, payload }) {
   return false;
 }
 
+/**
+  * The following payload properties are required to invoke this module:
+  * "text"
+  * @public
+  * @typedef {Array} chat/requiredData
+  */
 export const requiredData = ['text'];
+
+/**
+  * Module meta information
+  * @public
+  * @typedef {Object} chat/info
+  * @property {string} name - Module command name
+  * @property {string} category - Module category name
+  * @property {string} description - Information about module
+  * @property {string} usage - Information about module usage
+  */
 export const info = {
   name: 'chat',
+  category: 'core',
   description: 'Broadcasts passed `text` field to the calling users channel',
   usage: `
     API: { cmd: 'chat', text: '<text to send>' }

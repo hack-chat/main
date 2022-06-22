@@ -1,21 +1,29 @@
-/* eslint no-console: 0 */
-/*
-  Description: Adds the target socket's ip to the ratelimiter
-*/
+/**
+  * @author Marzavec ( https://github.com/marzavec )
+  * @summary Ban a user
+  * @version 1.0.0
+  * @description Bans target user by name
+  * @module ban
+  */
 
 import {
   isModerator,
   getUserDetails,
   levels,
-} from '../utility/_UAC';
+} from '../utility/_UAC.js';
 import {
   Errors,
-} from '../utility/_Constants';
+} from '../utility/_Constants.js';
 import {
   findUser,
-} from '../utility/_Channels';
+} from '../utility/_Channels.js';
 
-// module main
+/**
+  * Executes when invoked by a remote client
+  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @public
+  * @return {void}
+  */
 export async function run({
   core, server, socket, payload,
 }) {
@@ -27,12 +35,12 @@ export async function run({
   // check user input
   if (socket.hcProtocol === 1) {
     if (typeof payload.nick !== 'string') {
-      return true;
+      return false;
     }
 
     payload.channel = socket.channel; // eslint-disable-line no-param-reassign
   } else if (typeof payload.userid !== 'number') {
-    return true;
+    return false;
   }
 
   // find target user
@@ -89,10 +97,19 @@ export async function run({
   return true;
 }
 
-// export const requiredData = ['nick'];
+/**
+  * Module meta information
+  * @public
+  * @typedef {Object} ban/info
+  * @property {string} name - Module command name
+  * @property {string} category - Module category name
+  * @property {string} description - Information about module
+  * @property {string} usage - Information about module usage
+  */
 export const info = {
   name: 'ban',
-  description: 'Disconnects the target nickname in the same channel as calling socket & adds to ratelimiter',
+  category: 'moderators',
+  description: 'Bans target user by name',
   usage: `
     API: { cmd: 'ban', nick: '<target nickname>' }`,
 };

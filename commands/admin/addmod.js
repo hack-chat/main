@@ -1,15 +1,24 @@
-/*
-  Description: Adds the target trip to the mod list then elevates the uType
-*/
+/**
+  * @author Marzavec ( https://github.com/marzavec )
+  * @summary Create a new mod trip
+  * @version 1.0.0
+  * @description Adds target trip to the config as a mod and upgrades the socket type
+  * @module addmod
+  */
 
 import {
   isAdmin,
   isModerator,
   levels,
   getUserDetails,
-} from '../utility/_UAC';
+} from '../utility/_UAC.js';
 
-// module main
+/**
+  * Executes when invoked by a remote client
+  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @public
+  * @return {void}
+  */
 export async function run({
   core, server, socket, payload,
 }) {
@@ -19,7 +28,7 @@ export async function run({
   }
 
   // add new trip to config
-  core.config.mods.push({ trip: payload.trip });
+  core.appConfig.data.globalMods.push({ trip: payload.trip });
 
   // find targets current connections
   const newMod = server.findSockets({ trip: payload.trip });
@@ -35,7 +44,7 @@ export async function run({
     };
 
     for (let i = 0, l = newMod.length; i < l; i += 1) {
-      // upgrade privilages
+      // upgrade privileges
       newMod[i].uType = 'mod'; // @todo use legacyLevelToLabel from _LegacyFunctions.js
       newMod[i].level = levels.moderator;
 
@@ -73,9 +82,26 @@ export async function run({
   return true;
 }
 
+/**
+  * The following payload properties are required to invoke this module:
+  * "trip"
+  * @public
+  * @typedef {Array} addmod/requiredData
+  */
 export const requiredData = ['trip'];
+
+/**
+  * Module meta information
+  * @public
+  * @typedef {Object} addmod/info
+  * @property {string} name - Module command name
+  * @property {string} category - Module category name
+  * @property {string} description - Information about module
+  * @property {string} usage - Information about module usage
+  */
 export const info = {
   name: 'addmod',
+  category: 'admin',
   description: 'Adds target trip to the config as a mod and upgrades the socket type',
   usage: `
     API: { cmd: 'addmod', trip: '<target trip>' }`,

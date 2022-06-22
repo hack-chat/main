@@ -1,19 +1,34 @@
-/*
-  Description: Allows calling client to change their nickname color
-*/
+/**
+  * @author Marzavec ( https://github.com/marzavec )
+  * @summary Update name color
+  * @version 1.0.0
+  * @description Allows calling client to change their nickname color
+  * @module changecolor
+  */
 
 import {
   getUserDetails,
-} from '../utility/_UAC';
+} from '../utility/_UAC.js';
 
-// module support functions
+/**
+  * Validate a string as a valid hex color string
+  * @param {string} color - Color string to validate
+  * @private
+  * @todo Move into utility module
+  * @return {boolean}
+  */
 const verifyColor = (color) => /(^[0-9A-F]{6}$)|(^[0-9A-F]{3}$)/i.test(color);
 
-// module main
+/**
+  * Executes when invoked by a remote client
+  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @public
+  * @return {void}
+  */
 export async function run({
   server, socket, payload,
 }) {
-  const channel = socket.channel;
+  const { channel } = socket;
 
   if (server.police.frisk(socket.address, 1)) {
     return server.reply({
@@ -25,7 +40,7 @@ export async function run({
 
   // verify user data is string
   if (typeof payload.color !== 'string') {
-    return true;
+    return false;
   }
 
   // make sure requested nickname meets standards
@@ -60,12 +75,24 @@ export async function run({
   return true;
 }
 
-// module hook functions
+/**
+  * Automatically executes once after server is ready to register this modules hooks
+  * @param {Object} server - Reference to server enviroment object
+  * @public
+  * @return {void}
+  */
 export function initHooks(server) {
   server.registerHook('in', 'chat', this.colorCheck.bind(this), 29);
 }
 
-// hooks chat commands checking for /color
+/**
+  * Executes every time an incoming chat command is invoked
+  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @public
+  * @return {{Object|boolean|string}} Object = same/altered payload,
+  * false = suppress action,
+  * string = error
+  */
 export function colorCheck({
   core, server, socket, payload,
 }) {
@@ -103,11 +130,27 @@ export function colorCheck({
   return payload;
 }
 
-// module meta
+/**
+  * The following payload properties are required to invoke this module:
+  * "color"
+  * @public
+  * @typedef {Array} changecolor/requiredData
+  */
 export const requiredData = ['color'];
+
+/**
+  * Module meta information
+  * @public
+  * @typedef {Object} changecolor/info
+  * @property {string} name - Module command name
+  * @property {string} category - Module category name
+  * @property {string} description - Information about module
+  * @property {string} usage - Information about module usage
+  */
 export const info = {
   name: 'changecolor',
-  description: 'This will change your nickname color',
+  category: 'core',
+  description: 'Allows calling client to change their nickname color',
   usage: `
     API: { cmd: 'changecolor', color: '<new color as hex>' }
     Text: /color <new color as hex>

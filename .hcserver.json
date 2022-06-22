@@ -1,0 +1,1 @@
+{"modulesPath":"./commands","websocketPort":"6060","rateLimit":{"halflife":"30000","threshold":"25"},"pulseSpeed":"16000"}

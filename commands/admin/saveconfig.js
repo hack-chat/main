@@ -1,13 +1,22 @@
-/*
-  Description: Writes the current config to disk
-*/
+/**
+  * @author Marzavec ( https://github.com/marzavec )
+  * @summary Saves the config
+  * @version 1.0.0
+  * @description Writes the current config to disk
+  * @module saveconfig
+  */
 
 import {
   isAdmin,
   isModerator,
-} from '../utility/_UAC';
+} from '../utility/_UAC.js';
 
-// module main
+/**
+  * Executes when invoked by a remote client
+  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @public
+  * @return {void}
+  */
 export async function run({ core, server, socket }) {
   // increase rate limit chance and ignore if not admin
   if (!isAdmin(socket.level)) {
@@ -15,7 +24,9 @@ export async function run({ core, server, socket }) {
   }
 
   // attempt save, notify of failure
-  if (!core.configManager.save()) {
+  try {
+    await core.appConfig.write();
+  } catch (err) {
     return server.reply({
       cmd: 'warn', // @todo Add numeric error code as `id`
       text: 'Failed to save config, check logs.',
@@ -33,8 +44,18 @@ export async function run({ core, server, socket }) {
   return true;
 }
 
+/**
+  * Module meta information
+  * @public
+  * @typedef {Object} saveconfig/info
+  * @property {string} name - Module command name
+  * @property {string} category - Module category name
+  * @property {string} description - Information about module
+  * @property {string} usage - Information about module usage
+  */
 export const info = {
   name: 'saveconfig',
+  category: 'admin',
   description: 'Writes the current config to disk',
   usage: `
     API: { cmd: 'saveconfig' }`,

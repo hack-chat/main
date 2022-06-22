@@ -1,15 +1,24 @@
-/*
-  Description: Removes target trip from the config as a mod and downgrades the socket type
-*/
+/**
+  * @author Marzavec ( https://github.com/marzavec )
+  * @summary Removes a mod
+  * @version 1.0.0
+  * @description Removes target trip from the config as a mod and downgrades the socket type
+  * @module removemod
+  */
 
 import {
   isAdmin,
   isModerator,
   levels,
   getUserDetails,
-} from '../utility/_UAC';
+} from '../utility/_UAC.js';
 
-// module main
+/**
+  * Executes when invoked by a remote client
+  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @public
+  * @return {void}
+  */
 export async function run({
   core, server, socket, payload,
 }) {
@@ -20,7 +29,9 @@ export async function run({
 
   // remove trip from config
   // eslint-disable-next-line no-param-reassign
-  core.config.mods = core.config.mods.filter((mod) => mod.trip !== payload.trip);
+  core.appConfig.data.globalMods = core.appConfig.data.globalMods.filter(
+    (mod) => mod.trip !== payload.trip,
+  );
 
   // find targets current connections
   const targetMod = server.findSockets({ trip: payload.trip });
@@ -36,8 +47,8 @@ export async function run({
     };
 
     for (let i = 0, l = targetMod.length; i < l; i += 1) {
-      // downgrade privilages
-      targetMod[i].uType = 'user';
+      // downgrade privileges
+      targetMod[i].uType = 'user'; /* @legacy */
       targetMod[i].level = levels.default;
 
       // inform ex-mod
@@ -76,9 +87,26 @@ export async function run({
   return true;
 }
 
+/**
+  * The following payload properties are required to invoke this module:
+  * "trip"
+  * @public
+  * @typedef {Array} removemod/requiredData
+  */
 export const requiredData = ['trip'];
+
+/**
+  * Module meta information
+  * @public
+  * @typedef {Object} removemod/info
+  * @property {string} name - Module command name
+  * @property {string} category - Module category name
+  * @property {string} description - Information about module
+  * @property {string} usage - Information about module usage
+  */
 export const info = {
   name: 'removemod',
+  category: 'admin',
   description: 'Removes target trip from the config as a mod and downgrades the socket type',
   usage: `
     API: { cmd: 'removemod', trip: '<target trip>' }`,

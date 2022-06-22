@@ -1,21 +1,37 @@
-/*
-  Description: Forces a change on the target socket's nick color
-*/
+/**
+  * @author Marzavec ( https://github.com/marzavec )
+  * @summary Color a user
+  * @version 1.0.0
+  * @description Forces a user nick to become a certain color
+  * @module forcecolor
+  */
 
 import {
   isModerator,
   getUserDetails,
-} from '../utility/_UAC';
+} from '../utility/_UAC.js';
 import {
   Errors,
-} from '../utility/_Constants';
+} from '../utility/_Constants.js';
 import {
   findUser,
-} from '../utility/_Channels';
+} from '../utility/_Channels.js';
 
+/**
+  * Validate a string as a valid hex color string
+  * @param {string} color - Color string to validate
+  * @private
+  * @todo Move into utility module
+  * @return {boolean}
+  */
 const verifyColor = (color) => /(^[0-9A-F]{6}$)|(^[0-9A-F]{3}$)/i.test(color);
 
-// module main
+/**
+  * Executes when invoked by a remote client
+  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @public
+  * @return {void}
+  */
 export async function run({
   server, socket, payload,
 }) {
@@ -24,7 +40,7 @@ export async function run({
     return server.police.frisk(socket.address, 10);
   }
 
-  const channel = socket.channel;
+  const { channel } = socket;
   if (typeof payload.channel === 'undefined') {
     payload.channel = channel;
   }
@@ -87,12 +103,25 @@ export async function run({
   return true;
 }
 
-// module hook functions
+/**
+  * Automatically executes once after server is ready to register this modules hooks
+  * @param {Object} server - Reference to server enviroment object
+  * @public
+  * @return {void}
+  */
 export function initHooks(server) {
   server.registerHook('in', 'chat', this.colorCheck.bind(this), 20);
 }
 
-// hooks chat commands checking for /whisper
+/**
+  * Executes every time an incoming chat command is invoked;
+  * hooks chat commands checking for /forcecolor
+  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @public
+  * @return {{Object|boolean|string}} Object = same/altered payload,
+  * false = suppress action,
+  * string = error
+  */
 export function colorCheck({
   core, server, socket, payload,
 }) {
@@ -143,10 +172,26 @@ export function colorCheck({
   return payload;
 }
 
-// module meta
+/**
+  * The following payload properties are required to invoke this module:
+  * "nick", "color"
+  * @public
+  * @typedef {Array} forcecolor/requiredData
+  */
 export const requiredData = ['nick', 'color'];
+
+/**
+  * Module meta information
+  * @public
+  * @typedef {Object} forcecolor/info
+  * @property {string} name - Module command name
+  * @property {string} category - Module category name
+  * @property {string} description - Information about module
+  * @property {string} usage - Information about module usage
+  */
 export const info = {
   name: 'forcecolor',
+  category: 'moderators',
   description: 'Forces a user nick to become a certain color',
   usage: `
     API: { cmd: 'forcecolor', nick: '<target nick>', color: '<color as hex>' }

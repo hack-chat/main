@@ -1,14 +1,21 @@
-/* eslint no-console: 0 */
-
-/*
-  Description: Clears all bans and ratelimits
-*/
+/**
+  * @author Marzavec ( https://github.com/marzavec )
+  * @summary Released them from the void
+  * @version 1.0.0
+  * @description Clears all banned ip addresses
+  * @module unbanall
+  */
 
 import {
   isModerator,
-} from '../utility/_UAC';
+} from '../utility/_UAC.js';
 
-// module main
+/**
+  * Executes when invoked by a remote client
+  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @public
+  * @return {void}
+  */
 export async function run({ core, server, socket }) {
   // increase rate limit chance and ignore if not admin or mod
   if (!isModerator(socket.level)) {
@@ -39,8 +46,18 @@ export async function run({ core, server, socket }) {
   return true;
 }
 
+/**
+  * Module meta information
+  * @public
+  * @typedef {Object} unbanall/info
+  * @property {string} name - Module command name
+  * @property {string} category - Module category name
+  * @property {string} description - Information about module
+  * @property {string} usage - Information about module usage
+  */
 export const info = {
   name: 'unbanall',
+  category: 'moderators',
   description: 'Clears all banned ip addresses',
   usage: `
     API: { cmd: 'unbanall' }`,

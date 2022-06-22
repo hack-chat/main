@@ -4,14 +4,16 @@
   * @property {Object} levels - Defines labels for default permission ranges
   * @author MinusGix ( https://github.com/MinusGix )
   * @version v1.0.0
-  * @license WTFPL ( http://www.wtfpl.net/txt/copying/ )
+  * @module UAC
   */
 
 import {
   getChannelSettings,
-} from './_Channels';
+} from './_Channels.js';
 
-const crypto = require('crypto');
+const {
+  createHash,
+} = await import('crypto');
 
 /**
   * Object defining labels for default permission ranges
@@ -106,12 +108,13 @@ export function getUserDetails(socket) {
   return {
     nick: socket.nick,
     trip: socket.trip || '',
-    uType: socket.uType,
+    uType: socket.uType, /* @legacy */
     hash: socket.hash,
     level: socket.level,
     userid: socket.userid,
     isBot: socket.isBot,
     color: socket.color,
+    online: true,
   };
 }
 
@@ -132,11 +135,12 @@ export function verifyNickname(nick) {
   * or a blank string
   * @public
   * @param {string} pass User's password
+  * @param {buffer} salt Server salt data
   * @param {string} config Server config object
   * @param {string} channel Channel-level permissions check
   * @return {string}
   */
-export function getUserPerms(pass, config, channel) {
+export function getUserPerms(pass, salt, config, channel) {
   if (!pass) {
     return {
       trip: '',
@@ -144,8 +148,8 @@ export function getUserPerms(pass, config, channel) {
     };
   }
 
-  const sha = crypto.createHash('sha256');
-  sha.update(pass + config.tripSalt);
+  const sha = createHash('sha256');
+  sha.update(pass + salt);
   const trip = sha.digest('base64').substr(0, 6);
 
   // check if user is global admin
@@ -159,7 +163,7 @@ export function getUserPerms(pass, config, channel) {
   let level = levels.default;
 
   // check if user is global mod
-  config.mods.forEach((mod) => { // eslint-disable-line consistent-return
+  config.globalMods.forEach((mod) => { // eslint-disable-line consistent-return
     if (trip === mod.trip) {
       level = levels.moderator;
     }

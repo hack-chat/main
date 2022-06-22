@@ -1,29 +1,32 @@
 /* eslint no-param-reassign: 0 */
 /* eslint no-multi-assign: 0 */
 
-/*
- * Description: Make a user (spammer) dumb (mute)
- * Author: simple
- */
+/**
+  * @author OpSimple ( https://github.com/OpSimple )
+  * @summary Muzzle a user
+  * @version 1.0.0
+  * @description Globally shadow mute a connection. Optional allies array will see muted messages.
+  * @module dumb
+  */
 
 import {
   isModerator,
-} from '../utility/_UAC';
+} from '../utility/_UAC.js';
 import {
   findUser,
-} from '../utility/_Channels';
+} from '../utility/_Channels.js';
 import {
   Errors,
-} from '../utility/_Constants';
+} from '../utility/_Constants.js';
 import {
   legacyInviteReply,
   legacyWhisperReply,
-} from '../utility/_LegacyFunctions';
+} from '../utility/_LegacyFunctions.js';
 
-// module support functions
 /**
   * Returns the channel that should be invited to.
   * @param {any} channel
+  * @private
   * @return {string}
   */
 export function getChannel(channel = undefined) {
@@ -33,6 +36,13 @@ export function getChannel(channel = undefined) {
   return Math.random().toString(36).substr(2, 8);
 }
 
+/**
+  * Check and trim string provided by remote client
+  * @param {string} text - Subject string
+  * @private
+  * @todo Move into utility module
+  * @return {string|boolean}
+  */
 const parseText = (text) => {
   // verifies user input is text
   if (typeof text !== 'string') {
@@ -49,14 +59,24 @@ const parseText = (text) => {
   return sanitizedText;
 };
 
-// module constructor
+/**
+  * Automatically executes once after server is ready
+  * @param {Object} core - Reference to core enviroment object
+  * @public
+  * @return {void}
+  */
 export function init(core) {
   if (typeof core.muzzledHashes === 'undefined') {
     core.muzzledHashes = {};
   }
 }
 
-// module main
+/**
+  * Executes when invoked by a remote client
+  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @public
+  * @return {void}
+  */
 export async function run({
   core, server, socket, payload,
 }) {
@@ -78,6 +98,7 @@ export async function run({
 
   // find target user
   const targetUser = findUser(server, payload);
+
   if (!targetUser) {
     return server.reply({
       cmd: 'warn',
@@ -117,14 +138,27 @@ export async function run({
   return true;
 }
 
-// module hook functions
+/**
+  * Automatically executes once after server is ready to register this modules hooks
+  * @param {Object} server - Reference to server enviroment object
+  * @public
+  * @return {void}
+  */
 export function initHooks(server) {
   server.registerHook('in', 'chat', this.chatCheck.bind(this), 10);
   server.registerHook('in', 'invite', this.inviteCheck.bind(this), 10);
   server.registerHook('in', 'whisper', this.whisperCheck.bind(this), 10);
 }
 
-// hook incoming chat commands, shadow-prevent chat if they are muzzled
+/**
+  * Executes every time an incoming chat command is invoked;
+  * hook incoming chat commands, shadow-prevent chat if they are muzzled
+  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @public
+  * @return {{Object|boolean|string}} Object = same/altered payload,
+  * false = suppress action,
+  * string = error
+  */
 export function chatCheck({
   core, server, socket, payload,
 }) {
@@ -179,7 +213,15 @@ export function chatCheck({
   return payload;
 }
 
-// shadow-prevent all invites from muzzled users
+/**
+  * Executes every time an incoming chat command is invoked;
+  * shadow-prevent all invites from muzzled users
+  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @public
+  * @return {{Object|boolean|string}} Object = same/altered payload,
+  * false = suppress action,
+  * string = error
+  */
 export function inviteCheck({
   core, server, socket, payload,
 }) {
@@ -243,7 +285,15 @@ export function inviteCheck({
   return payload;
 }
 
-// shadow-prevent all whispers from muzzled users
+/**
+  * Executes every time an incoming chat command is invoked;
+  * shadow-prevent all whispers from muzzled users
+  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @public
+  * @return {{Object|boolean|string}} Object = same/altered payload,
+  * false = suppress action,
+  * string = error
+  */
 export function whisperCheck({
   core, server, socket, payload,
 }) {
@@ -304,11 +354,20 @@ export function whisperCheck({
   return payload;
 }
 
-// export const requiredData = ['nick'];
+/**
+  * Module meta information
+  * @public
+  * @typedef {Object} dumb/info
+  * @property {string} name - Module command name
+  * @property {string} category - Module category name
+  * @property {string} description - Information about module
+  * @property {string} usage - Information about module usage
+  */
 export const info = {
   name: 'dumb',
+  category: 'moderators',
   description: 'Globally shadow mute a connection. Optional allies array will see muted messages.',
+  aliases: ['muzzle', 'mute'],
   usage: `
     API: { cmd: 'dumb', nick: '<target nick>', allies: ['<optional nick array>', ...] }`,
 };
-info.aliases = ['muzzle', 'mute'];

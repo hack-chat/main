@@ -1,14 +1,21 @@
-/* eslint no-console: 0 */
-
-/*
-  Description: Removes a target ip from the ratelimiter
-*/
+/**
+  * @author Marzavec ( https://github.com/marzavec )
+  * @summary Unban a user
+  * @version 1.0.0
+  * @description Un-bans target user by ip or hash
+  * @module unban
+  */
 
 import {
   isModerator,
-} from '../utility/_UAC';
+} from '../utility/_UAC.js';
 
-// module main
+/**
+  * Executes when invoked by a remote client
+  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @public
+  * @return {void}
+  */
 export async function run({
   core, server, socket, payload,
 }) {
@@ -66,9 +73,19 @@ export async function run({
   return true;
 }
 
+/**
+  * Module meta information
+  * @public
+  * @typedef {Object} unban/info
+  * @property {string} name - Module command name
+  * @property {string} category - Module category name
+  * @property {string} description - Information about module
+  * @property {string} usage - Information about module usage
+  */
 export const info = {
   name: 'unban',
-  description: 'Removes target ip from the ratelimiter',
+  category: 'moderators',
+  description: 'Un-bans target user by ip or hash',
   usage: `
     API: { cmd: 'unban', ip/hash: '<target ip or hash>' }`,
 };
