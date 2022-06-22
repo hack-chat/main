@@ -91,20 +91,6 @@ describe('Checking changenick module', () => {
 
     expect(resp).to.be.true;
   });
-
-  it('should prevent admin impersonation', async () => {
-    const resp = await importedModule.run({
-      core: mocks.core,
-      server: mocks.server,
-      socket: mocks.plebSocket,
-      payload: {
-        cmd: 'changenick',
-        nick: 'admin',
-      },
-    });
-
-    expect(resp).to.be.true;
-  });
   
   it('should not update if there is no change', async () => {
     const resp = await importedModule.run({
