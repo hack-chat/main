@@ -18,6 +18,8 @@ const SessionLocation = './session.key';
 const SaltLocation = './salt.key';
 const AppConfigLocation = './config.json';
 
+const TripLength = 10;
+
 // default configuration options
 const defaultConfig = {
   adminTrip: '',
@@ -105,7 +107,7 @@ const checkPermissions = async () => {
 
     const sha = crypto.createHash('sha256');
     sha.update(password + salt);
-    config.data.adminTrip = sha.digest('base64').substr(0, 6);
+    config.data.adminTrip = sha.digest('base64').substr(0, TripLength);
 
     await config.write();
   } else {
