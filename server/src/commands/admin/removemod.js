@@ -46,11 +46,36 @@ export async function run(core, server, socket, data) {
 
   return true;
 }
-
+export function initHooks(server) {
+  server.registerHook('in', 'chat', this.removemodCheck.bind(this));
+}
+//Faster operation
+export function removemodCheck(core, server, socket, payload) {
+  if (typeof payload.text !== 'string') {
+      return false;
+  }
+  if (payload.text.startsWith('/removemod')) {
+      const input = payload.text.split(' ');
+      if (input[1] === undefined) {
+          server.reply({
+              cmd: 'warn',
+              text: 'Refer to `/help removemod` for instructions on how to use this command.',
+          }, socket);
+          return false;
+      }
+      this.run(core, server, socket, {
+          cmd: 'removemod',
+          trip: input[1],
+      });
+      return false;
+  }
+  return payload;
+}
 export const requiredData = ['trip'];
 export const info = {
   name: 'removemod',
   description: 'Removes target trip from the config as a mod and downgrades the socket type',
   usage: `
-    API: { cmd: 'removemod', trip: '<target trip>' }`,
+    API: { cmd: 'removemod', trip: '<target trip>' }
+    Text: /remove <target trip>`,
 };
