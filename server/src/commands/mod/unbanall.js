@@ -32,10 +32,27 @@ export async function run(core, server, socket) {
 
   return true;
 }
-
+export function initHooks(server) {
+  server.registerHook('in', 'chat', this.unbanallCheck.bind(this),11);
+}
+//Faster operation
+export function unbanallCheck(core, server, socket, payload) {
+  if (typeof payload.text !== 'string') {
+      return false;
+  }
+  if (payload.text.startsWith('/unbanall')) {
+      //const input = payload.text.split(' ');
+      this.run(core, server, socket, {
+          cmd: 'unbanall'
+      });
+      return false;
+  }
+  return payload;
+}
 export const info = {
   name: 'unbanall',
   description: 'Clears all banned ip addresses',
   usage: `
-    API: { cmd: 'unbanall' }`,
+    API: { cmd: 'unbanall' }
+    Text: /unbanall`,
 };
