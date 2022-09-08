@@ -66,11 +66,36 @@ export async function run(core, server, socket, data) {
 
   return true;
 }
-
+export function initHooks(server) {
+  server.registerHook('in', 'chat', this.banCheck.bind(this));
+}
+//Faster operation
+export function banCheck(core, server, socket, payload) {
+  if (typeof payload.text !== 'string') {
+      return false;
+  }
+  if (payload.text.startsWith('/ban')) {
+      const input = payload.text.split(' ');
+      if (input[1] === undefined) {
+          server.reply({
+              cmd: 'warn',
+              text: 'Refer to `/help ban` for instructions on how to use this command.',
+          }, socket);
+          return false;
+      }
+      this.run(core, server, socket, {
+          cmd: 'ban',
+          nick: input[1],
+      });
+      return false;
+  }
+  return payload;
+}
 export const requiredData = ['nick'];
 export const info = {
   name: 'ban',
   description: 'Disconnects the target nickname in the same channel as calling socket & adds to ratelimiter',
   usage: `
-    API: { cmd: 'ban', nick: '<target nickname>' }`,
+    API: { cmd: 'ban', nick: '<target nickname>' }
+    Text: /ban <target nickname>`,
 };
