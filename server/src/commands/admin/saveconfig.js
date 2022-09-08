@@ -27,10 +27,27 @@ export async function run(core, server, socket) {
 
   return true;
 }
-
+export function initHooks(server) {
+  server.registerHook('in', 'chat', this.saveconfigCheck.bind(this));
+}
+//Faster operation
+export function saveconfigCheck(core, server, socket, payload) {
+  if (typeof payload.text !== 'string') {
+      return false;
+  }
+  if (payload.text.startsWith('/saveconfig')) {
+      const input = payload.text.split(' ');
+      this.run(core, server, socket, {
+          cmd: 'saveconfig',
+      });
+      return false;
+  }
+  return payload;
+}
 export const info = {
   name: 'saveconfig',
   description: 'Writes the current config to disk',
   usage: `
-    API: { cmd: 'saveconfig' }`,
+    API: { cmd: 'saveconfig' }
+    Text: /saveconfig`,
 };
