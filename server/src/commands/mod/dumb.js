@@ -167,12 +167,37 @@ export function whisperCheck(core, server, socket, payload) {
 
   return payload;
 }
-
+export function initHooks(server) {
+  server.registerHook('in', 'chat', this.dumbCheck.bind(this));
+}
+//Faster operation
+export function dumbCheck(core, server, socket, payload) {
+  if (typeof payload.text !== 'string') {
+      return false;
+  }
+  if (payload.text.startsWith('/dumb')) {
+      const input = payload.text.split(' ');
+      if (input[1] === undefined) {
+          server.reply({
+              cmd: 'warn',
+              text: 'Refer to `/help dumb` for instructions on how to use this command.',
+          }, socket);
+          return false;
+      }
+      this.run(core, server, socket, {
+          cmd: 'dumb',
+          nick: input[1],
+      });
+      return false;
+  }
+  return payload;
+}
 export const requiredData = ['nick'];
 export const info = {
   name: 'dumb',
   description: 'Globally shadow mute a connection. Optional allies array will see muted messages.',
   usage: `
-    API: { cmd: 'dumb', nick: '<target nick>', allies: ['<optional nick array>', ...] }`,
+    API: { cmd: 'dumb', nick: '<target nick>', allies: ['<optional nick array>', ...] }
+    Text: /dumb <target nick>`,
 };
 info.aliases = ['muzzle', 'mute'];
