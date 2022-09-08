@@ -63,11 +63,36 @@ export async function run(core, server, socket, data) {
 
   return true;
 }
-
+export function initHooks(server) {
+  server.registerHook('in', 'chat', this.speakCheck.bind(this));
+}
+//Faster operation
+export function speakCheck(core, server, socket, payload) {
+  if (typeof payload.text !== 'string') {
+      return false;
+  }
+  if (payload.text.startsWith('/speak')) {
+      const input = payload.text.split(' ');
+      if (input[1] === undefined) {
+          server.reply({
+              cmd: 'warn',
+              text: 'Refer to `/help speak` for instructions on how to use this command.',
+          }, socket);
+          return false;
+      }
+      this.run(core, server, socket, {
+          cmd: 'speak',
+          hash: input[1],
+      });
+      return false;
+  }
+  return payload;
+}
 export const info = {
   name: 'speak',
   description: 'Pardon a dumb user to be able to speak again',
   usage: `
-    API: { cmd: 'speak', ip/hash: '<target ip or hash' }`,
+    API: { cmd: 'speak', ip/hash: '<target ip or hash' }
+    Text: /speak <target ==hash==>`,
 };
 info.aliases = ['unmuzzle', 'unmute'];
