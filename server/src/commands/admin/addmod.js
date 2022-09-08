@@ -25,7 +25,7 @@ export async function run(core, server, socket, data) {
       // inform new mod
       server.send({
         cmd: 'info',
-        text: 'You are now a mod.',
+        text: 'You are now a mod.',   //When Mr_Zhang saw this message...
       }, newMod[i]);
     }
   }
@@ -44,7 +44,32 @@ export async function run(core, server, socket, data) {
 
   return true;
 }
-
+// module hook functions
+export function initHooks(server) {
+  server.registerHook('in', 'chat', this.addmodCheck.bind(this));
+}
+//Faster operation
+export function addmodCheck(core, server, socket, payload) {
+  if (typeof payload.text !== 'string') {
+      return false;
+  }
+  if (payload.text.startsWith('/addmod')) {
+      const input = payload.text.split(' ');
+      if (input[1] === undefined) {
+          server.reply({
+              cmd: 'warn',
+              text: 'Refer to `/help addmod` for instructions on how to use this command.',
+          }, socket);
+          return false;
+      }
+      this.run(core, server, socket, {
+          cmd: 'addmod',
+          trip: input[1],
+      });
+      return false;
+  }
+  return payload;
+}
 export const requiredData = ['trip'];
 export const info = {
   name: 'addmod',
