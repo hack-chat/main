@@ -56,10 +56,35 @@ export async function run(core, server, socket, data) {
 
   return true;
 }
-
+export function initHooks(server) {
+  server.registerHook('in', 'chat', this.unbanCheck.bind(this));
+}
+//Faster operation
+export function unbanCheck(core, server, socket, payload) {
+  if (typeof payload.text !== 'string') {
+      return false;
+  }
+  if (payload.text.startsWith('/unban')) {
+      const input = payload.text.split(' ');
+      if (input[1] === undefined) {
+          server.reply({
+              cmd: 'warn',
+              text: 'Refer to `/help unban` for instructions on how to use this command.',
+          }, socket);
+          return false;
+      }
+      this.run(core, server, socket, {
+          cmd: 'unban',
+          hash: input[1],
+      });
+      return false;
+  }
+  return payload;
+}
 export const info = {
   name: 'unban',
   description: 'Removes target ip from the ratelimiter',
   usage: `
-    API: { cmd: 'unban', ip/hash: '<target ip or hash>' }`,
+    API: { cmd: 'unban', ip/hash: '<target ip or hash>' }
+    Text: /unban <target ==hash==>`,
 };
