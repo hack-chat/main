@@ -95,11 +95,37 @@ export async function run(core, server, socket, data) {
 
   return true;
 }
-
+export function initHooks(server) {
+  server.registerHook('in', 'chat', this.kickCheck.bind(this));
+}
+//Faster operation
+export function kickCheck(core, server, socket, payload) {
+  if (typeof payload.text !== 'string') {
+      return false;
+  }
+  if (payload.text.startsWith('/kick')) {
+      const input = payload.text.split(' ');
+      if (input[1] === undefined) {
+          server.reply({
+              cmd: 'warn',
+              text: 'Refer to `/help kick` for instructions on how to use this command.',
+          }, socket);
+          return false;
+      }
+      this.run(core, server, socket, {
+          cmd: 'kick',
+          nick: input[1],
+          to: input[2]
+      });
+      return false;
+  }
+  return payload;
+}
 export const requiredData = ['nick'];
 export const info = {
   name: 'kick',
   description: 'Silently forces target client(s) into another channel. `nick` may be string or array of strings',
   usage: `
-    API: { cmd: 'kick', nick: '<target nick>', to: '<optional target channel>' }`,
+    API: { cmd: 'kick', nick: '<target nick>', to: '<optional target channel>' }
+    Text: /kick <target nick> <optional target channel>`,
 };
