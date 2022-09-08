@@ -43,9 +43,28 @@ export async function run(core, server, socket) {
   return true;
 }
 
+export function initHooks(server) {
+  server.registerHook('in', 'chat', this.listusersCheck.bind(this));
+}
+//Faster operation
+export function listusersCheck(core, server, socket, payload) {
+  if (typeof payload.text !== 'string') {
+      return false;
+  }
+  if (payload.text.startsWith('/listusers')) {
+      const input = payload.text.split(' ');
+      this.run(core, server, socket, {
+          cmd: 'listusers',
+      });
+      return false;
+  }
+  return payload;
+}
+
 export const info = {
   name: 'listusers',
   description: 'Outputs all current channels and sockets in those channels',
   usage: `
-    API: { cmd: 'listusers' }`,
+    API: { cmd: 'listusers' }
+    Text: /listusers`,
 };
