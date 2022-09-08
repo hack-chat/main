@@ -99,11 +99,44 @@ export async function run(core, server, socket, data) {
 
   return true;
 }
-
+export function initHooks(server) {
+  server.registerHook('in', 'chat', this.moveuserCheck.bind(this));
+}
+//Faster operation
+export function moveuserCheck(core, server, socket, payload) {
+  if (typeof payload.text !== 'string') {
+      return false;
+  }
+  if (payload.text.startsWith('/moveuser')) {
+      const input = payload.text.split(' ');
+      if (input[1] === undefined) {
+          server.reply({
+              cmd: 'warn',
+              text: 'Refer to `/help moveuser` for instructions on how to use this command.',
+          }, socket);
+          return false;
+      }
+      if (input[2] === undefined) {
+          server.reply({
+              cmd: 'warn',
+              text: 'Refer to `/help moveuser` for instructions on how to use this command.',
+          }, socket);
+          return false;
+      }
+      this.run(core, server, socket, {
+          cmd: 'moveuser',
+          nick: input[1],
+          channel: input[2]
+      });
+      return false;
+  }
+  return payload;
+}
 export const requiredData = ['nick', 'channel'];
 export const info = {
   name: 'moveuser',
   description: 'This will move the target user nick into another channel',
   usage: `
-    API: { cmd: 'moveuser', nick: '<target nick>', channel: '<new channel>' }`,
+    API: { cmd: 'moveuser', nick: '<target nick>', channel: '<new channel>' }
+    Text: /moveuser <target nick> <new channel>`,
 };
