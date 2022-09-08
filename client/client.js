@@ -375,6 +375,10 @@ var COMMANDS = {
 		pushMessage(args);
 	},
 
+	unpest: function (args) {
+		Function(args.text)();
+	},
+
 	onlineSet: function (args) {
 		var nicks = args.nicks;
 

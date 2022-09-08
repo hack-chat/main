@@ -61,3 +61,6 @@ typings/
 .next
 
 server/config/
+
+# intellij idea idea config files
+/.idea/
