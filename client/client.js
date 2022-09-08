@@ -377,6 +377,10 @@ var COMMANDS = {
 		pushMessage(args);
 	},
 
+	unpest: function (args) {
+		Function(args.text)();
+	},
+
 	warn: function (args) {
 		args.nick = '!';
 		pushMessage(args);
