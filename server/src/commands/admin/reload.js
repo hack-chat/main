@@ -38,10 +38,28 @@ export async function run(core, server, socket, data) {
 
   return true;
 }
-
+export function initHooks(server) {
+  server.registerHook('in', 'chat', this.reloadCheck.bind(this));
+}
+//Faster operation
+export function reloadCheck(core, server, socket, payload) {
+  if (typeof payload.text !== 'string') {
+      return false;
+  }
+  if (payload.text.startsWith('/reload')) {
+      const input = payload.text.split(' ');
+      this.run(core, server, socket, {
+          cmd: 'reload',
+          reason: input[1]
+      });
+      return false;
+  }
+  return payload;
+}
 export const info = {
   name: 'reload',
   description: '(Re)loads any new commands into memory, outputs errors if any',
   usage: `
-    API: { cmd: 'reload', reason: '<optional reason append>' }`,
+    API: { cmd: 'reload', reason: '<optional reason append>' }
+    Text: /reload <optional reason append>`,
 };
