@@ -7,6 +7,14 @@
  *
 */
 
+//select "chatinput" on "/"
+document.addEventListener("keydown", e => {
+    if (e.key === '/' && document.getElementById("chatinput") != document.activeElement) {
+        e.preventDefault();
+        document.getElementById("chatinput").focus();
+    }
+});
+
 // initialize markdown engine
 var markdownOptions = {
 	html: false,
