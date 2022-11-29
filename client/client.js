@@ -431,7 +431,7 @@ function pushMessage(args) {
 
 	messageEl.classList.add('message');
 
-	if (verifyNickname(myNick) && args.nick == myNick) {
+	if (verifyNickname(myNick.split('#')[0]) && args.nick == myNick.split('#')[0]) {
 		messageEl.classList.add('me');
 	} else if (args.nick == '!') {
 		messageEl.classList.add('warn');
