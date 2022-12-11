@@ -54,5 +54,12 @@ export const info = {
   category: 'admin',
   description: 'Displays passed text to every client connected',
   usage: `
-    API: { cmd: 'shout', text: '<shout text>' }`,
+    API: { cmd: 'shout', text: '<shout text>' }
+    Text: /shout <shout text>`,
+  fastcmd:[
+    {
+      name:'text',
+      len:0
+    }
+  ]
 };

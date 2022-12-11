@@ -369,5 +369,12 @@ export const info = {
   description: 'Globally shadow mute a connection. Optional allies array will see muted messages.',
   aliases: ['muzzle', 'mute'],
   usage: `
-    API: { cmd: 'dumb', nick: '<target nick>', allies: ['<optional nick array>', ...] }`,
+    API: { cmd: 'dumb', nick: '<target nick>', allies: ['<optional nick array>', ...] }
+    Text: /dumb <target nick>`,
+  fastcmd:[
+    {
+      name:'nick',
+      len:1
+    }
+  ]
 };

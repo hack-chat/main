@@ -148,5 +148,16 @@ export const info = {
   category: 'moderators',
   description: 'Silently forces target client(s) into another channel. `nick` may be string or array of strings',
   usage: `
-    API: { cmd: 'kick', nick: '<target nick>', to: '<optional target channel>' }`,
+    API: { cmd: 'kick', nick: '<target nick>', to: '<optional target channel>' }
+    Text: /kick <target nick>`,
+  fastcmd:[
+    {
+      name:'nick',
+      len:1
+    },
+    {
+      name:'to',
+      len:1
+    }
+  ]
 };

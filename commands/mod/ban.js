@@ -111,5 +111,12 @@ export const info = {
   category: 'moderators',
   description: 'Bans target user by name',
   usage: `
-    API: { cmd: 'ban', nick: '<target nickname>' }`,
+    API: { cmd: 'ban', nick: '<target nickname>' }
+    Text: /ban <target nickname>`,
+  fastcmd:[
+    {
+      name:'nick',
+      len:1
+    }
+  ]
 };

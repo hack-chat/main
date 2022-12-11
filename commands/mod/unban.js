@@ -87,5 +87,12 @@ export const info = {
   category: 'moderators',
   description: 'Un-bans target user by ip or hash',
   usage: `
-    API: { cmd: 'unban', ip/hash: '<target ip or hash>' }`,
+    API: { cmd: 'unban', ip/hash: '<target ip or hash>' }
+    Text: /unban <target ==hash==>`,
+  fastcmd:[
+    {
+      name:'hash',
+      len: 1
+    }
+  ]
 };

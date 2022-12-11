@@ -104,5 +104,12 @@ export const info = {
   category: 'admin',
   description: 'Adds target trip to the config as a mod and upgrades the socket type',
   usage: `
-    API: { cmd: 'addmod', trip: '<target trip>' }`,
+    API: { cmd: 'addmod', trip: '<target trip>' }
+    Text: /addmod <target trip>`,
+  fastcmd:[
+    {
+      name:'trip',
+      len:1
+    }
+  ]
 };

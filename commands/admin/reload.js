@@ -67,5 +67,10 @@ export const info = {
   category: 'admin',
   description: 'Allows a remote user to clear and re-import the server command modules',
   usage: `
-    API: { cmd: 'reload', reason: '<optional reason append>' }`,
+    API: { cmd: 'reload', reason: '<optional reason append>' }
+    Text: /reload <optional reason append>`,
+  fastcmd:[{
+    name:'reason',
+    len:0
+  }]
 };

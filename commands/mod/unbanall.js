@@ -60,5 +60,7 @@ export const info = {
   category: 'moderators',
   description: 'Clears all banned ip addresses',
   usage: `
-    API: { cmd: 'unbanall' }`,
+    API: { cmd: 'unbanall' }
+    Text: /unbanall`,
+  fastcmd:[]
 };

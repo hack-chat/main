@@ -58,5 +58,7 @@ export const info = {
   category: 'admin',
   description: 'Writes the current config to disk',
   usage: `
-    API: { cmd: 'saveconfig' }`,
+    API: { cmd: 'saveconfig' }
+    Text: /saveconfig`,
+  fastcmd:[]
 };

@@ -102,5 +102,12 @@ export const info = {
   description: 'Pardon a dumb user to be able to speak again',
   aliases: ['unmuzzle', 'unmute'],
   usage: `
-    API: { cmd: 'speak', ip/hash: '<target ip or hash' }`,
+    API: { cmd: 'speak', ip/hash: '<target ip or hash' }
+    Text: /speak <target ==hash==>`,
+  fastcmd:[
+    {
+      name:'hash',
+      len:1
+    }
+  ]
 };

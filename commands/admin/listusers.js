@@ -73,5 +73,7 @@ export const info = {
   category: 'admin',
   description: 'Outputs all current channels and sockets in those channels',
   usage: `
-    API: { cmd: 'listusers' }`,
+    API: { cmd: 'listusers' }
+    Text: /listusers`,
+  fastcmd:[]
 };

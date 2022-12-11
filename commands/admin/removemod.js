@@ -109,5 +109,12 @@ export const info = {
   category: 'admin',
   description: 'Removes target trip from the config as a mod and downgrades the socket type',
   usage: `
-    API: { cmd: 'removemod', trip: '<target trip>' }`,
+    API: { cmd: 'removemod', trip: '<target trip>' }
+    Text: /removemod <target trip>`,
+  fastcmd:[
+    {
+      name:'trip',
+      len:1
+    }
+  ]
 };
