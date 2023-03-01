@@ -24,7 +24,7 @@
   "license": "WTFPL",
   "dependencies": {
     "esm": "^3.2.25",
-    "http-server": "^0.12.1",
+    "http-server": "^0.12.3",
     "pm2": "^5.2.0"
   }
 }
