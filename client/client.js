@@ -15,7 +15,7 @@ var markdownOptions = {
 	langPrefix: '',
 	linkify: true,
 	linkTarget: '_blank" rel="noreferrer',
-	typographer:  true,
+	typographer: true,
 	quotes: `""''`,
 
 	doHighlight: true,
@@ -25,12 +25,12 @@ var markdownOptions = {
 		if (lang && hljs.getLanguage(lang)) {
 			try {
 				return hljs.highlight(lang, str).value;
-			} catch (__) {}
+			} catch (__) { }
 		}
 
 		try {
 			return hljs.highlightAuto(str).value;
-		} catch (__) {}
+		} catch (__) { }
 
 		return '';
 	}
@@ -67,20 +67,20 @@ md.renderer.rules.image = function (tokens, idx, options) {
 		return '<a href="' + src + '" target="_blank" rel="noreferrer"><img' + scrollOnload + imgSrc + alt + title + suffix + '></a>';
 	}
 
-  return '<a href="' + src + '" target="_blank" rel="noreferrer">' + Remarkable.utils.escapeHtml(Remarkable.utils.replaceEntities(src)) + '</a>';
+	return '<a href="' + src + '" target="_blank" rel="noreferrer">' + Remarkable.utils.escapeHtml(Remarkable.utils.replaceEntities(src)) + '</a>';
 };
 
 md.renderer.rules.link_open = function (tokens, idx, options) {
 	var title = tokens[idx].title ? (' title="' + Remarkable.utils.escapeHtml(Remarkable.utils.replaceEntities(tokens[idx].title)) + '"') : '';
-  var target = options.linkTarget ? (' target="' + options.linkTarget + '"') : '';
-  return '<a rel="noreferrer" onclick="return verifyLink(this)" href="' + Remarkable.utils.escapeHtml(tokens[idx].href) + '"' + title + target + '>';
+	var target = options.linkTarget ? (' target="' + options.linkTarget + '"') : '';
+	return '<a rel="noreferrer" onclick="return verifyLink(this)" href="' + Remarkable.utils.escapeHtml(tokens[idx].href) + '"' + title + target + '>';
 };
 
-md.renderer.rules.text = function(tokens, idx) {
+md.renderer.rules.text = function (tokens, idx) {
 	tokens[idx].content = Remarkable.utils.escapeHtml(tokens[idx].content);
 
 	if (tokens[idx].content.indexOf('?') !== -1) {
-		tokens[idx].content = tokens[idx].content.replace(/(^|\s)(\?)\S+?(?=[,.!?:)]?\s|$)/gm, function(match) {
+		tokens[idx].content = tokens[idx].content.replace(/(^|\s)(\?)\S+?(?=[,.!?:)]?\s|$)/gm, function (match) {
 			var channelLink = Remarkable.utils.escapeHtml(Remarkable.utils.replaceEntities(match.trim()));
 			var whiteSpace = '';
 			if (match[0] !== '?') {
@@ -90,7 +90,7 @@ md.renderer.rules.text = function(tokens, idx) {
 		});
 	}
 
-  return tokens[idx].content;
+	return tokens[idx].content;
 };
 
 md.use(remarkableKatex);
@@ -163,6 +163,34 @@ var myNick = localStorageGet('my-nick') || '';
 var myChannel = window.location.search.replace(/^\?/, '');
 var lastSent = [""];
 var lastSentPos = 0;
+
+/**
+ * Stores active messages
+ * These are messages that can be edited.
+ * @type {{ customId: string, userid: number, sent: number, text: string, elem: HTMLElement }[]}
+ */
+var activeMessages = [];
+
+setInterval(function () {
+	var editTimeout = 6 * 60 * 1000;
+	var now = Date.now();
+	for (var i = 0; i < activeMessages.length; i++) {
+		if (now - activeMessages[i].sent > editTimeout) {
+			activeMessages.splice(i, 1);
+			i--;
+		}
+	}
+}, 30 * 1000);
+
+function addActiveMessage(customId, userid, text, elem) {
+	activeMessages.push({
+		customId,
+		userid,
+		sent: Date.now(),
+		text,
+		elem,
+	});
+}
 
 /** Notification switch and local storage behavior **/
 var notifySwitch = document.getElementById("notify-switch")
@@ -364,7 +392,59 @@ var COMMANDS = {
 		if (ignoredUsers.indexOf(args.nick) >= 0) {
 			return;
 		}
-		pushMessage(args);
+
+		var elem = pushMessage(args);
+
+		if (typeof (args.customId) === 'string') {
+			addActiveMessage(args.customId, args.userid, args.text, elem);
+		}
+	},
+
+	updateMessage: function (args) {
+		var customId = args.customId;
+		var mode = args.mode;
+
+		if (!mode) {
+			return;
+		}
+
+		var message;
+		for (var i = 0; i < activeMessages.length; i++) {
+			var msg = activeMessages[i];
+			if (msg.userid === args.userid && msg.customId === customId) {
+				message = msg;
+				break;
+			}
+		}
+
+		if (!message) {
+			return;
+		}
+
+		var textElem = message.elem.querySelector('.text');
+		if (!textElem) {
+			return;
+		}
+
+		var newText = message.text;
+		if (mode === 'overwrite') {
+			newText = args.text;
+		} else if (mode === 'append') {
+			newText += args.text;
+		} else if (mode === 'prepend') {
+			newText = args.text + newText;
+		}
+
+		message.text = newText;
+
+		// Scroll to bottom if necessary
+		var atBottom = isAtBottom();
+
+		textElem.innerHTML = md.render(newText);
+
+		if (atBottom) {
+			window.scrollTo(0, document.body.scrollHeight);
+		}
 	},
 
 	info: function (args) {
@@ -518,6 +598,8 @@ function pushMessage(args) {
 
 	unread += 1;
 	updateTitle();
+
+	return messageEl;
 }
 
 function insertAtCursor(text) {
@@ -705,8 +787,8 @@ $('#sidebar').onmouseleave = document.ontouchstart = function (event) {
 	var e = event.toElement || event.relatedTarget;
 	try {
 		if (e.parentNode == this || e == this) {
-	     return;
-	  }
+			return;
+		}
 	} catch (e) { return; }
 
 	if (!$('#pin-sidebar').checked) {
@@ -734,8 +816,8 @@ if (localStorageGet('joined-left') == 'false') {
 
 if (localStorageGet('parse-latex') == 'false') {
 	$('#parse-latex').checked = false;
-	md.inline.ruler.disable([ 'katex' ]);
-	md.block.ruler.disable([ 'katex' ]);
+	md.inline.ruler.disable(['katex']);
+	md.block.ruler.disable(['katex']);
 }
 
 $('#pin-sidebar').onchange = function (e) {
@@ -750,11 +832,11 @@ $('#parse-latex').onchange = function (e) {
 	var enabled = !!e.target.checked;
 	localStorageSet('parse-latex', enabled);
 	if (enabled) {
-		md.inline.ruler.enable([ 'katex' ]);
-		md.block.ruler.enable([ 'katex' ]);
+		md.inline.ruler.enable(['katex']);
+		md.block.ruler.enable(['katex']);
 	} else {
-		md.inline.ruler.disable([ 'katex' ]);
-		md.block.ruler.disable([ 'katex' ]);
+		md.inline.ruler.disable(['katex']);
+		md.block.ruler.disable(['katex']);
 	}
 }
 
