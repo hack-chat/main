@@ -102,6 +102,7 @@ ul li {
 }
 .text p {
   margin: 0;
+  color: #ac3939 !important;
 }
 #footer {
   position: fixed;
@@ -213,10 +214,8 @@ img {
 }
 
 @media only screen and (max-width: 600px) {
-  .messages {
-    border: none;
-  }
   #messages {
+    border: none;
     padding: 0.5em;
   }
   .message {
