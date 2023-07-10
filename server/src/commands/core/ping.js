@@ -3,7 +3,14 @@
 */
 
 // module main
-export async function run() { }
+export async function run() {
+  if (server.police.frisk(socket.address, 30)) {
+    return server.reply({
+      cmd: 'warn',
+      text: 'You are pinging too fast. Wait a moment before trying again.',
+    }, socket);
+  }
+}
 
 export const info = {
   name: 'ping',
