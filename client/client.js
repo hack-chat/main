@@ -808,6 +808,7 @@ function userIgnore(nick) {
 /* color scheme switcher */
 
 var schemes = [
+	'amoled',
 	'android',
 	'android-white',
 	'atelier-dune',
@@ -818,12 +819,16 @@ var schemes = [
 	'banana',
 	'bright',
 	'bubblegum',
+	'carrot',
 	'chalk',
 	'default',
 	'eighties',
 	'fresh-green',
+	'fried-egg',
 	'greenscreen',
+	'gruvbox-light',
 	'hacker',
+	'lax',
 	'maniac',
 	'mariana',
 	'military',
@@ -834,16 +839,12 @@ var schemes = [
 	'omega',
 	'pop',
 	'railscasts',
+	'rainbow',
+	'retro',
 	'solarized',
 	'tk-night',
 	'tomorrow',
-	'carrot',
-	'lax',
-	'Ubuntu',
-	'gruvbox-light',
-	'fried-egg',
-	'rainbow',
-	'amoled'
+	'Ubuntu'
 ];
 
 var highlights = [
