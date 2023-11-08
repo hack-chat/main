@@ -385,11 +385,12 @@ var COMMANDS = {
 
 	onlineSet: function (args) {
 		var nicks = args.nicks;
+		var users = args.users;
 
 		usersClear();
 
-		nicks.forEach(function (nick) {
-			userAdd(nick);
+		users.forEach(function (user) {
+			userAdd(user.nick, user.utype);
 		});
 
 		pushMessage({ nick: '*', text: "Users online: " + nicks.join(", ") })
@@ -397,8 +398,9 @@ var COMMANDS = {
 
 	onlineAdd: function (args) {
 		var nick = args.nick;
+		var utype = args.utype
 
-		userAdd(nick);
+		userAdd(nick, utype);
 
 		if ($('#joined-left').checked) {
 			pushMessage({ nick: '*', text: nick + " joined" });
@@ -751,7 +753,7 @@ $('#allow-imgur').onchange = function (e) {
 var onlineUsers = [];
 var ignoredUsers = [];
 
-function userAdd(nick) {
+function userAdd(nick, utype) {
 	var user = document.createElement('a');
 	user.textContent = nick;
 
@@ -761,6 +763,9 @@ function userAdd(nick) {
 
 	var userLi = document.createElement('li');
 	userLi.appendChild(user);
+	if (utype && ['admin','mod','user'].includes(utype)){
+		userLi.className = utype;
+	}
 	$('#users').appendChild(userLi);
 	onlineUsers.push(nick);
 }
