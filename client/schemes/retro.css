@@ -1,0 +1,285 @@
+/** defaults **/
+
+body {
+  background: #20201d;
+  color: #a6a28c;
+}
+input,
+textarea {
+  color: #a6a28c;
+}
+.message {
+  border-left: 1px solid rgba(125, 122, 104, 0.5) !important;
+}
+.refmessage {
+  border-left: 1px solid rgba(125, 122, 104, 1) !important;
+}
+.nick {
+  color: #6684e1;
+}
+.trip {
+  color: #6e6b5e;
+}
+.text a {
+  color: #e8e4cf;
+}
+.admin .nick {
+  color: #d73737;
+}
+.mod .nick {
+  color: #1fad83;
+}
+.me .nick {
+  color: #b854d4;
+}
+.info .nick,
+.info .text {
+  color: #60ac39;
+}
+.warn .nick,
+.warn .text {
+  color: #cfb017;
+}
+#footer {
+  background: #20201d;
+}
+#sidebar {
+  background: #292824;
+  border-color: #7d7a68;
+}
+#chatform {
+  border-color: #7d7a68;
+}
+
+
+/** customizations **/
+
+:root {
+  color-scheme: dark!important;
+  scrollbar-color: #8e8e8e #151515;
+}
+
+html {
+  font-family: 'Courier New', 'Consolas', 'Lucida Console', 'Menlo', Courier, monospace;
+}
+body, #footer, #sidebar {
+  background: #050505;
+}
+article.container {
+  min-height: 100vh;
+  width: 100%;
+  max-width: calc(100% - 264px);
+  margin: 36px 36px 0em 36px;
+  overflow: hidden;
+  border: 2px solid gray;
+  border-top: 0;
+  border-bottom: 0;
+  padding-bottom: 2px;
+}
+.hidden {
+  display: inherit;
+}
+@keyframes changeColors {
+  0%, 100% {
+    background-color: initial;
+  }
+  0.1% {
+    background-color: #0d1b62;
+  }
+  99.9% {
+    background-color: #0d1b62;
+  }
+}
+.message {
+  animation-name: changeColors;
+  animation-duration: 10s;
+  animation-timing-function: steps(1, start);
+  animation-iteration-count: 1;
+}
+
+#pin-sidebar {
+  display: none;
+}
+label[for=pin-sidebar] {
+  display: none;
+}
+#messages {
+  padding: 0;
+  border-bottom: 0;
+}
+#messages::after {
+  width: 100%;
+  max-width: calc(100% - 270px);
+  position: absolute;
+  display: block;
+  top: 15px;
+  left: 36px;
+  height: 14px;
+  padding: 2px 3px;
+  content: "#programming [+ver 1.0] :: https://hack.chat - The Next Frontier of Unknown Pleasures";
+  border: 2px solid gray;
+  border-bottom: 2px solid gray;
+  background: linear-gradient(to right, #000080, #1084d0);
+  color: white;
+  font-size: 12px;
+  text-overflow:ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+#messages > :first-child {
+  background: #1f71a4!important;
+}
+#sidebar {
+  width: 195px;
+}
+#users li {
+  list-style-type: none!important;
+  margin-left: -1.3em;
+  margin-top: 0.5em;
+}
+#sidebar-content {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content:start;
+  align-items:start;
+}
+#sidebar-content hr {
+  display:none;
+}
+#sidebar-content select, #sidebar-content button {
+  border-radius: 0;
+  margin-bottom: 0.5em;
+}
+#sidebar-content > :nth-child(19) {
+  /*         border: 1px solid red; */
+  margin-top: 80vh;
+  margin-bottom: 2.5em;
+}
+#sidebar-content > :nth-child(22) {
+  display: none;
+}
+#sidebar-content > :nth-child(21) {
+  display: none;
+}
+#sidebar-content > :nth-child(1) {
+  display: none;
+}
+
+/* chat form */
+#footer {
+  margin-bottom: 0px;
+}
+#footer .container {
+  margin: 0 0 0 3em;
+  border: 2px solid gray;
+  max-width: calc(100% - 22em);
+  overflow: hidden;
+}
+#chatform {
+  height: 4em;
+  overflow: hidden;
+  overflow-y: scroll;
+}
+#chatinput {
+  padding: 1px 5px;
+  overflow: hidden;
+}
+
+/* chat room */
+pre {
+  margin-top: 0.3rem;
+  margin-bottom: 0.3rem;
+  margin-left: 0em;
+  overflow: hidden;
+  padding: 0.1rem;
+  font-weight: 400;
+  background: #1d1f21;
+  border: 0;
+  border-radius: 3px;
+  width: calc(100% - 17em);
+}
+.message {
+  position: relative;
+  border: 0 !important;
+  padding: 0.2em 0;
+}
+.message .nick {
+  display: inline-block;
+  text-align: right;
+  margin-left: 6.6em;
+  width: 226px;
+}
+.trip {
+  display: inline-block!important;
+  width: 6em;
+  text-align: right;
+  margin-right: 0.75em;
+}
+.nick > a {
+  font-weight: bold;
+  display: inline-block;
+}
+.nick > a::before {
+  display: inline;
+  content: attr(title);
+  font-weight: normal;
+  margin-left: -5.8em;
+  position: absolute;
+  left: 0;
+}
+/* Missing trip */
+.message .nick a:only-child {
+  margin-left: 5.5em;
+}
+.message .nick a::after {
+  content: "|";
+  position: absolute;
+  font-weight: bolder;
+  color: #6e6b5e;
+  font-size: 10px;
+  margin-top: 1px;
+  margin-left: 0.6em;
+}
+/* system */
+.message.info {
+  background: #2a7550!important;
+}
+.message.info * {
+  color: black!important;
+}
+.message.warn {
+  background: #887221!important;
+}
+.message.warn * {
+  color: black!important;
+}
+.info > .nick {
+  margin-left: 6.6em;
+}
+.info > .nick > :only-child {
+  margin-left: 15em;
+}
+.message.info .nick a::after, .message.warn .nick a::after {
+  color: black;
+}
+/* misc */
+.text > p {
+  line-height: 1.2em !important;
+  width: calc(100% - 20px);
+  display: inline-block;
+  margin-left: 0.5em;
+}
+.text > pre, .text > blockquote:first-child {
+  display: block;
+  margin: 6px 0 5px 6px;
+  width: calc(100% - 2.3em);
+}
+.text > ol {
+  margin-left: 20px;
+}
+.message .text:not(:first-child) {
+  width: auto;
+  margin-left: 320px;
+}
+
+
