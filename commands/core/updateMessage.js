@@ -93,5 +93,5 @@ export const info = {
   category: 'core',
   description: 'Update a message you have sent.',
   usage: `
-    API: { cmd: 'updateMessage', mode: 'overwrite'|'append'|'prepand', text: '<text to apply>',customId: '<customId sent with the chat message>' }`,
+    API: { cmd: 'updateMessage', mode: 'overwrite'|'append'|'prepend', text: '<text to apply>', customId: '<customId sent with the chat message>' }`,
 };
