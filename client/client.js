@@ -412,6 +412,10 @@ var COMMANDS = {
 		for (var i = 0; i < activeMessages.length; i++) {
 			var msg = activeMessages[i];
 			if (msg.userid === args.userid && msg.customId === customId) {
+				if (mode === 'complete') {
+					activeMessages.splice(i, 1);
+					return;
+				}
 				message = msg;
 				break;
 			}
