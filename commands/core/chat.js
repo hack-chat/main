@@ -40,7 +40,7 @@ export function cleanActiveMessages() {
   const now = Date.now();
   for (let i = 0; i < ACTIVE_MESSAGES.length; i++) {
     const message = ACTIVE_MESSAGES[i];
-    if (now - message.sent > ACTIVE_TIMEOUT) {
+    if (now - message.sent > ACTIVE_TIMEOUT || message.toDelete) {
       ACTIVE_MESSAGES.splice(i, 1);
       i--;
     }
@@ -62,6 +62,7 @@ export function addActiveMessage(customId, userid) {
     customId,
     userid,
     sent: Date.now(),
+    toDelete: false,
   });
 }
 
