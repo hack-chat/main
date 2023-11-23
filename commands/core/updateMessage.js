@@ -48,6 +48,9 @@ export async function run({ core, server, socket, payload }) {
 
     if (msg.userid === socket.userid && msg.customId === customId) {
       message = ACTIVE_MESSAGES[i];
+      if (mode === 'complete') {
+        ACTIVE_MESSAGES.splice(i, 1);
+      }
       break;
     }
   }
