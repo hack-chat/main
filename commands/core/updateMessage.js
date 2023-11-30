@@ -3,14 +3,14 @@ import { isAdmin, isModerator } from "../utility/_UAC.js";
 import { ACTIVE_MESSAGES, MAX_MESSAGE_ID_LENGTH } from "./chat.js";
 
 export async function run({ core, server, socket, payload }) {
-  // undefined | "overwrite" | "append" | "prepend"
+  // undefined | "overwrite" | "append" | "prepend" | "complete"
   let mode = payload.mode;
 
   if (!mode) {
     mode = 'overwrite';
   }
 
-  if (mode !== 'overwrite' && mode !== 'append' && mode !== 'prepend') {
+  if (mode !== 'overwrite' && mode !== 'append' && mode !== 'prepend' && mode !== 'complete') {
     return server.police.frisk(socket.address, 13);
   }
 
@@ -48,6 +48,9 @@ export async function run({ core, server, socket, payload }) {
 
     if (msg.userid === socket.userid && msg.customId === customId) {
       message = ACTIVE_MESSAGES[i];
+      if (mode === 'complete') {
+        ACTIVE_MESSAGES[i].toDelete = true;
+      }
       break;
     }
   }
@@ -93,5 +96,5 @@ export const info = {
   category: 'core',
   description: 'Update a message you have sent.',
   usage: `
-    API: { cmd: 'updateMessage', mode: 'overwrite'|'append'|'prepand', text: '<text to apply>',customId: '<customId sent with the chat message>' }`,
+    API: { cmd: 'updateMessage', mode: 'overwrite'|'append'|'prepend'|'complete', text: '<text to apply>', customId: '<customId sent with the chat message>' }`,
 };
