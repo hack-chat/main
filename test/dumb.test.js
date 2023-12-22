@@ -191,25 +191,30 @@ describe('Checking dumb module', () => {
     expect(resp).to.be.false;
   });
 
-  it('should shadow block invite attempts', async () => {
-    mocks.core.muzzledHashes['testHash'] = true;
+  it('should shadow block chat attempts, checking for allies', async () => {
+    mocks.core.muzzledHashes['testHash'] = {
+      dumb: true,
+      allies: [1234],
+    };
     mocks.plebSocket.hcProtocol = 1;
+    const newSocket = Object.assign({}, mocks.plebSocket);
+    newSocket.hash = 'cantcatchme';
     
-    const resp = importedModule.inviteCheck({
+    const resp = importedModule.chatCheck({
       core: mocks.core,
       server: mocks.server,
-      socket: mocks.plebSocket,
+      socket: newSocket,
       payload: {
         cmd: 'chat',
-        text: [],
+        text: 'test',
         channel: 'cake',
       },
     });
 
-    expect(resp).to.be.true;
+    expect(resp).to.be.an('object');
   });
 
-  it('should shadow block invite attempts with ratelimiting', async () => {
+  it('should ratelimit invites', async () => {
     const oldRL = mocks.server.police.frisk;
     mocks.server.police.frisk = () => true;
 
@@ -221,9 +226,9 @@ describe('Checking dumb module', () => {
       server: mocks.server,
       socket: mocks.plebSocket,
       payload: {
-        cmd: 'chat',
-        text: [],
-        channel: 'cake',
+        cmd: 'invite',
+        userid: 12,
+        channel: 'test',
       },
     });
 
@@ -232,7 +237,7 @@ describe('Checking dumb module', () => {
     expect(resp).to.be.true;
   });
 
-  it('should verify userid params on shadow block invite attempts', async () => {
+  it('should validate v2 clients userid param', async () => {
     mocks.core.muzzledHashes['testHash'] = true;
     mocks.plebSocket.hcProtocol = 2;
     
@@ -241,17 +246,16 @@ describe('Checking dumb module', () => {
       server: mocks.server,
       socket: mocks.plebSocket,
       payload: {
-        cmd: 'chat',
-        userid: '1234',
-        text: [],
-        channel: 'cake',
+        cmd: 'invite',
+        userid: 'test',
+        channel: 1,
       },
     });
 
     expect(resp).to.be.true;
   });
 
-  it('should verify channel params on shadow block invite attempts', async () => {
+  it('should validate v2 clients channel param', async () => {
     mocks.core.muzzledHashes['testHash'] = true;
     mocks.plebSocket.hcProtocol = 2;
     
@@ -260,14 +264,121 @@ describe('Checking dumb module', () => {
       server: mocks.server,
       socket: mocks.plebSocket,
       payload: {
-        cmd: 'chat',
-        userid: 1234,
-        text: [],
-        channel: false,
+        cmd: 'invite',
+        userid: 12,
+        channel: 1,
       },
     });
 
     expect(resp).to.be.true;
+  });
+
+  it('should give warning if user is missing', async () => {
+    const origFindSockets = mocks.server.findSockets;
+    mocks.server.findSockets = () => false;
+    mocks.core.muzzledHashes['testHash'] = true;
+    mocks.plebSocket.hcProtocol = 2;
+    
+    const resp = importedModule.inviteCheck({
+      core: mocks.core,
+      server: mocks.server,
+      socket: mocks.plebSocket,
+      payload: {
+        cmd: 'invite',
+        userid: 12,
+        channel: 'test',
+      },
+    });
+
+    mocks.server.findSockets = origFindSockets;
+
+    expect(resp).to.be.true;
+  });
+
+  it('should handle v2 output', async () => {
+    const origFindSockets = mocks.server.findSockets;
+    mocks.server.findSockets = () => [mocks.plebSocket];
+    mocks.core.muzzledHashes['testHash'] = true;
+    mocks.plebSocket.hcProtocol = 2;
+    
+    const resp = importedModule.inviteCheck({
+      core: mocks.core,
+      server: mocks.server,
+      socket: mocks.plebSocket,
+      payload: {
+        cmd: 'invite',
+        userid: 12,
+        channel: 'test',
+      },
+    });
+
+    mocks.server.findSockets = origFindSockets;
+
+    expect(resp).to.be.false;
+  });
+
+  it('should validate v1 clients channel', async () => {
+    const origPlebSocket = {...mocks.plebSocket};
+    mocks.core.muzzledHashes['testHash'] = true;
+    mocks.plebSocket.hcProtocol = 1;
+    mocks.plebSocket.channel = undefined;
+    
+    const resp = importedModule.inviteCheck({
+      core: mocks.core,
+      server: mocks.server,
+      socket: mocks.plebSocket,
+      payload: {
+        cmd: 'invite',
+        nick: 'test',
+        channel: 1,
+      },
+    });
+
+    mocks.plebSocket = origPlebSocket;
+
+    expect(resp).to.be.true;
+  });
+
+  it('should validate v1 clients nick param', async () => {
+    const origPlebSocket = {...mocks.plebSocket};
+    mocks.core.muzzledHashes['testHash'] = true;
+    mocks.plebSocket.hcProtocol = 1;
+    
+    const resp = importedModule.inviteCheck({
+      core: mocks.core,
+      server: mocks.server,
+      socket: mocks.plebSocket,
+      payload: {
+        cmd: 'invite',
+        nick: 0,
+        channel: 'test',
+      },
+    });
+
+    mocks.plebSocket = origPlebSocket;
+
+    expect(resp).to.be.true;
+  });
+
+  it('should handle v1 output', async () => {
+    const origPlebSocket = {...mocks.plebSocket};
+    mocks.core.muzzledHashes['testHash'] = true;
+    mocks.plebSocket.hcProtocol = 1;
+    
+    const resp = importedModule.inviteCheck({
+      core: mocks.core,
+      server: mocks.server,
+      socket: mocks.plebSocket,
+      payload: {
+        cmd: 'invite',
+        nick: 'test',
+        channel: 'test',
+      },
+    });
+
+    mocks.plebSocket = origPlebSocket;
+
+    expect(resp).to.be.false;
   });
 
   it('should accept an allies param', async () => {

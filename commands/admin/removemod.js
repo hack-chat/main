@@ -48,7 +48,7 @@ export async function run({
 
     for (let i = 0, l = targetMod.length; i < l; i += 1) {
       // downgrade privileges
-      targetMod[i].uType = 'user'; /* @legacy */
+      targetMod[i].uType = 'user';
       targetMod[i].level = levels.default;
 
       // inform ex-mod

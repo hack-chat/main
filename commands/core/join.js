@@ -49,7 +49,7 @@ export async function run({
   }
 
   // `join` is the legacy entry point, check if it needs to be upgraded
-  if (typeof socket.hcProtocol === 'undefined') {
+  if (typeof socket.hcProtocol === 'undefined' || socket.hcProtocol === 1) {
     payload = upgradeLegacyJoin(server, socket, payload);
   }
 

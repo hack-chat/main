@@ -1,15 +1,19 @@
 import { expect } from 'chai';
 import mocks from './mockImports.js';
 
-const modulePath = '../commands/mod/speak.js';
+const modulePath = '../commands/mod/disablecaptcha.js';
 let importedModule;
 
 const mockPayload = {
-  cmd: 'speak',
-  ip: '127.0.0.1',
+  cmd: 'disablecaptcha',
 }
 
-describe('Checking speak module', () => {
+const mockChannelPayload = {
+  cmd: 'disablecaptcha',
+  channel: 'test',
+}
+
+describe('Checking disablecaptcha module', () => {
   // module meta data
   it('should be importable', async () => {
     importedModule = await import(modulePath);
@@ -36,6 +40,13 @@ describe('Checking speak module', () => {
     expect(importedModule.run).to.be.a('function');
   });
 
+  it('should initialize', async () => {
+    mocks.core.captchas = undefined;
+    const resp = importedModule.init(mocks.core);
+
+    expect(mocks.core.captchas).to.be.an('object');
+  });
+
   // module main function
   it('should be invokable only by a mod', async () => {
     const resp = await importedModule.run({
@@ -48,80 +59,42 @@ describe('Checking speak module', () => {
     expect(resp).to.be.false;
   });
 
-  it('should initialize', async () => {
-    mocks.core.muzzledHashes = undefined;
-    const resp = importedModule.init(mocks.core);
-
-    expect(mocks.core.muzzledHashes).to.be.an('object');
-  });
-
-  it('should validate params', async () => {
+  it('should accept a channel param', async () => {
     const resp = await importedModule.run({
       core: mocks.core,
       server: mocks.server,
       socket: mocks.authedSocket,
-      payload: {
-        cmd: 'speak',
-      },
+      payload: mockChannelPayload,
     });
 
     expect(resp).to.be.true;
   });
 
-  it('should accept payload.ip as a string', async () => {
+  it('should accept no channel param', async () => {
     const resp = await importedModule.run({
       core: mocks.core,
       server: mocks.server,
       socket: mocks.authedSocket,
-      payload: {
-        cmd: 'speak',
-        ip: '127.0.0.1',
-      },
+      payload: mockPayload,
     });
 
     expect(resp).to.be.true;
   });
 
-  it('should accept payload.hash as a string', async () => {
+  it('should fail on missing channel data', async () => {
+    const origChannel = mocks.authedSocket.channel;
+    mocks.authedSocket.channel = undefined;
+
     const resp = await importedModule.run({
       core: mocks.core,
       server: mocks.server,
       socket: mocks.authedSocket,
-      payload: {
-        cmd: 'speak',
-        hash: 'pretendthisisahash',
-      },
+      payload: mockPayload,
     });
 
-    expect(resp).to.be.true;
+    mocks.authedSocket.channel = origChannel;
+
+    expect(resp).to.be.false;
   });
-
-  it('should unmuzzle all if payload.ip is *', async () => {
-    const resp = await importedModule.run({
-      core: mocks.core,
-      server: mocks.server,
-      socket: mocks.authedSocket,
-      payload: {
-        cmd: 'speak',
-        ip: '*',
-      },
-    });
-
-    expect(resp).to.be.true;
-  });
-
-  it('should unmuzzle all if payload.hash is *', async () => {
-    const resp = await importedModule.run({
-      core: mocks.core,
-      server: mocks.server,
-      socket: mocks.authedSocket,
-      payload: {
-        cmd: 'speak',
-        hash: '*',
-      },
-    });
-
-    expect(resp).to.be.true;
-  });
-
+  
 });

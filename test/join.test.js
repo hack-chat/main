@@ -139,6 +139,25 @@ describe('Checking join module', () => {
     expect(resp).to.be.true;
   });
 
+  it('should prevent admin impersonation', async () => {
+    const newSocket = Object.assign({}, mocks.authedSocket);
+    newSocket.channel = undefined;
+    newSocket.hcProtocol = undefined;
+
+    const resp = await importedModule.run({
+      core: mocks.core,
+      server: mocks.server,
+      socket: newSocket,
+      payload: {
+        cmd: 'join',
+        nick: 'admin#test',
+        channel: 'cake',
+      },
+    });
+
+    expect(resp).to.be.true;
+  });
+
   it('should prevent two of the same name in the same channel', async () => {
     const newSocket = Object.assign({}, mocks.authedSocket);
     newSocket.channel = undefined;

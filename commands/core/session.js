@@ -2,9 +2,9 @@
 
 /**
   * @author Marzavec ( https://github.com/marzavec )
-  * @summary Restore session
+  * @summary Create or restore session
   * @version 1.0.0
-  * @description Restore previous state by session
+  * @description Restore previous state by session or create new session
   * @module session
   */
 
@@ -24,9 +24,9 @@ import {
 const SessionLocation = './session.key';
 
 /**
-  * Get a fresh session string for target socket
-  * @param {Object} socket
-  * @param {Object} core
+  * Get a new json web token for the provided socket
+  * @param {*} socket
+  * @param {*} core
   * @returns {object}
   */
 export function getSession(socket, core) {
@@ -39,7 +39,7 @@ export function getSession(socket, core) {
     nick: socket.nick,
     trip: socket.trip,
     userid: socket.userid,
-    uType: socket.uType, /* @legacy */
+    uType: socket.uType,
     muzzled: socket.muzzled || false,
     banned: socket.banned || false,
   }, core.sessionKey, {
@@ -49,8 +49,8 @@ export function getSession(socket, core) {
 
 /**
   * Reply to target socket with session failure notice
-  * @param {Object} server
-  * @param {Object} socket
+  * @param {*} server
+  * @param {*} socket
   * @returns {boolean}
   */
 function notifyFailure(server, socket) {
@@ -136,12 +136,20 @@ export async function run({
   socket.nick = session.nick;
   socket.trip = session.trip;
   socket.userid = session.userid;
-  socket.uType = session.uType; /* @legacy */
+  socket.uType = session.uType;
   socket.muzzled = session.muzzled;
   socket.banned = session.banned;
 
   socket.hash = server.getSocketHash(socket);
   socket.hcProtocol = 2;
+
+  // dispatch info
+  server.reply({
+    cmd: 'session',
+    restored: true,
+    token: getSession(socket, core),
+    channels: socket.channels,
+  }, socket);
 
   for (let i = 0, j = session.channels.length; i < j; i += 1) {
     restoreJoin({
@@ -151,14 +159,6 @@ export async function run({
       channel: session.channels[i],
     }, true);
   }
-
-  // dispatch updated session
-  server.reply({
-    cmd: 'session',
-    restored: true,
-    token: getSession(socket, core),
-    channels: socket.channels,
-  }, socket);
 
   return true;
 }

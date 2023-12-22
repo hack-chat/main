@@ -6,43 +6,51 @@
   * @module chat
   */
 
-import { parseText } from '../utility/_Text.js';
+import {
+  parseText,
+} from '../utility/_Text.js';
 import {
   isAdmin,
   isModerator,
 } from '../utility/_UAC.js';
 
+/**
+  * Maximum length of the customId property
+  * @type {number}
+  */
 export const MAX_MESSAGE_ID_LENGTH = 6;
+
 /**
- * The time in milliseconds before a message is considered stale, and thus no longer allowed
- * to be edited.
- * @type {number}
- */
+  * The time in milliseconds before a message is considered stale, and thus no longer allowed
+  * to be edited.
+  * @type {number}
+  */
 const ACTIVE_TIMEOUT = 5 * 60 * 1000;
+
 /**
- * The time in milliseconds that a check for stale messages should be performed.
- * @type {number}
- */
+  * The time in milliseconds that a check for stale messages should be performed.
+  * @type {number}
+  */
 const TIMEOUT_CHECK_INTERVAL = 30 * 1000;
 
 /**
- * Stores active messages that can be edited.
- * @type {{ customId: string, userid: number, sent: number }[]}
- */
+  * Stores active messages that can be edited.
+  * @type {{ customId: string, userid: number, sent: number }[]}
+  */
 export const ACTIVE_MESSAGES = [];
 
 /**
- * Cleans up stale messages.
- * @public
- * @return {void}
- */
+  * Cleans up stale messages.
+  * @public
+  * @return {void}
+  */
 export function cleanActiveMessages() {
   const now = Date.now();
-  for (let i = 0; i < ACTIVE_MESSAGES.length; i++) {
+  for (let i = 0; i < ACTIVE_MESSAGES.length; i += 1) {
     const message = ACTIVE_MESSAGES[i];
     if (now - message.sent > ACTIVE_TIMEOUT || message.toDelete) {
       ACTIVE_MESSAGES.splice(i, 1);
-      i--;
+      i -= 1;
     }
   }
 }
@@ -51,12 +59,12 @@ export function cleanActiveMessages() {
 setInterval(cleanActiveMessages, TIMEOUT_CHECK_INTERVAL);
 
 /**
- * Adds a message to the active messages map.
- * @public
- * @param {string} id
- * @param {number} userid
- * @return {void}
- */
+  * Adds a message to the active messages map.
+  * @public
+  * @param {string} id
+  * @param {number} userid
+  * @return {void}
+  */
 export function addActiveMessage(customId, userid) {
   ACTIVE_MESSAGES.push({
     customId,
@@ -93,7 +101,7 @@ export async function run({
     }, socket);
   }
 
-  const customId = payload.customId;
+  const { customId } = payload;
 
   if (typeof (customId) === 'string' && customId.length > MAX_MESSAGE_ID_LENGTH) {
     // There's a limit on the custom id length.
@@ -127,6 +135,7 @@ export async function run({
   }
 
   addActiveMessage(outgoingPayload.customId, socket.userid);
+
   // broadcast to channel peers
   server.broadcast(outgoingPayload, { channel: socket.channel });
 

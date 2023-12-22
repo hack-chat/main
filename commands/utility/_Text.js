@@ -1,3 +1,13 @@
+/* eslint import/prefer-default-export: 0 */
+
+/**
+  * @author MinusGix ( https://github.com/MinusGix )
+  * @summary General string helper functions
+  * @version v1.0.0
+  * @description A library of several commonly used string functions
+  * @module Text
+  */
+
 /**
   * Check and trim string provided by remote client
   * @public

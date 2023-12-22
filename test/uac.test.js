@@ -42,7 +42,7 @@ describe('Checking UAC module', () => {
 
   it('should return admin level labels', async () => {
     const newConfig = Object.assign({}, mocks.core.appConfig.data);
-    newConfig.adminTrip = 'Tt8H7clbL9';
+    newConfig.adminTrip = 'Tt8H7c';
     const resp = importedModule.getUserPerms('test', 'salt', newConfig, 'cake');
     expect(resp).to.be.an('object');
   });
@@ -50,7 +50,7 @@ describe('Checking UAC module', () => {
   it('should return mod level labels', async () => {
     const newConfig = Object.assign({}, mocks.core.appConfig.data);
     newConfig.globalMods = [{
-        trip: 'Tt8H7clbL9',
+        trip: 'Tt8H7c',
     }];
     const resp = importedModule.getUserPerms('test', 'salt', newConfig, 'cake');
     expect(resp).to.be.an('object');

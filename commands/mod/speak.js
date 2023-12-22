@@ -94,6 +94,7 @@ export async function run({
   * @property {string} name - Module command name
   * @property {string} category - Module category name
   * @property {string} description - Information about module
+  * @property {Array} aliases - An array of alternative cmd names
   * @property {string} usage - Information about module usage
   */
 export const info = {
@@ -102,5 +103,5 @@ export const info = {
   description: 'Pardon a dumb user to be able to speak again',
   aliases: ['unmuzzle', 'unmute'],
   usage: `
-    API: { cmd: 'speak', ip/hash: '<target ip or hash' }`,
+    API: { cmd: 'speak', ip/hash: '<target ip or hash>' }`,
 };

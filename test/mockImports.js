@@ -1,6 +1,7 @@
 const mocks = {
   core: {
     sessionKey: 'test',
+
     appConfig: {
       data: {
         globalMods: [],
@@ -15,18 +16,23 @@ const mocks = {
       },
       write: async () => '',
     },
+
     muzzledHashes: [],
+
     stats: {
       increment: () => 1,
       decrement: () => 1,
       get: () => 1,
       set: () => 1,
     },
+
     dynamicImports: {
       reloadDirCache: () => '',
     },
+
     commands: {
       reloadCommands: () => '',
+      handleCommand: () => '',
       commands: [],
       categoriesList: ['test'],
       all: () => [{
@@ -56,10 +62,12 @@ const mocks = {
         }
       },
     },
+    
     configManager: {
       save: () => true,
     },
   },
+
   server : {
     police: {
       addresses: [],
@@ -85,6 +93,7 @@ const mocks = {
     }],
     getSocketHash: () => 'test',
   },
+
   plebSocket: {
     level: 100,
     address: '127.0.0.1',
@@ -97,6 +106,7 @@ const mocks = {
     uType: 'user',
     userid: 1234,
   },
+
   authedSocket: {
     level: 9999999,
     address: '127.0.0.1',

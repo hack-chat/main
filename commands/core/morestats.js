@@ -37,7 +37,7 @@ export async function run({ core, server, socket }) {
   // gather connection and channel count
   const ips = {};
   const channels = {};
-  // @todo use public channels from core.appConfig.data
+  // @todo use public channel flag
   const publicChanCounts = {
     lounge: 0,
     meta: 0,

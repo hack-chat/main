@@ -1,10 +1,35 @@
-import { parseText } from "../utility/_Text.js";
-import { isAdmin, isModerator } from "../utility/_UAC.js";
-import { ACTIVE_MESSAGES, MAX_MESSAGE_ID_LENGTH } from "./chat.js";
+/**
+  * @author MinusGix ( https://github.com/MinusGix )
+  * @summary Change target message
+  * @version v1.0.0
+  * @description Will alter a previously sent message using that message's customId
+  * @module updateMessage
+  */
 
-export async function run({ core, server, socket, payload }) {
+import {
+  parseText,
+} from '../utility/_Text.js';
+import {
+  isAdmin,
+  isModerator,
+} from '../utility/_UAC.js';
+import {
+  ACTIVE_MESSAGES,
+  MAX_MESSAGE_ID_LENGTH,
+} from './chat.js';
+
+/**
+  * Executes when invoked by a remote client
+  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @public
+  * @return {void}
+  */
+export async function run({
+  server, socket, payload,
+}) {
   // undefined | "overwrite" | "append" | "prepend" | "complete"
-  let mode = payload.mode;
+  const { customId } = payload;
+  let { mode, text } = payload;
 
   if (!mode) {
     mode = 'overwrite';
@@ -14,13 +39,9 @@ export async function run({ core, server, socket, payload }) {
     return server.police.frisk(socket.address, 13);
   }
 
-  const customId = payload.customId;
-
-  if (!customId || typeof customId !== "string" || customId.length > MAX_MESSAGE_ID_LENGTH) {
+  if (!customId || typeof customId !== 'string' || customId.length > MAX_MESSAGE_ID_LENGTH) {
     return server.police.frisk(socket.address, 13);
   }
-
-  let text = payload.text;
 
   if (typeof (text) !== 'string') {
     return server.police.frisk(socket.address, 13);
@@ -43,7 +64,7 @@ export async function run({ core, server, socket, payload }) {
   // Or flashing between huge and small. Etc.
 
   let message;
-  for (let i = 0; i < ACTIVE_MESSAGES.length; i++) {
+  for (let i = 0; i < ACTIVE_MESSAGES.length; i += 1) {
     const msg = ACTIVE_MESSAGES[i];
 
     if (msg.userid === socket.userid && msg.customId === customId) {
@@ -80,6 +101,12 @@ export async function run({ core, server, socket, payload }) {
   return true;
 }
 
+/**
+  * The following payload properties are required to invoke this module:
+  * "text", "customId"
+  * @public
+  * @typedef {Array} addmod/requiredData
+  */
 export const requiredData = ['text', 'customId'];
 
 /**

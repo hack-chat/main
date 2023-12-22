@@ -361,6 +361,7 @@ export function whisperCheck({
   * @property {string} name - Module command name
   * @property {string} category - Module category name
   * @property {string} description - Information about module
+  * @property {Array} aliases - An array of alternative cmd names
   * @property {string} usage - Information about module usage
   */
 export const info = {

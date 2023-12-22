@@ -15,8 +15,6 @@ const {
   createHash,
 } = await import('crypto');
 
-const TripLength = 10;
-
 /**
   * Object defining labels for default permission ranges
   * @typedef {Object} levels
@@ -110,7 +108,7 @@ export function getUserDetails(socket) {
   return {
     nick: socket.nick,
     trip: socket.trip || '',
-    uType: socket.uType, /* @legacy */
+    uType: socket.uType,
     hash: socket.hash,
     level: socket.level,
     userid: socket.userid,
@@ -152,7 +150,7 @@ export function getUserPerms(pass, salt, config, channel) {
 
   const sha = createHash('sha256');
   sha.update(pass + salt);
-  const trip = sha.digest('base64').substr(0, TripLength);
+  const trip = sha.digest('base64').substr(0, 6);
 
   // check if user is global admin
   if (trip === config.adminTrip) {

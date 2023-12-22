@@ -121,6 +121,23 @@ describe('Checking chat module', () => {
     expect(resp).to.be.true;
   });
 
+  it('should reject too long of customId', async () => {
+    const newPayload = { ...mockPayload };
+    newPayload.customId = '1234567890';
+
+    const newSocket = { ...mocks.plebSocket };
+    newSocket.color = '000000';
+
+    const resp = await importedModule.run({
+      core: mocks.core,
+      server: mocks.server,
+      socket: newSocket,
+      payload: newPayload,
+    });
+
+    expect(resp).to.be.false;
+  });
+
   it('should initialize hooks', async () => {
     expect(() => importedModule.initHooks(mocks.server)).not.to.throw();
   });
@@ -194,5 +211,16 @@ describe('Checking chat module', () => {
     });
 
     expect(resp).to.be.an('object');
+  });
+
+  it('should cleanup old active messages', async () => {
+    importedModule.ACTIVE_MESSAGES.push({
+      customId: '1234',
+      userid: 1234,
+      sent: 0,
+      toDelete: false,
+    });
+
+    expect(() => importedModule.cleanActiveMessages()).not.to.throw();
   });
 });
