@@ -30,7 +30,7 @@ export async function run({
 }) {
   const { channel } = socket;
 
-  if (server.police.frisk(socket.address, 1)) {
+  if (server.police.frisk(socket, 1)) {
     return server.reply({
       cmd: 'warn', // @todo Add numeric error code as `id`
       text: 'You are changing colors too fast. Wait a moment before trying again.',

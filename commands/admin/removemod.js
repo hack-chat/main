@@ -24,7 +24,7 @@ export async function run({
 }) {
   // increase rate limit chance and ignore if not admin
   if (!isAdmin(socket.level)) {
-    return server.police.frisk(socket.address, 20);
+    return server.police.frisk(socket, 20);
   }
 
   // remove trip from config

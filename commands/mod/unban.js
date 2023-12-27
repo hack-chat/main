@@ -21,7 +21,7 @@ export async function run({
 }) {
   // increase rate limit chance and ignore if not admin or mod
   if (!isModerator(socket.level)) {
-    return server.police.frisk(socket.address, 10);
+    return server.police.frisk(socket, 10);
   }
 
   // check user input

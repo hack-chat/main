@@ -19,7 +19,7 @@ import {
 export async function run({ server, socket, payload }) {
   if (payload.cmdKey !== server.cmdKey) {
     // internal command attempt by client, increase rate limit chance and ignore
-    return server.police.frisk(socket.address, 20);
+    return server.police.frisk(socket, 20);
   }
 
   // send leave notice to client peers

@@ -36,15 +36,15 @@ export async function run({
   }
 
   if (mode !== 'overwrite' && mode !== 'append' && mode !== 'prepend' && mode !== 'complete') {
-    return server.police.frisk(socket.address, 13);
+    return server.police.frisk(socket, 13);
   }
 
   if (!customId || typeof customId !== 'string' || customId.length > MAX_MESSAGE_ID_LENGTH) {
-    return server.police.frisk(socket.address, 13);
+    return server.police.frisk(socket, 13);
   }
 
   if (typeof (text) !== 'string') {
-    return server.police.frisk(socket.address, 13);
+    return server.police.frisk(socket, 13);
   }
 
   if (mode === 'overwrite') {
@@ -56,7 +56,7 @@ export async function run({
   }
 
   if (!text) {
-    return server.police.frisk(socket.address, 13);
+    return server.police.frisk(socket, 13);
   }
 
   // TODO: What score should we use for this? It isn't as space filling as chat messages.
@@ -77,7 +77,7 @@ export async function run({
   }
 
   if (!message) {
-    return server.police.frisk(socket.address, 6);
+    return server.police.frisk(socket, 6);
   }
 
   const outgoingPayload = {

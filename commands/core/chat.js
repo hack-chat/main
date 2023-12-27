@@ -88,12 +88,12 @@ export async function run({
 
   if (!text) {
     // lets not send objects or empty text, yea?
-    return server.police.frisk(socket.address, 13);
+    return server.police.frisk(socket, 13);
   }
 
   // check for spam
   const score = text.length / 83 / 4;
-  if (server.police.frisk(socket.address, score)) {
+  if (server.police.frisk(socket, score)) {
     return server.reply({
       cmd: 'warn', // @todo Add numeric error code as `id`
       text: 'You are sending too much text. Wait a moment and try again.\nPress the up arrow key to restore your last message.',
@@ -105,7 +105,7 @@ export async function run({
 
   if (typeof (customId) === 'string' && customId.length > MAX_MESSAGE_ID_LENGTH) {
     // There's a limit on the custom id length.
-    return server.police.frisk(socket.address, 13);
+    return server.police.frisk(socket, 13);
   }
 
   // build chat payload

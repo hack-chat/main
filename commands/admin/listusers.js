@@ -23,7 +23,7 @@ import {
 export async function run({ server, socket }) {
   // increase rate limit chance and ignore if not admin
   if (!isAdmin(socket.level)) {
-    return server.police.frisk(socket.address, 20);
+    return server.police.frisk(socket, 20);
   }
 
   // find all users currently in a channel

@@ -51,7 +51,7 @@ export async function run({
 }) {
   // increase rate limit chance and ignore if not admin or mod
   if (!isModerator(socket.level)) {
-    return server.police.frisk(socket.address, 10);
+    return server.police.frisk(socket, 10);
   }
 
   let targetChannel;
@@ -141,7 +141,7 @@ export function chatCheck({
         return false;
       }
 
-      server.police.frisk(socket.address, 7);
+      server.police.frisk(socket, 7);
       socket.terminate();
 
       return false;

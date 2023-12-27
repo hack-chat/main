@@ -48,7 +48,7 @@ import {
 export async function run({ core, server, socket }) {
   // increase rate limit chance and ignore if not admin
   if (!isAdmin(socket.level)) {
-    return server.police.frisk(socket.address, 20);
+    return server.police.frisk(socket, 20);
   }
 
   // attempt save, notify of failure

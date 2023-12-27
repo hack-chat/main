@@ -39,7 +39,7 @@ export async function run({
   core, server, socket, payload,
 }) {
   // check for spam
-  if (server.police.frisk(socket.address, 3)) {
+  if (server.police.frisk(socket, 3)) {
     return server.reply({
       cmd: 'warn',
       text: 'You are joining channels too fast. Wait a moment and try again.',
