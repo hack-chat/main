@@ -27,6 +27,7 @@ import {
   verifyNickname,
   getUserPerms,
   getUserDetails,
+  isModerator,
 } from '../utility/_UAC.js';
 
 /**
