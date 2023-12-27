@@ -9,7 +9,6 @@
   */
 
 import {
-  levels,
   isTrustedUser,
   isModerator,
   verifyNickname,
@@ -173,7 +172,7 @@ export function chatCheck({
   socket, payload,
 }) {
   if (socket.channel === 'purgatory') {
-    if (socket.level >= levels.moderator) {
+    if (isModerator(socket.level)) {
       return payload;
     }
 

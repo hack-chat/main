@@ -151,6 +151,11 @@ export async function run({
   // socket.channels.push(channel);
   socket.channels = [channel];
 
+  // global mod perks
+  if (isModerator(socket.level)) {
+    socket.ratelimitImmune = true;
+  }
+
   nicks.push(userInfo.nick); /* @legacy */
   users.push({ ...{ isme: true, isBot: socket.isBot }, ...userInfo });
 

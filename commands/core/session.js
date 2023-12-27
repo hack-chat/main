@@ -12,6 +12,7 @@ import fs from 'fs';
 import jsonwebtoken from 'jsonwebtoken';
 
 import {
+  isModerator,
   verifyNickname,
 } from '../utility/_UAC.js';
 import {
@@ -139,6 +140,11 @@ export async function run({
   socket.uType = session.uType;
   socket.muzzled = session.muzzled;
   socket.banned = session.banned;
+
+  // global mod perks
+  if (isModerator(socket.level)) {
+    socket.ratelimitImmune = true;
+  }
 
   socket.hash = server.getSocketHash(socket);
   socket.hcProtocol = 2;
