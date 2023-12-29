@@ -51,6 +51,7 @@ export async function run({
     } else {
       reply += `# ${command.info.name} command:\n| | |\n|---:|---|\n`;
       reply += `|**Name:**|${command.info.name}|\n`;
+      reply += `|**Hash:**|${command.info.srcHash}|\n`;
       reply += `|**Aliases:**|${typeof command.info.aliases !== 'undefined' ? command.info.aliases.join(', ') : 'None'}|\n`;
       reply += `|**Category:**|${command.info.category.replace('../src/commands/', '').replace(/^\w/, (c) => c.toUpperCase())}|\n`;
       reply += `|**Required Parameters:**|${command.requiredData || 'None'}|\n`;
