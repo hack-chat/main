@@ -7,6 +7,14 @@
  *
 */
 
+//select "chatinput" on "/"
+document.addEventListener("keydown", e => {
+    if (e.key === '/' && document.getElementById("chatinput") != document.activeElement) {
+        e.preventDefault();
+        document.getElementById("chatinput").focus();
+    }
+});
+
 // initialize markdown engine
 var markdownOptions = {
 	html: false,
@@ -130,7 +138,7 @@ var frontpage = [
 	"Formatting:",
 	"Whitespace is preserved, so source code can be pasted verbatim.",
 	"Surround LaTeX with a dollar sign for inline style $\\zeta(2) = \\pi^2/6$, and two dollars for display. $$\\int_0^1 \\int_0^1 \\frac{1}{1-xy} dx dy = \\frac{\\pi^2}{6}$$",
-	"For syntax highlight, wrap the code like: ```<language> <the code>``` where <language> is any known programming language.",
+	"For syntax highlight, wrap the code like: \\`\\`\\`<language> <the code>\\`\\`\\` where <language> is any known programming language.",
 	"",
 	"Current Github: https://github.com/hack-chat",
 	"Legacy GitHub: https://github.com/AndrewBelt/hack.chat",
@@ -538,7 +546,7 @@ function pushMessage(args) {
 
 	messageEl.classList.add('message');
 
-	if (verifyNickname(myNick) && args.nick == myNick) {
+	if (verifyNickname(myNick.split('#')[0]) && args.nick == myNick.split('#')[0]) {
 		messageEl.classList.add('me');
 	} else if (args.nick == '!') {
 		messageEl.classList.add('warn');
