@@ -1,0 +1,69 @@
+:root {
+  color-scheme: dark!important;
+  scrollbar-color: #8e8e8e #151515;
+}
+
+body {
+  background: #151515;
+  color: #8e8e8e;
+}
+pre {
+  margin-top: 0.3rem;
+  margin-bottom: 0.3rem;
+  overflow: hidden;
+  padding: 0.1rem;
+  font-weight: 400;
+  background: #1d1f21;
+  border: 0;
+  border-radius: 3px;
+}
+code{
+  background: #444;
+}
+
+input,
+textarea {
+  color: #8e8e8e;
+}
+.message {
+  border-left: 1px solid rgba(116, 115, 105, 0.1);
+}
+.refmessage {
+  border-left: 1px solid rgba(116, 115, 105, 1);
+}
+.nick {
+  color: #6699cc;
+}
+.trip {
+  color: #515151;
+}
+.text a {
+  color: #5c9c9f;
+}
+.admin .nick {
+  color: #f2777a;
+}
+.mod .nick {
+  color: #66cccc;
+}
+.me .nick {
+  color: #cc99cc;
+}
+.info .nick,
+.info .text {
+  color: #3e9353;
+}
+.warn .nick,
+.warn .text {
+  color: #ffcc66;
+}
+#footer {
+  background: #151515;
+}
+#sidebar {
+  background: #111;
+  border-color: #20201e;
+}
+#chatform {
+  border-color: rgba(116, 115, 105, 0.15);
+}

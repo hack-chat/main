@@ -960,7 +960,16 @@ var schemes = [
 	'pop',
 	'railscasts',
 	'solarized',
-	'tomorrow'
+	'tomorrow',
+	'tk-night',
+	'carrot',
+	'lax',
+	'Ubuntu',
+	'gruvbox-light',
+	'fried-egg',
+	'rainbow',
+	'amoled',
+	'retro'
 ];
 
 var highlights = [
@@ -970,6 +979,7 @@ var highlights = [
 	'darcula',
 	'github',
 	'rainbow',
+	'tk-night',
 	'tomorrow',
 	'xcode',
 	'zenburn'
