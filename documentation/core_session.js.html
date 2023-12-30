@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: core/session.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: core/session.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/* eslint import/no-cycle: [0, { ignoreExternal: true }] */
+
+/**
+  * @author Marzavec ( https://github.com/marzavec )
+  * @summary Create or restore session
+  * @version 1.0.0
+  * @description Restore previous state by session or create new session
+  * @module session
+  */
+
+import fs from 'fs';
+import jsonwebtoken from 'jsonwebtoken';
+
+import {
+  isModerator,
+  verifyNickname,
+} from '../utility/_UAC.js';
+import {
+  Errors,
+} from '../utility/_Constants.js';
+import {
+  restoreJoin,
+} from './join.js';
+
+const SessionLocation = './session.key';
+
+/**
+  * Get a new json web token for the provided socket
+  * @param {*} socket
+  * @param {*} core
+  * @returns {object}
+  */
+export function getSession(socket, core) {
+  return jsonwebtoken.sign({
+    channel: socket.channel,
+    channels: socket.channels,
+    color: socket.color,
+    isBot: socket.isBot,
+    level: socket.level,
+    nick: socket.nick,
+    trip: socket.trip,
+    userid: socket.userid,
+    uType: socket.uType,
+    muzzled: socket.muzzled || false,
+    banned: socket.banned || false,
+  }, core.sessionKey, {
+    expiresIn: '7 days',
+  });
+}
+
+/**
+  * Reply to target socket with session failure notice
+  * @param {*} server
+  * @param {*} socket
+  * @returns {boolean}
+  */
+function notifyFailure(server, socket) {
+  server.reply({
+    cmd: 'error',
+    id: Errors.Session.BAD_SESSION,
+    text: 'Invalid session',
+  }, socket);
+
+  return false;
+}
+
+/**
+  * Executes when invoked by a remote client
+  * @param {Object} env - Enviroment object with references to core, server, socket &amp; payload
+  * @public
+  * @return {void}
+  */
+export async function run({
+  core, server, socket, payload,
+}) {
+  if (typeof payload.token === 'undefined') {
+    return notifyFailure(server, socket);
+  }
+
+  let session = false;
+  try {
+    session = jsonwebtoken.verify(payload.token, core.sessionKey);
+  } catch (err) {
+    return notifyFailure(server, socket);
+  }
+
+  // validate session
+  if (typeof session.channel !== 'string') {
+    return notifyFailure(server, socket);
+  }
+
+  if (Array.isArray(session.channels) === false) {
+    return notifyFailure(server, socket);
+  }
+
+  if (typeof session.color !== 'string' &amp;&amp; typeof session.color !== 'boolean') {
+    return notifyFailure(server, socket);
+  }
+
+  if (typeof session.isBot !== 'boolean') {
+    return notifyFailure(server, socket);
+  }
+
+  if (typeof session.level !== 'number') {
+    return notifyFailure(server, socket);
+  }
+
+  if (verifyNickname(session.nick) === false) {
+    return notifyFailure(server, socket);
+  }
+
+  if (typeof session.trip !== 'string') {
+    return notifyFailure(server, socket);
+  }
+
+  if (typeof session.userid !== 'number') {
+    return notifyFailure(server, socket);
+  }
+
+  if (typeof session.uType !== 'string') {
+    return notifyFailure(server, socket);
+  }
+
+  if (typeof session.muzzled !== 'boolean') {
+    return notifyFailure(server, socket);
+  }
+
+  if (typeof session.banned !== 'boolean') {
+    return notifyFailure(server, socket);
+  }
+
+  // populate socket info with validated session
+  socket.channels = [];
+  socket.color = session.color;
+  socket.isBot = session.isBot;
+  socket.level = session.level;
+  socket.nick = session.nick;
+  socket.trip = session.trip;
+  socket.userid = session.userid;
+  socket.uType = session.uType;
+  socket.muzzled = session.muzzled;
+  socket.banned = session.banned;
+
+  // global mod perks
+  if (isModerator(socket.level)) {
+    socket.ratelimitImmune = true;
+  }
+
+  socket.hash = server.getSocketHash(socket);
+  socket.hcProtocol = 2;
+
+  // dispatch info
+  server.reply({
+    cmd: 'session',
+    restored: true,
+    token: getSession(socket, core),
+    channels: socket.channels,
+  }, socket);
+
+  for (let i = 0, j = session.channels.length; i &lt; j; i += 1) {
+    restoreJoin({
+      core,
+      server,
+      socket,
+      channel: session.channels[i],
+    }, true);
+  }
+
+  return true;
+}
+
+/**
+  * Automatically executes once after server is ready
+  * @param {Object} core - Reference to core enviroment object
+  * @public
+  * @return {void}
+  */
+export function init(core) {
+  // load the encryption key if required
+  if (typeof core.sessionKey === 'undefined') {
+    core.sessionKey = fs.readFileSync(SessionLocation);
+  }
+}
+
+/**
+  * Module meta information
+  * @public
+  * @typedef {Object} session/info
+  * @property {string} name - Module command name
+  * @property {string} category - Module category name
+  * @property {string} description - Information about module
+  * @property {string} usage - Information about module usage
+  */
+export const info = {
+  name: 'session',
+  category: 'core',
+  description: 'Restore previous state by session or create new session',
+  usage: "API: { cmd: 'session', id: '&lt;previous session>' }",
+};
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-addmod.html">addmod</a></li><li><a href="module-ban.html">ban</a></li><li><a href="module-changecolor.html">changecolor</a></li><li><a href="module-changenick.html">changenick</a></li><li><a href="module-chat.html">chat</a></li><li><a href="module-disablecaptcha.html">disablecaptcha</a></li><li><a href="module-disconnect.html">disconnect</a></li><li><a href="module-dumb.html">dumb</a></li><li><a href="module-emote.html">emote</a></li><li><a href="module-enablecaptcha.html">enablecaptcha</a></li><li><a href="module-forcecolor.html">forcecolor</a></li><li><a href="module-help.html">help</a></li><li><a href="module-invite.html">invite</a></li><li><a href="module-join.html">join</a></li><li><a href="module-kick.html">kick</a></li><li><a href="module-listusers.html">listusers</a></li><li><a href="module-lockroom.html">lockroom</a></li><li><a href="module-morestats.html">morestats</a></li><li><a href="module-ping.html">ping</a></li><li><a href="module-reload.html">reload</a></li><li><a href="module-removemod.html">removemod</a></li><li><a href="module-saveconfig.html">saveconfig</a></li><li><a href="module-session.html">session</a></li><li><a href="module-shout.html">shout</a></li><li><a href="module-socketreply.html">socketreply</a></li><li><a href="module-speak.html">speak</a></li><li><a href="module-stats.html">stats</a></li><li><a href="module-unban.html">unban</a></li><li><a href="module-unbanall.html">unbanall</a></li><li><a href="module-unlockroom.html">unlockroom</a></li><li><a href="module-updateMessage.html">updateMessage</a></li><li><a href="module-whisper.html">whisper</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.10</a> on Fri Dec 29 2023 23:22:35 GMT-0800 (Pacific Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

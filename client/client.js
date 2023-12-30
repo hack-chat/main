@@ -23,7 +23,7 @@ var markdownOptions = {
 	langPrefix: '',
 	linkify: true,
 	linkTarget: '_blank" rel="noreferrer',
-	typographer:  true,
+	typographer: true,
 	quotes: `""''`,
 
 	doHighlight: true,
@@ -33,12 +33,12 @@ var markdownOptions = {
 		if (lang && hljs.getLanguage(lang)) {
 			try {
 				return hljs.highlight(lang, str).value;
-			} catch (__) {}
+			} catch (__) { }
 		}
 
 		try {
 			return hljs.highlightAuto(str).value;
-		} catch (__) {}
+		} catch (__) { }
 
 		return '';
 	}
@@ -75,20 +75,20 @@ md.renderer.rules.image = function (tokens, idx, options) {
 		return '<a href="' + src + '" target="_blank" rel="noreferrer"><img' + scrollOnload + imgSrc + alt + title + suffix + '></a>';
 	}
 
-  return '<a href="' + src + '" target="_blank" rel="noreferrer">' + Remarkable.utils.escapeHtml(Remarkable.utils.replaceEntities(src)) + '</a>';
+	return '<a href="' + src + '" target="_blank" rel="noreferrer">' + Remarkable.utils.escapeHtml(Remarkable.utils.replaceEntities(src)) + '</a>';
 };
 
 md.renderer.rules.link_open = function (tokens, idx, options) {
 	var title = tokens[idx].title ? (' title="' + Remarkable.utils.escapeHtml(Remarkable.utils.replaceEntities(tokens[idx].title)) + '"') : '';
-  var target = options.linkTarget ? (' target="' + options.linkTarget + '"') : '';
-  return '<a rel="noreferrer" onclick="return verifyLink(this)" href="' + Remarkable.utils.escapeHtml(tokens[idx].href) + '"' + title + target + '>';
+	var target = options.linkTarget ? (' target="' + options.linkTarget + '"') : '';
+	return '<a rel="noreferrer" onclick="return verifyLink(this)" href="' + Remarkable.utils.escapeHtml(tokens[idx].href) + '"' + title + target + '>';
 };
 
-md.renderer.rules.text = function(tokens, idx) {
+md.renderer.rules.text = function (tokens, idx) {
 	tokens[idx].content = Remarkable.utils.escapeHtml(tokens[idx].content);
 
 	if (tokens[idx].content.indexOf('?') !== -1) {
-		tokens[idx].content = tokens[idx].content.replace(/(^|\s)(\?)\S+?(?=[,.!?:)]?\s|$)/gm, function(match) {
+		tokens[idx].content = tokens[idx].content.replace(/(^|\s)(\?)\S+?(?=[,.!?:)]?\s|$)/gm, function (match) {
 			var channelLink = Remarkable.utils.escapeHtml(Remarkable.utils.replaceEntities(match.trim()));
 			var whiteSpace = '';
 			if (match[0] !== '?') {
@@ -98,7 +98,7 @@ md.renderer.rules.text = function(tokens, idx) {
 		});
 	}
 
-  return tokens[idx].content;
+	return tokens[idx].content;
 };
 
 md.use(remarkableKatex);
@@ -172,12 +172,40 @@ var myChannel = window.location.search.replace(/^\?/, '');
 var lastSent = [""];
 var lastSentPos = 0;
 
+/**
+ * Stores active messages
+ * These are messages that can be edited.
+ * @type {{ customId: string, userid: number, sent: number, text: string, elem: HTMLElement }[]}
+ */
+var activeMessages = [];
+
+setInterval(function () {
+	var editTimeout = 6 * 60 * 1000;
+	var now = Date.now();
+	for (var i = 0; i < activeMessages.length; i++) {
+		if (now - activeMessages[i].sent > editTimeout) {
+			activeMessages.splice(i, 1);
+			i--;
+		}
+	}
+}, 30 * 1000);
+
+function addActiveMessage(customId, userid, text, elem) {
+	activeMessages.push({
+		customId,
+		userid,
+		sent: Date.now(),
+		text,
+		elem,
+	});
+}
+
 /** Notification switch and local storage behavior **/
 var notifySwitch = document.getElementById("notify-switch")
 var notifySetting = localStorageGet("notify-api")
 var notifyPermissionExplained = 0; // 1 = granted msg shown, -1 = denied message shown
 
-// Inital request for notifications permission
+// Initial request for notifications permission
 function RequestNotifyPermission() {
 	try {
 		var notifyPromise = Notification.requestPermission();
@@ -361,7 +389,9 @@ function join(channel) {
 		var args = JSON.parse(message.data);
 		var cmd = args.cmd;
 		var command = COMMANDS[cmd];
-		command.call(null, args);
+		if (command) {
+			command.call(null, args);
+		}
 	}
 }
 
@@ -370,10 +400,71 @@ var COMMANDS = {
 		if (ignoredUsers.indexOf(args.nick) >= 0) {
 			return;
 		}
-		pushMessage(args);
+
+		var elem = pushMessage(args);
+
+		if (typeof (args.customId) === 'string') {
+			addActiveMessage(args.customId, args.userid, args.text, elem);
+		}
+	},
+
+	updateMessage: function (args) {
+		var customId = args.customId;
+		var mode = args.mode;
+
+		if (!mode) {
+			return;
+		}
+
+		var message;
+		for (var i = 0; i < activeMessages.length; i++) {
+			var msg = activeMessages[i];
+			if (msg.userid === args.userid && msg.customId === customId) {
+				if (mode === 'complete') {
+					activeMessages.splice(i, 1);
+					return;
+				}
+				message = msg;
+				break;
+			}
+		}
+
+		if (!message) {
+			return;
+		}
+
+		var textElem = message.elem.querySelector('.text');
+		if (!textElem) {
+			return;
+		}
+
+		var newText = message.text;
+		if (mode === 'overwrite') {
+			newText = args.text;
+		} else if (mode === 'append') {
+			newText += args.text;
+		} else if (mode === 'prepend') {
+			newText = args.text + newText;
+		}
+
+		message.text = newText;
+
+		// Scroll to bottom if necessary
+		var atBottom = isAtBottom();
+
+		textElem.innerHTML = md.render(newText);
+
+		if (atBottom) {
+			window.scrollTo(0, document.body.scrollHeight);
+		}
 	},
 
 	info: function (args) {
+		args.nick = '*';
+		pushMessage(args);
+	},
+
+	emote: function (args) {
 		args.nick = '*';
 		pushMessage(args);
 	},
@@ -413,6 +504,30 @@ var COMMANDS = {
 		if ($('#joined-left').checked) {
 			pushMessage({ nick: '*', text: nick + " left" });
 		}
+	},
+
+	captcha: function (args) {
+		var messageEl = document.createElement('div');
+		messageEl.classList.add('info');
+
+
+		var nickSpanEl = document.createElement('span');
+		nickSpanEl.classList.add('nick');
+		messageEl.appendChild(nickSpanEl);
+
+		var nickLinkEl = document.createElement('a');
+		nickLinkEl.textContent = '#';
+		nickSpanEl.appendChild(nickLinkEl);
+
+		var textEl = document.createElement('pre');
+		textEl.style.fontSize = '4px';
+		textEl.classList.add('text');
+		textEl.innerHTML = args.text;
+
+		messageEl.appendChild(textEl);
+		$('#messages').appendChild(messageEl);
+
+		window.scrollTo(0, document.body.scrollHeight);
 	}
 }
 
@@ -450,7 +565,13 @@ function pushMessage(args) {
 
 	if (args.trip) {
 		var tripEl = document.createElement('span');
-		tripEl.textContent = args.trip + " ";
+
+		if (args.mod) {
+			tripEl.textContent = String.fromCodePoint(11088) + " " + args.trip + " ";
+		} else {
+			tripEl.textContent = args.trip + " ";
+		}
+
 		tripEl.classList.add('trip');
 		nickSpanEl.appendChild(tripEl);
 	}
@@ -458,6 +579,10 @@ function pushMessage(args) {
 	if (args.nick) {
 		var nickLinkEl = document.createElement('a');
 		nickLinkEl.textContent = args.nick;
+
+		if (args.color && /(^[0-9A-F]{6}$)|(^[0-9A-F]{3}$)/i.test(args.color)) {
+			nickLinkEl.setAttribute('style', 'color:#' + args.color + ' !important');
+		}
 
 		nickLinkEl.onclick = function () {
 			insertAtCursor("@" + args.nick + " ");
@@ -485,6 +610,8 @@ function pushMessage(args) {
 
 	unread += 1;
 	updateTitle();
+
+	return messageEl;
 }
 
 function insertAtCursor(text) {
@@ -641,12 +768,23 @@ $('#chatinput').onkeydown = function (e) {
 	}
 }
 
+// from https://stackoverflow.com/questions/11381673/detecting-a-mobile-browser
+function checkIsMobileOrTablet() {
+	let check = false;
+	(function(a){if(/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino|android|ipad|playbook|silk/i.test(a)||/1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(a.substr(0,4))) check = true;})(navigator.userAgent||navigator.vendor||window.opera);
+	return check;
+};
+
+var isMobileOrTablet = checkIsMobileOrTablet();
+
 function updateInputSize() {
 	var atBottom = isAtBottom();
+	if (!isMobileOrTablet) {
+		var input = $('#chatinput');
+		input.style.height = 0;
+		input.style.height = input.scrollHeight + 'px';
+	}
 
-	var input = $('#chatinput');
-	input.style.height = 0;
-	input.style.height = input.scrollHeight + 'px';
 	document.body.style.marginBottom = $('#footer').offsetHeight + 'px';
 
 	if (atBottom) {
@@ -672,8 +810,8 @@ $('#sidebar').onmouseleave = document.ontouchstart = function (event) {
 	var e = event.toElement || event.relatedTarget;
 	try {
 		if (e.parentNode == this || e == this) {
-	     return;
-	  }
+			return;
+		}
 	} catch (e) { return; }
 
 	if (!$('#pin-sidebar').checked) {
@@ -701,8 +839,8 @@ if (localStorageGet('joined-left') == 'false') {
 
 if (localStorageGet('parse-latex') == 'false') {
 	$('#parse-latex').checked = false;
-	md.inline.ruler.disable([ 'katex' ]);
-	md.block.ruler.disable([ 'katex' ]);
+	md.inline.ruler.disable(['katex']);
+	md.block.ruler.disable(['katex']);
 }
 
 $('#pin-sidebar').onchange = function (e) {
@@ -717,11 +855,11 @@ $('#parse-latex').onchange = function (e) {
 	var enabled = !!e.target.checked;
 	localStorageSet('parse-latex', enabled);
 	if (enabled) {
-		md.inline.ruler.enable([ 'katex' ]);
-		md.block.ruler.enable([ 'katex' ]);
+		md.inline.ruler.enable(['katex']);
+		md.block.ruler.enable(['katex']);
 	} else {
-		md.inline.ruler.disable([ 'katex' ]);
-		md.block.ruler.disable([ 'katex' ]);
+		md.inline.ruler.disable(['katex']);
+		md.block.ruler.disable(['katex']);
 	}
 }
 
@@ -830,15 +968,16 @@ var schemes = [
 	'pop',
 	'railscasts',
 	'solarized',
-	'tk-night',
 	'tomorrow',
+	'tk-night',
 	'carrot',
 	'lax',
 	'Ubuntu',
 	'gruvbox-light',
 	'fried-egg',
 	'rainbow',
-	'amoled'
+	'amoled',
+	'retro'
 ];
 
 var highlights = [
@@ -892,7 +1031,7 @@ $('#highlight-selector').onchange = function (e) {
 	setHighlight(e.target.value);
 }
 
-// Load sidebar configaration values from local storage if available
+// Load sidebar configuration values from local storage if available
 if (localStorageGet('scheme')) {
 	setScheme(localStorageGet('scheme'));
 }

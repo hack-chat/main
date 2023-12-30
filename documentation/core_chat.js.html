@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: core/chat.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: core/chat.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+  * @author Marzavec ( https://github.com/marzavec )
+  * @summary Send chat messages
+  * @version 1.0.0
+  * @description Broadcasts passed `text` field to the calling users channel
+  * @module chat
+  */
+
+import {
+  parseText,
+} from '../utility/_Text.js';
+import {
+  isAdmin,
+  isModerator,
+} from '../utility/_UAC.js';
+
+/**
+  * Maximum length of the customId property
+  * @type {number}
+  */
+export const MAX_MESSAGE_ID_LENGTH = 6;
+
+/**
+  * The time in milliseconds before a message is considered stale, and thus no longer allowed
+  * to be edited.
+  * @type {number}
+  */
+const ACTIVE_TIMEOUT = 5 * 60 * 1000;
+
+/**
+  * The time in milliseconds that a check for stale messages should be performed.
+  * @type {number}
+  */
+const TIMEOUT_CHECK_INTERVAL = 30 * 1000;
+
+/**
+  * Stores active messages that can be edited.
+  * @type {Array}
+  */
+export const ACTIVE_MESSAGES = [];
+
+/**
+  * Cleans up stale messages.
+  * @public
+  * @return {void}
+  */
+export function cleanActiveMessages() {
+  const now = Date.now();
+  for (let i = 0; i &lt; ACTIVE_MESSAGES.length; i += 1) {
+    const message = ACTIVE_MESSAGES[i];
+    if (now - message.sent > ACTIVE_TIMEOUT || message.toDelete) {
+      ACTIVE_MESSAGES.splice(i, 1);
+      i -= 1;
+    }
+  }
+}
+
+// TODO: This won't get cleared on module reload.
+setInterval(cleanActiveMessages, TIMEOUT_CHECK_INTERVAL);
+
+/**
+  * Adds a message to the active messages map.
+  * @public
+  * @param {string} id
+  * @param {number} userid
+  * @return {void}
+  */
+export function addActiveMessage(customId, userid) {
+  ACTIVE_MESSAGES.push({
+    customId,
+    userid,
+    sent: Date.now(),
+    toDelete: false,
+  });
+}
+
+/**
+  * Executes when invoked by a remote client
+  * @param {Object} env - Enviroment object with references to core, server, socket &amp; payload
+  * @public
+  * @return {void}
+  */
+export async function run({
+  core, server, socket, payload,
+}) {
+  // check user input
+  const text = parseText(payload.text);
+
+  if (!text) {
+    // lets not send objects or empty text, yea?
+    return server.police.frisk(socket, 13);
+  }
+
+  // check for spam
+  const score = text.length / 83 / 4;
+  if (server.police.frisk(socket, score)) {
+    return server.reply({
+      cmd: 'warn', // @todo Add numeric error code as `id`
+      text: 'You are sending too much text. Wait a moment and try again.\nPress the up arrow key to restore your last message.',
+      channel: socket.channel, // @todo Multichannel
+    }, socket);
+  }
+
+  const { customId } = payload;
+
+  if (typeof (customId) === 'string' &amp;&amp; customId.length > MAX_MESSAGE_ID_LENGTH) {
+    // There's a limit on the custom id length.
+    return server.police.frisk(socket, 13);
+  }
+
+  // build chat payload
+  const outgoingPayload = {
+    cmd: 'chat',
+    nick: socket.nick, /* @legacy */
+    uType: socket.uType, /* @legacy */
+    userid: socket.userid,
+    channel: socket.channel,
+    text,
+    level: socket.level,
+    customId,
+  };
+
+  if (isAdmin(socket.level)) {
+    outgoingPayload.admin = true;
+  } else if (isModerator(socket.level)) {
+    outgoingPayload.mod = true;
+  }
+
+  if (socket.trip) {
+    outgoingPayload.trip = socket.trip; /* @legacy */
+  }
+
+  if (socket.color) {
+    outgoingPayload.color = socket.color;
+  }
+
+  addActiveMessage(outgoingPayload.customId, socket.userid);
+
+  // broadcast to channel peers
+  server.broadcast(outgoingPayload, { channel: socket.channel });
+
+  // stats are fun
+  core.stats.increment('messages-sent');
+
+  return true;
+}
+
+/**
+  * Automatically executes once after server is ready to register this modules hooks
+  * @param {Object} server - Reference to server enviroment object
+  * @public
+  * @return {void}
+  */
+export function initHooks(server) {
+  server.registerHook('in', 'chat', this.commandCheckIn.bind(this), 20);
+  server.registerHook('in', 'chat', this.finalCmdCheck.bind(this), 254);
+}
+
+/**
+  * Executes every time an incoming chat command is invoked;
+  * checks for miscellaneous '/' based commands
+  * @param {Object} env - Enviroment object with references to core, server, socket &amp; payload
+  * @public
+  * @return {(Object|boolean|string)} Object = same/altered payload,
+  * false = suppress action,
+  * string = error
+  */
+export function commandCheckIn({ server, socket, payload }) {
+  if (typeof payload.text !== 'string') {
+    return false;
+  }
+
+  if (payload.text.startsWith('/myhash')) {
+    server.reply({
+      cmd: 'info',
+      text: `Your hash: ${socket.hash}`,
+      channel: socket.channel, // @todo Multichannel
+    }, socket);
+
+    return false;
+  }
+
+  return payload;
+}
+
+/**
+  * Executes every time an incoming chat command is invoked;
+  * assumes a failed chat command invocation and will reject with notice
+  * @param {Object} env - Enviroment object with references to core, server, socket &amp; payload
+  * @public
+  * @return {(Object|boolean|string)} Object = same/altered payload,
+  * false = suppress action,
+  * string = error
+  */
+export function finalCmdCheck({ server, socket, payload }) {
+  if (typeof payload.text !== 'string') {
+    return false;
+  }
+
+  if (!payload.text.startsWith('/')) {
+    return payload;
+  }
+
+  if (payload.text.startsWith('//')) {
+    payload.text = payload.text.substr(1); // eslint-disable-line no-param-reassign
+
+    return payload;
+  }
+
+  server.reply({
+    cmd: 'warn', // @todo Add numeric error code as `id`
+    text: `Unknown command: ${payload.text}`,
+    channel: socket.channel, // @todo Multichannel
+  }, socket);
+
+  return false;
+}
+
+/**
+  * The following payload properties are required to invoke this module:
+  * "text"
+  * @public
+  * @typedef {Array} chat/requiredData
+  */
+export const requiredData = ['text'];
+
+/**
+  * Module meta information
+  * @public
+  * @typedef {Object} chat/info
+  * @property {string} name - Module command name
+  * @property {string} category - Module category name
+  * @property {string} description - Information about module
+  * @property {string} usage - Information about module usage
+  */
+export const info = {
+  name: 'chat',
+  category: 'core',
+  description: 'Broadcasts passed `text` field to the calling users channel',
+  usage: `
+    API: { cmd: 'chat', text: '&lt;text to send>' }
+    Text: Uuuuhm. Just kind type in that little box at the bottom and hit enter.\n
+    Bonus super secret hidden commands:
+    /myhash`,
+};
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-addmod.html">addmod</a></li><li><a href="module-ban.html">ban</a></li><li><a href="module-changecolor.html">changecolor</a></li><li><a href="module-changenick.html">changenick</a></li><li><a href="module-chat.html">chat</a></li><li><a href="module-disablecaptcha.html">disablecaptcha</a></li><li><a href="module-disconnect.html">disconnect</a></li><li><a href="module-dumb.html">dumb</a></li><li><a href="module-emote.html">emote</a></li><li><a href="module-enablecaptcha.html">enablecaptcha</a></li><li><a href="module-forcecolor.html">forcecolor</a></li><li><a href="module-help.html">help</a></li><li><a href="module-invite.html">invite</a></li><li><a href="module-join.html">join</a></li><li><a href="module-kick.html">kick</a></li><li><a href="module-listusers.html">listusers</a></li><li><a href="module-lockroom.html">lockroom</a></li><li><a href="module-morestats.html">morestats</a></li><li><a href="module-ping.html">ping</a></li><li><a href="module-reload.html">reload</a></li><li><a href="module-removemod.html">removemod</a></li><li><a href="module-saveconfig.html">saveconfig</a></li><li><a href="module-session.html">session</a></li><li><a href="module-shout.html">shout</a></li><li><a href="module-socketreply.html">socketreply</a></li><li><a href="module-speak.html">speak</a></li><li><a href="module-stats.html">stats</a></li><li><a href="module-unban.html">unban</a></li><li><a href="module-unbanall.html">unbanall</a></li><li><a href="module-unlockroom.html">unlockroom</a></li><li><a href="module-updateMessage.html">updateMessage</a></li><li><a href="module-whisper.html">whisper</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.10</a> on Fri Dec 29 2023 23:22:35 GMT-0800 (Pacific Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

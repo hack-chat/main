@@ -221,10 +221,8 @@ ul ul, ol ol {
 }
 
 @media only screen and (max-width: 600px) {
-  .messages {
-    border: none;
-  }
   #messages {
+    border: none;
     padding: 0.5em;
   }
   .message {
