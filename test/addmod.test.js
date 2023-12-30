@@ -38,8 +38,10 @@ describe('Checking addmod module', () => {
 
   // module main function
   it('should be invokable only by an admin', async () => {
+    const newCore = Object.assign({}, mocks.core);
+
     const resp = await importedModule.run({
-      core: mocks.core,
+      core: newCore,
       server: mocks.server,
       socket: mocks.plebSocket,
       payload: mockPayload,
@@ -49,8 +51,10 @@ describe('Checking addmod module', () => {
   });
 
   it('should add new trip to the config', async () => {
+    const newCore = Object.assign({}, mocks.core);
+
     const resp = await importedModule.run({
-      core: mocks.core,
+      core: newCore,
       server: mocks.server,
       socket: mocks.authedSocket,
       payload: mockPayload,
@@ -60,18 +64,17 @@ describe('Checking addmod module', () => {
   });
 
   it('should inform the new mod', async () => {
+    const newCore = Object.assign({}, mocks.core);
     mocks.server.findSockets = () => {
       return [{}];
     }
 
     const resp = await importedModule.run({
-      core: mocks.core,
+      core: newCore,
       server: mocks.server,
       socket: mocks.authedSocket,
       payload: mockPayload,
     });
-
-    mocks.core.appConfig.data.globalMods = [];
     
     expect(resp).to.be.true;
   });

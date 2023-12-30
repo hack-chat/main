@@ -6,7 +6,7 @@ let importedModule;
 
 const mockPayload = {
   cmd: 'removemod',
-  trip: 'newTrip',
+  trip: 'XVeP3T',
 }
 
 describe('Checking removemod module', () => {
@@ -38,8 +38,10 @@ describe('Checking removemod module', () => {
 
   // module main function
   it('should be invokable only by an admin', async () => {
+    const newCore = Object.assign({}, mocks.core);
+    
     const resp = await importedModule.run({
-      core: mocks.core,
+      core: newCore,
       server: mocks.server,
       socket: mocks.plebSocket,
       payload: mockPayload,
@@ -49,8 +51,10 @@ describe('Checking removemod module', () => {
   });
 
   it('should remove trip from the config', async () => {
+    const newCore = Object.assign({}, mocks.core);
+
     const resp = await importedModule.run({
-      core: mocks.core,
+      core: newCore,
       server: mocks.server,
       socket: mocks.authedSocket,
       payload: mockPayload,
@@ -60,12 +64,14 @@ describe('Checking removemod module', () => {
   });
 
   it('should inform the ex-mod', async () => {
+    const newCore = Object.assign({}, mocks.core);
+
     mocks.server.findSockets = () => {
       return [{}];
     }
 
     const resp = await importedModule.run({
-      core: mocks.core,
+      core: newCore,
       server: mocks.server,
       socket: mocks.authedSocket,
       payload: mockPayload,

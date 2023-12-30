@@ -181,6 +181,32 @@ describe('Checking join module', () => {
     expect(resp).to.be.true;
   });
 
+  it('should provide mod perks', async () => {
+    const newCore = Object.assign({}, mocks.core);
+    newCore.appConfig.data.globalMods = [
+      {
+        trip: 'XVeP3T',
+      }
+    ];
+
+    const newSocket = Object.assign({}, mocks.authedSocket);
+    newSocket.channel = undefined;
+    newSocket.hcProtocol = undefined;
+
+    const resp = await importedModule.run({
+      core: newCore,
+      server: mocks.server,
+      socket: newSocket,
+      payload: {
+        cmd: 'join',
+        nick: 'admin#test',
+        channel: 'cake',
+      },
+    });
+
+    expect(newSocket.ratelimitImmune).to.be.true;
+  });
+
   it('should announce new user', async () => {
     const newSocket = Object.assign({}, mocks.authedSocket);
     newSocket.channel = undefined;
