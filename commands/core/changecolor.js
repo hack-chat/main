@@ -89,7 +89,7 @@ export function initHooks(server) {
   * Executes every time an incoming chat command is invoked
   * @param {Object} env - Enviroment object with references to core, server, socket & payload
   * @public
-  * @return {{Object|boolean|string}} Object = same/altered payload,
+  * @return {(Object|boolean|string)} Object = same/altered payload,
   * false = suppress action,
   * string = error
   */

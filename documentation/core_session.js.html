@@ -26,7 +26,7 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>/* eslint no-param-reassign: 0 */
+            <pre class="prettyprint source linenums"><code>/* eslint import/no-cycle: [0, { ignoreExternal: true }] */
 
 /**
   * @author Marzavec ( https://github.com/marzavec )
@@ -40,6 +40,7 @@ import fs from 'fs';
 import jsonwebtoken from 'jsonwebtoken';
 
 import {
+  isModerator,
   verifyNickname,
 } from '../utility/_UAC.js';
 import {
@@ -49,10 +50,10 @@ import {
   restoreJoin,
 } from './join.js';
 
-const CertLocation = './cert.key';
+const SessionLocation = './session.key';
 
 /**
-  *
+  * Get a new json web token for the provided socket
   * @param {*} socket
   * @param {*} core
   * @returns {object}
@@ -68,15 +69,15 @@ export function getSession(socket, core) {
     trip: socket.trip,
     userid: socket.userid,
     uType: socket.uType,
-    muzzled: socket.muzzled,
-    banned: socket.banned,
-  }, core.cert, {
+    muzzled: socket.muzzled || false,
+    banned: socket.banned || false,
+  }, core.sessionKey, {
     expiresIn: '7 days',
   });
 }
 
 /**
-  *
+  * Reply to target socket with session failure notice
   * @param {*} server
   * @param {*} socket
   * @returns {boolean}
@@ -106,7 +107,7 @@ export async function run({
 
   let session = false;
   try {
-    session = jsonwebtoken.verify(payload.token, core.cert);
+    session = jsonwebtoken.verify(payload.token, core.sessionKey);
   } catch (err) {
     return notifyFailure(server, socket);
   }
@@ -120,7 +121,7 @@ export async function run({
     return notifyFailure(server, socket);
   }
 
-  if (typeof session.color !== 'string') {
+  if (typeof session.color !== 'string' &amp;&amp; typeof session.color !== 'boolean') {
     return notifyFailure(server, socket);
   }
 
@@ -157,8 +158,7 @@ export async function run({
   }
 
   // populate socket info with validated session
-  socket.channel = session.channel;
-  socket.channels = session.channels;
+  socket.channels = [];
   socket.color = session.color;
   socket.isBot = session.isBot;
   socket.level = session.level;
@@ -168,6 +168,11 @@ export async function run({
   socket.uType = session.uType;
   socket.muzzled = session.muzzled;
   socket.banned = session.banned;
+
+  // global mod perks
+  if (isModerator(socket.level)) {
+    socket.ratelimitImmune = true;
+  }
 
   socket.hash = server.getSocketHash(socket);
   socket.hcProtocol = 2;
@@ -180,12 +185,12 @@ export async function run({
     channels: socket.channels,
   }, socket);
 
-  for (let i = 0, j = socket.channels.length; i &lt; j; i += 1) {
+  for (let i = 0, j = session.channels.length; i &lt; j; i += 1) {
     restoreJoin({
       core,
       server,
       socket,
-      channel: socket.channels[i],
+      channel: session.channels[i],
     }, true);
   }
 
@@ -200,8 +205,8 @@ export async function run({
   */
 export function init(core) {
   // load the encryption key if required
-  if (typeof core.cert === 'undefined') {
-    core.cert = fs.readFileSync(CertLocation);
+  if (typeof core.sessionKey === 'undefined') {
+    core.sessionKey = fs.readFileSync(SessionLocation);
   }
 }
 
@@ -230,13 +235,13 @@ export const info = {
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-addmod.html">addmod</a></li><li><a href="module-ban.html">ban</a></li><li><a href="module-changecolor.html">changecolor</a></li><li><a href="module-changenick.html">changenick</a></li><li><a href="module-chat.html">chat</a></li><li><a href="module-disconnect.html">disconnect</a></li><li><a href="module-dumb.html">dumb</a></li><li><a href="module-emote.html">emote</a></li><li><a href="module-forcecolor.html">forcecolor</a></li><li><a href="module-help.html">help</a></li><li><a href="module-invite.html">invite</a></li><li><a href="module-join.html">join</a></li><li><a href="module-kick.html">kick</a></li><li><a href="module-listusers.html">listusers</a></li><li><a href="module-morestats.html">morestats</a></li><li><a href="module-ping.html">ping</a></li><li><a href="module-reload.html">reload</a></li><li><a href="module-removemod.html">removemod</a></li><li><a href="module-saveconfig.html">saveconfig</a></li><li><a href="module-session.html">session</a></li><li><a href="module-shout.html">shout</a></li><li><a href="module-socketreply.html">socketreply</a></li><li><a href="module-speak.html">speak</a></li><li><a href="module-stats.html">stats</a></li><li><a href="module-unban.html">unban</a></li><li><a href="module-unbanall.html">unbanall</a></li><li><a href="module-whisper.html">whisper</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-addmod.html">addmod</a></li><li><a href="module-ban.html">ban</a></li><li><a href="module-changecolor.html">changecolor</a></li><li><a href="module-changenick.html">changenick</a></li><li><a href="module-chat.html">chat</a></li><li><a href="module-disablecaptcha.html">disablecaptcha</a></li><li><a href="module-disconnect.html">disconnect</a></li><li><a href="module-dumb.html">dumb</a></li><li><a href="module-emote.html">emote</a></li><li><a href="module-enablecaptcha.html">enablecaptcha</a></li><li><a href="module-forcecolor.html">forcecolor</a></li><li><a href="module-help.html">help</a></li><li><a href="module-invite.html">invite</a></li><li><a href="module-join.html">join</a></li><li><a href="module-kick.html">kick</a></li><li><a href="module-listusers.html">listusers</a></li><li><a href="module-lockroom.html">lockroom</a></li><li><a href="module-morestats.html">morestats</a></li><li><a href="module-ping.html">ping</a></li><li><a href="module-reload.html">reload</a></li><li><a href="module-removemod.html">removemod</a></li><li><a href="module-saveconfig.html">saveconfig</a></li><li><a href="module-session.html">session</a></li><li><a href="module-shout.html">shout</a></li><li><a href="module-socketreply.html">socketreply</a></li><li><a href="module-speak.html">speak</a></li><li><a href="module-stats.html">stats</a></li><li><a href="module-unban.html">unban</a></li><li><a href="module-unbanall.html">unbanall</a></li><li><a href="module-unlockroom.html">unlockroom</a></li><li><a href="module-updateMessage.html">updateMessage</a></li><li><a href="module-whisper.html">whisper</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.10</a> on Thu May 05 2022 00:29:35 GMT-0700 (Pacific Daylight Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.10</a> on Fri Dec 29 2023 23:22:35 GMT-0800 (Pacific Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>

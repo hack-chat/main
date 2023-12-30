@@ -27,6 +27,7 @@
     <section>
         <article>
             <pre class="prettyprint source linenums"><code>/* eslint no-param-reassign: 0 */
+/* eslint import/no-cycle: [0, { ignoreExternal: true }] */
 
 /**
   * @author Marzavec ( https://github.com/marzavec )
@@ -36,6 +37,9 @@
   * @module join
   */
 
+import {
+  getSession,
+} from './session.js';
 import {
   canJoinChannel,
   socketInChannel,
@@ -51,6 +55,7 @@ import {
   verifyNickname,
   getUserPerms,
   getUserDetails,
+  isModerator,
 } from '../utility/_UAC.js';
 
 /**
@@ -73,7 +78,7 @@ export async function run({
   }
 
   // `join` is the legacy entry point, check if it needs to be upgraded
-  if (typeof socket.hcProtocol === 'undefined') {
+  if (typeof socket.hcProtocol === 'undefined' || socket.hcProtocol === 1) {
     payload = upgradeLegacyJoin(server, socket, payload);
   }
 
@@ -114,7 +119,7 @@ export async function run({
   }
 
   // get trip and level
-  const { trip, level } = getUserPerms(pass, core.config, channel);
+  const { trip, level } = getUserPerms(pass, core.saltKey, core.appConfig.data, channel);
 
   // store the user values
   const userInfo = {
@@ -128,13 +133,6 @@ export async function run({
     color: socket.color,
     channel,
   };
-
-  // prevent admin impersonation
-  if (nick.toLowerCase() === core.config.adminName.toLowerCase()) {
-    if (userInfo.trip !== 'Admin') {
-      userInfo.nick = `Fake${userInfo.nick}`;
-    }
-  }
 
   // check if the nickname already exists in the channel
   const userExists = server.findSockets({
@@ -180,6 +178,12 @@ export async function run({
   socket.channel = channel; /* @legacy */
   // @todo multi-channel patch
   // socket.channels.push(channel);
+  socket.channels = [channel];
+
+  // global mod perks
+  if (isModerator(socket.level)) {
+    socket.ratelimitImmune = true;
+  }
 
   nicks.push(userInfo.nick); /* @legacy */
   users.push({ ...{ isme: true, isBot: socket.isBot }, ...userInfo });
@@ -190,6 +194,14 @@ export async function run({
     nicks, /* @legacy */
     users,
     channel, // @todo Multichannel (?)
+  }, socket);
+
+  // update client with new session info
+  server.reply({
+    cmd: 'session',
+    restored: false,
+    token: getSession(socket, core),
+    channels: socket.channels,
   }, socket);
 
   // stats are fun
@@ -270,6 +282,9 @@ export function restoreJoin({
     channel, // @todo Multichannel (?)
   }, socket);
 
+  socket.channel = channel; /* @legacy */
+  socket.channels.push(channel);
+
   return true;
 }
 
@@ -299,13 +314,13 @@ export const info = {
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-addmod.html">addmod</a></li><li><a href="module-ban.html">ban</a></li><li><a href="module-changecolor.html">changecolor</a></li><li><a href="module-changenick.html">changenick</a></li><li><a href="module-chat.html">chat</a></li><li><a href="module-disconnect.html">disconnect</a></li><li><a href="module-dumb.html">dumb</a></li><li><a href="module-emote.html">emote</a></li><li><a href="module-forcecolor.html">forcecolor</a></li><li><a href="module-help.html">help</a></li><li><a href="module-invite.html">invite</a></li><li><a href="module-join.html">join</a></li><li><a href="module-kick.html">kick</a></li><li><a href="module-listusers.html">listusers</a></li><li><a href="module-morestats.html">morestats</a></li><li><a href="module-ping.html">ping</a></li><li><a href="module-reload.html">reload</a></li><li><a href="module-removemod.html">removemod</a></li><li><a href="module-saveconfig.html">saveconfig</a></li><li><a href="module-session.html">session</a></li><li><a href="module-shout.html">shout</a></li><li><a href="module-socketreply.html">socketreply</a></li><li><a href="module-speak.html">speak</a></li><li><a href="module-stats.html">stats</a></li><li><a href="module-unban.html">unban</a></li><li><a href="module-unbanall.html">unbanall</a></li><li><a href="module-whisper.html">whisper</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-addmod.html">addmod</a></li><li><a href="module-ban.html">ban</a></li><li><a href="module-changecolor.html">changecolor</a></li><li><a href="module-changenick.html">changenick</a></li><li><a href="module-chat.html">chat</a></li><li><a href="module-disablecaptcha.html">disablecaptcha</a></li><li><a href="module-disconnect.html">disconnect</a></li><li><a href="module-dumb.html">dumb</a></li><li><a href="module-emote.html">emote</a></li><li><a href="module-enablecaptcha.html">enablecaptcha</a></li><li><a href="module-forcecolor.html">forcecolor</a></li><li><a href="module-help.html">help</a></li><li><a href="module-invite.html">invite</a></li><li><a href="module-join.html">join</a></li><li><a href="module-kick.html">kick</a></li><li><a href="module-listusers.html">listusers</a></li><li><a href="module-lockroom.html">lockroom</a></li><li><a href="module-morestats.html">morestats</a></li><li><a href="module-ping.html">ping</a></li><li><a href="module-reload.html">reload</a></li><li><a href="module-removemod.html">removemod</a></li><li><a href="module-saveconfig.html">saveconfig</a></li><li><a href="module-session.html">session</a></li><li><a href="module-shout.html">shout</a></li><li><a href="module-socketreply.html">socketreply</a></li><li><a href="module-speak.html">speak</a></li><li><a href="module-stats.html">stats</a></li><li><a href="module-unban.html">unban</a></li><li><a href="module-unbanall.html">unbanall</a></li><li><a href="module-unlockroom.html">unlockroom</a></li><li><a href="module-updateMessage.html">updateMessage</a></li><li><a href="module-whisper.html">whisper</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.10</a> on Thu May 05 2022 00:29:35 GMT-0700 (Pacific Daylight Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.10</a> on Fri Dec 29 2023 23:22:35 GMT-0800 (Pacific Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>

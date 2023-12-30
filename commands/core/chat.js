@@ -35,7 +35,7 @@ const TIMEOUT_CHECK_INTERVAL = 30 * 1000;
 
 /**
   * Stores active messages that can be edited.
-  * @type {{ customId: string, userid: number, sent: number }[]}
+  * @type {Array}
   */
 export const ACTIVE_MESSAGES = [];
 
@@ -161,7 +161,7 @@ export function initHooks(server) {
   * checks for miscellaneous '/' based commands
   * @param {Object} env - Enviroment object with references to core, server, socket & payload
   * @public
-  * @return {{Object|boolean|string}} Object = same/altered payload,
+  * @return {(Object|boolean|string)} Object = same/altered payload,
   * false = suppress action,
   * string = error
   */
@@ -188,7 +188,7 @@ export function commandCheckIn({ server, socket, payload }) {
   * assumes a failed chat command invocation and will reject with notice
   * @param {Object} env - Enviroment object with references to core, server, socket & payload
   * @public
-  * @return {{Object|boolean|string}} Object = same/altered payload,
+  * @return {(Object|boolean|string)} Object = same/altered payload,
   * false = suppress action,
   * string = error
   */

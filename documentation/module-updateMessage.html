@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Module: forcecolor</title>
+    <title>JSDoc: Module: updateMessage</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,7 +17,7 @@
 
 <div id="main">
 
-    <h1 class="page-title">Module: forcecolor</h1>
+    <h1 class="page-title">Module: updateMessage</h1>
 
     
 
@@ -38,7 +38,7 @@
     <div class="container-overview">
     
         
-            <div class="description">Forces a user nick to become a certain color</div>
+            <div class="description">Will alter a previously sent message using that message's customId</div>
         
 
         
@@ -62,7 +62,7 @@
 
     
     <dt class="tag-version">Version:</dt>
-    <dd class="tag-version"><ul class="dummy"><li>1.0.0</li></ul></dd>
+    <dd class="tag-version"><ul class="dummy"><li>v1.0.0</li></ul></dd>
     
 
     
@@ -83,7 +83,7 @@
     <dt class="tag-author">Author:</dt>
     <dd class="tag-author">
         <ul>
-            <li>Marzavec ( https://github.com/marzavec )</li>
+            <li>MinusGix ( https://github.com/MinusGix )</li>
         </ul>
     </dd>
     
@@ -97,7 +97,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mod_forcecolor.js.html">mod/forcecolor.js</a>, <a href="mod_forcecolor.js.html#line1">line 1</a>
+        <a href="core_updateMessage.js.html">core/updateMessage.js</a>, <a href="core_updateMessage.js.html#line1">line 1</a>
     </li></ul></dd>
     
 
@@ -147,329 +147,6 @@
 
     
         <h3 class="subsection-title">Methods</h3>
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id=".colorCheck"><span class="type-signature">(static) </span>colorCheck<span class="signature">(env)</span><span class="type-signature"> &rarr; {Object|boolean|string}</span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Executes every time an incoming chat command is invoked;
-hooks chat commands checking for /forcecolor
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>env</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">Enviroment object with references to core, server, socket & payload</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mod_forcecolor.js.html">mod/forcecolor.js</a>, <a href="mod_forcecolor.js.html#line125">line 125</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    Object = same/altered payload,
-false = suppress action,
-string = error
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Object</span>
-|
-
-<span class="param-type">boolean</span>
-|
-
-<span class="param-type">string</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id=".initHooks"><span class="type-signature">(static) </span>initHooks<span class="signature">(server)</span><span class="type-signature"> &rarr; {void}</span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Automatically executes once after server is ready to register this modules hooks
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>server</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">Reference to server enviroment object</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mod_forcecolor.js.html">mod/forcecolor.js</a>, <a href="mod_forcecolor.js.html#line112">line 112</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">void</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-
 
         
             
@@ -578,7 +255,7 @@ string = error
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mod_forcecolor.js.html">mod/forcecolor.js</a>, <a href="mod_forcecolor.js.html#line35">line 35</a>
+        <a href="core_updateMessage.js.html">core/updateMessage.js</a>, <a href="core_updateMessage.js.html#line27">line 27</a>
     </li></ul></dd>
     
 
@@ -634,7 +311,80 @@ string = error
 
         
                 
-<h4 class="name" id="~forcecolor/info">forcecolor/info</h4>
+<h4 class="name" id="~addmod/requiredData">addmod/requiredData</h4>
+
+
+
+
+<div class="description">
+    The following payload properties are required to invoke this module:
+"text", "customId"
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Array</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="core_updateMessage.js.html">core/updateMessage.js</a>, <a href="core_updateMessage.js.html#line104">line 104</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+            
+                
+<h4 class="name" id="~updateMessage/info">updateMessage/info</h4>
 
 
 
@@ -809,80 +559,7 @@ string = error
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mod_forcecolor.js.html">mod/forcecolor.js</a>, <a href="mod_forcecolor.js.html#line183">line 183</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-            
-                
-<h4 class="name" id="~forcecolor/requiredData">forcecolor/requiredData</h4>
-
-
-
-
-<div class="description">
-    The following payload properties are required to invoke this module:
-"nick", "color"
-</div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">Array</span>
-
-
-        </li>
-    </ul>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mod_forcecolor.js.html">mod/forcecolor.js</a>, <a href="mod_forcecolor.js.html#line175">line 175</a>
+        <a href="core_updateMessage.js.html">core/updateMessage.js</a>, <a href="core_updateMessage.js.html#line112">line 112</a>
     </li></ul></dd>
     
 

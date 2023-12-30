@@ -86,7 +86,7 @@ export function initHooks(server) {
   * hooks chat commands checking for /help
   * @param {Object} env - Enviroment object with references to core, server, socket & payload
   * @public
-  * @return {{Object|boolean|string}} Object = same/altered payload,
+  * @return {(Object|boolean|string)} Object = same/altered payload,
   * false = suppress action,
   * string = error
   */

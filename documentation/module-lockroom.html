@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Module: dumb</title>
+    <title>JSDoc: Module: lockroom</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,7 +17,7 @@
 
 <div id="main">
 
-    <h1 class="page-title">Module: dumb</h1>
+    <h1 class="page-title">Module: lockroom</h1>
 
     
 
@@ -38,7 +38,7 @@
     <div class="container-overview">
     
         
-            <div class="description">Globally shadow mute a connection. Optional allies array will see muted messages.</div>
+            <div class="description">Locks a channel preventing default levels from joining</div>
         
 
         
@@ -83,7 +83,7 @@
     <dt class="tag-author">Author:</dt>
     <dd class="tag-author">
         <ul>
-            <li>OpSimple ( https://github.com/OpSimple )</li>
+            <li>Marzavec ( https://github.com/marzavec )</li>
         </ul>
     </dd>
     
@@ -97,7 +97,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mod_dumb.js.html">mod/dumb.js</a>, <a href="mod_dumb.js.html#line4">line 4</a>
+        <a href="mod_lockroom.js.html">mod/lockroom.js</a>, <a href="mod_lockroom.js.html#line3">line 3</a>
     </li></ul></dd>
     
 
@@ -154,7 +154,7 @@
     
 
     
-    <h4 class="name" id=".chatCheck"><span class="type-signature">(static) </span>chatCheck<span class="signature">(env)</span><span class="type-signature"> &rarr; {Object|boolean|string}</span></h4>
+    <h4 class="name" id=".changeNickCheck"><span class="type-signature">(static) </span>changeNickCheck<span class="signature">(env)</span><span class="type-signature"> &rarr; {Object|boolean|string}</span></h4>
     
 
     
@@ -162,8 +162,8 @@
 
 
 <div class="description">
-    Executes every time an incoming chat command is invoked;
-hook incoming chat commands, shadow-prevent chat if they are muzzled
+    Executes every time an incoming changenick command is invoked;
+hook incoming changenick commands, reject them if the channel is 'purgatory'
 </div>
 
 
@@ -256,7 +256,175 @@ hook incoming chat commands, shadow-prevent chat if they are muzzled
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mod_dumb.js.html">mod/dumb.js</a>, <a href="mod_dumb.js.html#line162">line 162</a>
+        <a href="mod_lockroom.js.html">mod/lockroom.js</a>, <a href="mod_lockroom.js.html#line133">line 133</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    Object = same/altered payload,
+false = suppress action,
+string = error
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Object</span>
+|
+
+<span class="param-type">boolean</span>
+|
+
+<span class="param-type">string</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id=".chatCheck"><span class="type-signature">(static) </span>chatCheck<span class="signature">(env)</span><span class="type-signature"> &rarr; {Object|boolean|string}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Executes every time an incoming chat command is invoked;
+hook incoming chat commands, reject them if the channel is 'purgatory'
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>env</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Enviroment object with references to core, server, socket & payload</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="mod_lockroom.js.html">mod/lockroom.js</a>, <a href="mod_lockroom.js.html#line171">line 171</a>
     </li></ul></dd>
     
 
@@ -423,7 +591,7 @@ string = error
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mod_dumb.js.html">mod/dumb.js</a>, <a href="mod_dumb.js.html#line68">line 68</a>
+        <a href="mod_lockroom.js.html">mod/lockroom.js</a>, <a href="mod_lockroom.js.html#line57">line 57</a>
     </li></ul></dd>
     
 
@@ -578,7 +746,7 @@ string = error
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mod_dumb.js.html">mod/dumb.js</a>, <a href="mod_dumb.js.html#line147">line 147</a>
+        <a href="mod_lockroom.js.html">mod/lockroom.js</a>, <a href="mod_lockroom.js.html#line116">line 116</a>
     </li></ul></dd>
     
 
@@ -640,8 +808,8 @@ string = error
 
 
 <div class="description">
-    Executes every time an incoming chat command is invoked;
-shadow-prevent all invites from muzzled users
+    Executes every time an incoming invite command is invoked;
+hook incoming invite commands, reject them if the channel is 'purgatory'
 </div>
 
 
@@ -734,7 +902,175 @@ shadow-prevent all invites from muzzled users
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mod_dumb.js.html">mod/dumb.js</a>, <a href="mod_dumb.js.html#line225">line 225</a>
+        <a href="mod_lockroom.js.html">mod/lockroom.js</a>, <a href="mod_lockroom.js.html#line194">line 194</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    Object = same/altered payload,
+false = suppress action,
+string = error
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Object</span>
+|
+
+<span class="param-type">boolean</span>
+|
+
+<span class="param-type">string</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id=".joinCheck"><span class="type-signature">(static) </span>joinCheck<span class="signature">(env)</span><span class="type-signature"> &rarr; {Object|boolean|string}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Executes every time an incoming join command is invoked;
+hook incoming join commands, shunt them to purgatory if needed
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>env</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Enviroment object with references to core, server, socket & payload</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="mod_lockroom.js.html">mod/lockroom.js</a>, <a href="mod_lockroom.js.html#line213">line 213</a>
     </li></ul></dd>
     
 
@@ -901,7 +1237,7 @@ string = error
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mod_dumb.js.html">mod/dumb.js</a>, <a href="mod_dumb.js.html#line80">line 80</a>
+        <a href="mod_lockroom.js.html">mod/lockroom.js</a>, <a href="mod_lockroom.js.html#line69">line 69</a>
     </li></ul></dd>
     
 
@@ -963,8 +1299,8 @@ string = error
 
 
 <div class="description">
-    Executes every time an incoming chat command is invoked;
-shadow-prevent all whispers from muzzled users
+    Executes every time an incoming whisper command is invoked;
+hook incoming whisper commands, reject them if the channel is 'purgatory'
 </div>
 
 
@@ -1057,7 +1393,7 @@ shadow-prevent all whispers from muzzled users
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mod_dumb.js.html">mod/dumb.js</a>, <a href="mod_dumb.js.html#line297">line 297</a>
+        <a href="mod_lockroom.js.html">mod/lockroom.js</a>, <a href="mod_lockroom.js.html#line152">line 152</a>
     </li></ul></dd>
     
 
@@ -1125,7 +1461,7 @@ string = error
 
         
                 
-<h4 class="name" id="~dumb/info">dumb/info</h4>
+<h4 class="name" id="~kick/info">kick/info</h4>
 
 
 
@@ -1245,29 +1581,6 @@ string = error
 
         <tr>
             
-                <td class="name"><code>aliases</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Array</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">An array of alternative cmd names</td>
-        </tr>
-
-    
-
-        <tr>
-            
                 <td class="name"><code>usage</code></td>
             
 
@@ -1323,7 +1636,7 @@ string = error
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mod_dumb.js.html">mod/dumb.js</a>, <a href="mod_dumb.js.html#line357">line 357</a>
+        <a href="mod_lockroom.js.html">mod/lockroom.js</a>, <a href="mod_lockroom.js.html#line316">line 316</a>
     </li></ul></dd>
     
 

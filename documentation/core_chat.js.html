@@ -35,32 +35,72 @@
   */
 
 import {
+  parseText,
+} from '../utility/_Text.js';
+import {
   isAdmin,
   isModerator,
 } from '../utility/_UAC.js';
 
 /**
-  * Check and trim string provided by remote client
-  * @param {string} text - Subject string
-  * @private
-  * @todo Move into utility module
-  * @return {string|boolean}
+  * Maximum length of the customId property
+  * @type {number}
   */
-const parseText = (text) => {
-  // verifies user input is text
-  if (typeof text !== 'string') {
-    return false;
+export const MAX_MESSAGE_ID_LENGTH = 6;
+
+/**
+  * The time in milliseconds before a message is considered stale, and thus no longer allowed
+  * to be edited.
+  * @type {number}
+  */
+const ACTIVE_TIMEOUT = 5 * 60 * 1000;
+
+/**
+  * The time in milliseconds that a check for stale messages should be performed.
+  * @type {number}
+  */
+const TIMEOUT_CHECK_INTERVAL = 30 * 1000;
+
+/**
+  * Stores active messages that can be edited.
+  * @type {Array}
+  */
+export const ACTIVE_MESSAGES = [];
+
+/**
+  * Cleans up stale messages.
+  * @public
+  * @return {void}
+  */
+export function cleanActiveMessages() {
+  const now = Date.now();
+  for (let i = 0; i &lt; ACTIVE_MESSAGES.length; i += 1) {
+    const message = ACTIVE_MESSAGES[i];
+    if (now - message.sent > ACTIVE_TIMEOUT || message.toDelete) {
+      ACTIVE_MESSAGES.splice(i, 1);
+      i -= 1;
+    }
   }
+}
 
-  let sanitizedText = text;
+// TODO: This won't get cleared on module reload.
+setInterval(cleanActiveMessages, TIMEOUT_CHECK_INTERVAL);
 
-  // strip newlines from beginning and end
-  sanitizedText = sanitizedText.replace(/^\s*\n|^\s+$|\n\s*$/g, '');
-  // replace 3+ newlines with just 2 newlines
-  sanitizedText = sanitizedText.replace(/\n{3,}/g, '\n\n');
-
-  return sanitizedText;
-};
+/**
+  * Adds a message to the active messages map.
+  * @public
+  * @param {string} id
+  * @param {number} userid
+  * @return {void}
+  */
+export function addActiveMessage(customId, userid) {
+  ACTIVE_MESSAGES.push({
+    customId,
+    userid,
+    sent: Date.now(),
+    toDelete: false,
+  });
+}
 
 /**
   * Executes when invoked by a remote client
@@ -89,6 +129,13 @@ export async function run({
     }, socket);
   }
 
+  const { customId } = payload;
+
+  if (typeof (customId) === 'string' &amp;&amp; customId.length > MAX_MESSAGE_ID_LENGTH) {
+    // There's a limit on the custom id length.
+    return server.police.frisk(socket, 13);
+  }
+
   // build chat payload
   const outgoingPayload = {
     cmd: 'chat',
@@ -98,6 +145,7 @@ export async function run({
     channel: socket.channel,
     text,
     level: socket.level,
+    customId,
   };
 
   if (isAdmin(socket.level)) {
@@ -113,6 +161,8 @@ export async function run({
   if (socket.color) {
     outgoingPayload.color = socket.color;
   }
+
+  addActiveMessage(outgoingPayload.customId, socket.userid);
 
   // broadcast to channel peers
   server.broadcast(outgoingPayload, { channel: socket.channel });
@@ -139,7 +189,7 @@ export function initHooks(server) {
   * checks for miscellaneous '/' based commands
   * @param {Object} env - Enviroment object with references to core, server, socket &amp; payload
   * @public
-  * @return {{Object|boolean|string}} Object = same/altered payload,
+  * @return {(Object|boolean|string)} Object = same/altered payload,
   * false = suppress action,
   * string = error
   */
@@ -166,7 +216,7 @@ export function commandCheckIn({ server, socket, payload }) {
   * assumes a failed chat command invocation and will reject with notice
   * @param {Object} env - Enviroment object with references to core, server, socket &amp; payload
   * @public
-  * @return {{Object|boolean|string}} Object = same/altered payload,
+  * @return {(Object|boolean|string)} Object = same/altered payload,
   * false = suppress action,
   * string = error
   */
@@ -231,13 +281,13 @@ export const info = {
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-addmod.html">addmod</a></li><li><a href="module-ban.html">ban</a></li><li><a href="module-changecolor.html">changecolor</a></li><li><a href="module-changenick.html">changenick</a></li><li><a href="module-chat.html">chat</a></li><li><a href="module-disconnect.html">disconnect</a></li><li><a href="module-dumb.html">dumb</a></li><li><a href="module-emote.html">emote</a></li><li><a href="module-forcecolor.html">forcecolor</a></li><li><a href="module-help.html">help</a></li><li><a href="module-invite.html">invite</a></li><li><a href="module-join.html">join</a></li><li><a href="module-kick.html">kick</a></li><li><a href="module-listusers.html">listusers</a></li><li><a href="module-morestats.html">morestats</a></li><li><a href="module-ping.html">ping</a></li><li><a href="module-reload.html">reload</a></li><li><a href="module-removemod.html">removemod</a></li><li><a href="module-saveconfig.html">saveconfig</a></li><li><a href="module-session.html">session</a></li><li><a href="module-shout.html">shout</a></li><li><a href="module-socketreply.html">socketreply</a></li><li><a href="module-speak.html">speak</a></li><li><a href="module-stats.html">stats</a></li><li><a href="module-unban.html">unban</a></li><li><a href="module-unbanall.html">unbanall</a></li><li><a href="module-whisper.html">whisper</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-addmod.html">addmod</a></li><li><a href="module-ban.html">ban</a></li><li><a href="module-changecolor.html">changecolor</a></li><li><a href="module-changenick.html">changenick</a></li><li><a href="module-chat.html">chat</a></li><li><a href="module-disablecaptcha.html">disablecaptcha</a></li><li><a href="module-disconnect.html">disconnect</a></li><li><a href="module-dumb.html">dumb</a></li><li><a href="module-emote.html">emote</a></li><li><a href="module-enablecaptcha.html">enablecaptcha</a></li><li><a href="module-forcecolor.html">forcecolor</a></li><li><a href="module-help.html">help</a></li><li><a href="module-invite.html">invite</a></li><li><a href="module-join.html">join</a></li><li><a href="module-kick.html">kick</a></li><li><a href="module-listusers.html">listusers</a></li><li><a href="module-lockroom.html">lockroom</a></li><li><a href="module-morestats.html">morestats</a></li><li><a href="module-ping.html">ping</a></li><li><a href="module-reload.html">reload</a></li><li><a href="module-removemod.html">removemod</a></li><li><a href="module-saveconfig.html">saveconfig</a></li><li><a href="module-session.html">session</a></li><li><a href="module-shout.html">shout</a></li><li><a href="module-socketreply.html">socketreply</a></li><li><a href="module-speak.html">speak</a></li><li><a href="module-stats.html">stats</a></li><li><a href="module-unban.html">unban</a></li><li><a href="module-unbanall.html">unbanall</a></li><li><a href="module-unlockroom.html">unlockroom</a></li><li><a href="module-updateMessage.html">updateMessage</a></li><li><a href="module-whisper.html">whisper</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.10</a> on Thu May 05 2022 00:29:35 GMT-0700 (Pacific Daylight Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.10</a> on Fri Dec 29 2023 23:22:35 GMT-0800 (Pacific Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>

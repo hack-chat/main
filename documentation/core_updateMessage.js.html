@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Source: mod/speak.js</title>
+    <title>JSDoc: Source: core/updateMessage.js</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,7 +17,7 @@
 
 <div id="main">
 
-    <h1 class="page-title">Source: mod/speak.js</h1>
+    <h1 class="page-title">Source: core/updateMessage.js</h1>
 
     
 
@@ -26,31 +26,25 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>/* eslint no-param-reassign: 0 */
-
-/**
-  * @author OpSimple ( https://github.com/OpSimple )
-  * @summary Unmuzzle a user
-  * @version 1.0.0
-  * @description Pardon a dumb user to be able to speak again
-  * @module speak
+            <pre class="prettyprint source linenums"><code>/**
+  * @author MinusGix ( https://github.com/MinusGix )
+  * @summary Change target message
+  * @version v1.0.0
+  * @description Will alter a previously sent message using that message's customId
+  * @module updateMessage
   */
 
 import {
+  parseText,
+} from '../utility/_Text.js';
+import {
+  isAdmin,
   isModerator,
 } from '../utility/_UAC.js';
-
-/**
-  * Automatically executes once after server is ready
-  * @param {Object} core - Reference to core enviroment object
-  * @public
-  * @return {void}
-  */
-export function init(core) {
-  if (typeof core.muzzledHashes === 'undefined') {
-    core.muzzledHashes = {};
-  }
-}
+import {
+  ACTIVE_MESSAGES,
+  MAX_MESSAGE_ID_LENGTH,
+} from './chat.js';
 
 /**
   * Executes when invoked by a remote client
@@ -59,79 +53,105 @@ export function init(core) {
   * @return {void}
   */
 export async function run({
-  core, server, socket, payload,
+  server, socket, payload,
 }) {
-  // increase rate limit chance and ignore if not admin or mod
-  if (!isModerator(socket.level)) {
-    return server.police.frisk(socket, 10);
+  // undefined | "overwrite" | "append" | "prepend" | "complete"
+  const { customId } = payload;
+  let { mode, text } = payload;
+
+  if (!mode) {
+    mode = 'overwrite';
   }
 
-  // check user input
-  if (typeof payload.ip !== 'string' &amp;&amp; typeof payload.hash !== 'string') {
-    return server.reply({
-      cmd: 'warn', // @todo Add numeric error code as `id`
-      text: "hash:'targethash' or ip:'1.2.3.4' is required",
-      channel: socket.channel, // @todo Multichannel
-    }, socket);
+  if (mode !== 'overwrite' &amp;&amp; mode !== 'append' &amp;&amp; mode !== 'prepend' &amp;&amp; mode !== 'complete') {
+    return server.police.frisk(socket, 13);
   }
 
-  if (typeof payload.ip === 'string') {
-    if (payload.ip === '*') {
-      core.muzzledHashes = {};
+  if (!customId || typeof customId !== 'string' || customId.length > MAX_MESSAGE_ID_LENGTH) {
+    return server.police.frisk(socket, 13);
+  }
 
-      return server.broadcast({
-        cmd: 'info',
-        text: `${socket.nick} unmuzzled all users`,
-        channel: false, // @todo Multichannel, false for global
-      }, { level: isModerator });
+  if (typeof (text) !== 'string') {
+    return server.police.frisk(socket, 13);
+  }
+
+  if (mode === 'overwrite') {
+    text = parseText(text);
+
+    if (text === '') {
+      text = '\u0000';
     }
-  } else if (payload.hash === '*') {
-    core.muzzledHashes = {};
-
-    return server.broadcast({
-      cmd: 'info',
-      text: `${socket.nick} unmuzzled all users`,
-      channel: false, // @todo Multichannel, false for global
-    }, { level: isModerator });
   }
 
-  // find target &amp; remove mute status
-  let target;
-  if (typeof payload.ip === 'string') {
-    target = server.getSocketHash(payload.ip);
-  } else {
-    target = payload.hash;
+  if (!text) {
+    return server.police.frisk(socket, 13);
   }
 
-  delete core.muzzledHashes[target];
+  // TODO: What score should we use for this? It isn't as space filling as chat messages.
+  // But we also don't want a massive growing message.
+  // Or flashing between huge and small. Etc.
 
-  // notify mods
-  server.broadcast({
-    cmd: 'info',
-    text: `${socket.nick}#${socket.trip} unmuzzled : ${target}`,
-    channel: false, // @todo Multichannel, false for global
-  }, { level: isModerator });
+  let message;
+  for (let i = 0; i &lt; ACTIVE_MESSAGES.length; i += 1) {
+    const msg = ACTIVE_MESSAGES[i];
+
+    if (msg.userid === socket.userid &amp;&amp; msg.customId === customId) {
+      message = ACTIVE_MESSAGES[i];
+      if (mode === 'complete') {
+        ACTIVE_MESSAGES[i].toDelete = true;
+      }
+      break;
+    }
+  }
+
+  if (!message) {
+    return server.police.frisk(socket, 6);
+  }
+
+  const outgoingPayload = {
+    cmd: 'updateMessage',
+    userid: socket.userid,
+    channel: socket.channel,
+    level: socket.level,
+    mode,
+    text,
+    customId: message.customId,
+  };
+
+  if (isAdmin(socket.level)) {
+    outgoingPayload.admin = true;
+  } else if (isModerator(socket.level)) {
+    outgoingPayload.mod = true;
+  }
+
+  server.broadcast(outgoingPayload, { channel: socket.channel });
 
   return true;
 }
 
 /**
+  * The following payload properties are required to invoke this module:
+  * "text", "customId"
+  * @public
+  * @typedef {Array} addmod/requiredData
+  */
+export const requiredData = ['text', 'customId'];
+
+/**
   * Module meta information
   * @public
-  * @typedef {Object} speak/info
+  * @typedef {Object} updateMessage/info
   * @property {string} name - Module command name
   * @property {string} category - Module category name
   * @property {string} description - Information about module
-  * @property {Array} aliases - An array of alternative cmd names
   * @property {string} usage - Information about module usage
   */
 export const info = {
-  name: 'speak',
-  category: 'moderators',
-  description: 'Pardon a dumb user to be able to speak again',
-  aliases: ['unmuzzle', 'unmute'],
+  name: 'updateMessage',
+  category: 'core',
+  description: 'Update a message you have sent.',
   usage: `
-    API: { cmd: 'speak', ip/hash: '&lt;target ip or hash>' }`,
+    API: { cmd: 'updateMessage', mode: 'overwrite'|'append'|'prepend'|'complete', text: '&lt;text to apply>', customId: '&lt;customId sent with the chat message>' }`,
 };
 </code></pre>
         </article>

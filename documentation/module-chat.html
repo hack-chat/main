@@ -144,6 +144,299 @@
     
 
     
+        <h3 class="subsection-title">Members</h3>
+
+        
+            
+<h4 class="name" id=".ACTIVE_MESSAGES"><span class="type-signature">(static, constant) </span>ACTIVE_MESSAGES<span class="type-signature"> :Array</span></h4>
+
+
+
+
+<div class="description">
+    Stores active messages that can be edited.
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Array</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="core_chat.js.html">core/chat.js</a>, <a href="core_chat.js.html#line40">line 40</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".MAX_MESSAGE_ID_LENGTH"><span class="type-signature">(static, constant) </span>MAX_MESSAGE_ID_LENGTH<span class="type-signature"> :number</span></h4>
+
+
+
+
+<div class="description">
+    Maximum length of the customId property
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">number</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="core_chat.js.html">core/chat.js</a>, <a href="core_chat.js.html#line21">line 21</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~ACTIVE_TIMEOUT"><span class="type-signature">(inner, constant) </span>ACTIVE_TIMEOUT<span class="type-signature"> :number</span></h4>
+
+
+
+
+<div class="description">
+    The time in milliseconds before a message is considered stale, and thus no longer allowed
+to be edited.
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">number</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="core_chat.js.html">core/chat.js</a>, <a href="core_chat.js.html#line28">line 28</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~TIMEOUT_CHECK_INTERVAL"><span class="type-signature">(inner, constant) </span>TIMEOUT_CHECK_INTERVAL<span class="type-signature"> :number</span></h4>
+
+
+
+
+<div class="description">
+    The time in milliseconds that a check for stale messages should be performed.
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">number</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="core_chat.js.html">core/chat.js</a>, <a href="core_chat.js.html#line34">line 34</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+    
 
     
         <h3 class="subsection-title">Methods</h3>
@@ -154,7 +447,291 @@
     
 
     
-    <h4 class="name" id=".commandCheckIn"><span class="type-signature">(static) </span>commandCheckIn<span class="signature">(env)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id=".addActiveMessage"><span class="type-signature">(static) </span>addActiveMessage<span class="signature">(id, userid)</span><span class="type-signature"> &rarr; {void}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Adds a message to the active messages map.
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>id</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>userid</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="core_chat.js.html">core/chat.js</a>, <a href="core_chat.js.html#line68">line 68</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">void</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id=".cleanActiveMessages"><span class="type-signature">(static) </span>cleanActiveMessages<span class="signature">()</span><span class="type-signature"> &rarr; {void}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Cleans up stale messages.
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="core_chat.js.html">core/chat.js</a>, <a href="core_chat.js.html#line47">line 47</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">void</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id=".commandCheckIn"><span class="type-signature">(static) </span>commandCheckIn<span class="signature">(env)</span><span class="type-signature"> &rarr; {Object|boolean|string}</span></h4>
     
 
     
@@ -256,7 +833,7 @@ checks for miscellaneous '/' based commands
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="core_chat.js.html">core/chat.js</a>, <a href="core_chat.js.html#line118">line 118</a>
+        <a href="core_chat.js.html">core/chat.js</a>, <a href="core_chat.js.html#line168">line 168</a>
     </li></ul></dd>
     
 
@@ -284,7 +861,31 @@ checks for miscellaneous '/' based commands
 <h5>Returns:</h5>
 
         
+<div class="param-desc">
+    Object = same/altered payload,
+false = suppress action,
+string = error
+</div>
 
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Object</span>
+|
+
+<span class="param-type">boolean</span>
+|
+
+<span class="param-type">string</span>
+
+
+    </dd>
+</dl>
 
     
 
@@ -298,7 +899,7 @@ checks for miscellaneous '/' based commands
     
 
     
-    <h4 class="name" id=".finalCmdCheck"><span class="type-signature">(static) </span>finalCmdCheck<span class="signature">(env)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id=".finalCmdCheck"><span class="type-signature">(static) </span>finalCmdCheck<span class="signature">(env)</span><span class="type-signature"> &rarr; {Object|boolean|string}</span></h4>
     
 
     
@@ -400,7 +1001,7 @@ assumes a failed chat command invocation and will reject with notice
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="core_chat.js.html">core/chat.js</a>, <a href="core_chat.js.html#line145">line 145</a>
+        <a href="core_chat.js.html">core/chat.js</a>, <a href="core_chat.js.html#line195">line 195</a>
     </li></ul></dd>
     
 
@@ -428,7 +1029,31 @@ assumes a failed chat command invocation and will reject with notice
 <h5>Returns:</h5>
 
         
+<div class="param-desc">
+    Object = same/altered payload,
+false = suppress action,
+string = error
+</div>
 
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Object</span>
+|
+
+<span class="param-type">boolean</span>
+|
+
+<span class="param-type">string</span>
+
+
+    </dd>
+</dl>
 
     
 
@@ -543,7 +1168,7 @@ assumes a failed chat command invocation and will reject with notice
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="core_chat.js.html">core/chat.js</a>, <a href="core_chat.js.html#line104">line 104</a>
+        <a href="core_chat.js.html">core/chat.js</a>, <a href="core_chat.js.html#line154">line 154</a>
     </li></ul></dd>
     
 
@@ -698,7 +1323,7 @@ assumes a failed chat command invocation and will reject with notice
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="core_chat.js.html">core/chat.js</a>, <a href="core_chat.js.html#line43">line 43</a>
+        <a href="core_chat.js.html">core/chat.js</a>, <a href="core_chat.js.html#line83">line 83</a>
     </li></ul></dd>
     
 
@@ -929,7 +1554,7 @@ assumes a failed chat command invocation and will reject with notice
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="core_chat.js.html">core/chat.js</a>, <a href="core_chat.js.html#line177">line 177</a>
+        <a href="core_chat.js.html">core/chat.js</a>, <a href="core_chat.js.html#line227">line 227</a>
     </li></ul></dd>
     
 
@@ -1002,7 +1627,7 @@ assumes a failed chat command invocation and will reject with notice
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="core_chat.js.html">core/chat.js</a>, <a href="core_chat.js.html#line169">line 169</a>
+        <a href="core_chat.js.html">core/chat.js</a>, <a href="core_chat.js.html#line219">line 219</a>
     </li></ul></dd>
     
 
@@ -1032,13 +1657,13 @@ assumes a failed chat command invocation and will reject with notice
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-addmod.html">addmod</a></li><li><a href="module-ban.html">ban</a></li><li><a href="module-changecolor.html">changecolor</a></li><li><a href="module-changenick.html">changenick</a></li><li><a href="module-chat.html">chat</a></li><li><a href="module-disconnect.html">disconnect</a></li><li><a href="module-dumb.html">dumb</a></li><li><a href="module-emote.html">emote</a></li><li><a href="module-forcecolor.html">forcecolor</a></li><li><a href="module-help.html">help</a></li><li><a href="module-invite.html">invite</a></li><li><a href="module-join.html">join</a></li><li><a href="module-kick.html">kick</a></li><li><a href="module-listusers.html">listusers</a></li><li><a href="module-morestats.html">morestats</a></li><li><a href="module-ping.html">ping</a></li><li><a href="module-reload.html">reload</a></li><li><a href="module-removemod.html">removemod</a></li><li><a href="module-saveconfig.html">saveconfig</a></li><li><a href="module-session.html">session</a></li><li><a href="module-shout.html">shout</a></li><li><a href="module-socketreply.html">socketreply</a></li><li><a href="module-speak.html">speak</a></li><li><a href="module-stats.html">stats</a></li><li><a href="module-unban.html">unban</a></li><li><a href="module-unbanall.html">unbanall</a></li><li><a href="module-whisper.html">whisper</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-addmod.html">addmod</a></li><li><a href="module-ban.html">ban</a></li><li><a href="module-changecolor.html">changecolor</a></li><li><a href="module-changenick.html">changenick</a></li><li><a href="module-chat.html">chat</a></li><li><a href="module-disablecaptcha.html">disablecaptcha</a></li><li><a href="module-disconnect.html">disconnect</a></li><li><a href="module-dumb.html">dumb</a></li><li><a href="module-emote.html">emote</a></li><li><a href="module-enablecaptcha.html">enablecaptcha</a></li><li><a href="module-forcecolor.html">forcecolor</a></li><li><a href="module-help.html">help</a></li><li><a href="module-invite.html">invite</a></li><li><a href="module-join.html">join</a></li><li><a href="module-kick.html">kick</a></li><li><a href="module-listusers.html">listusers</a></li><li><a href="module-lockroom.html">lockroom</a></li><li><a href="module-morestats.html">morestats</a></li><li><a href="module-ping.html">ping</a></li><li><a href="module-reload.html">reload</a></li><li><a href="module-removemod.html">removemod</a></li><li><a href="module-saveconfig.html">saveconfig</a></li><li><a href="module-session.html">session</a></li><li><a href="module-shout.html">shout</a></li><li><a href="module-socketreply.html">socketreply</a></li><li><a href="module-speak.html">speak</a></li><li><a href="module-stats.html">stats</a></li><li><a href="module-unban.html">unban</a></li><li><a href="module-unbanall.html">unbanall</a></li><li><a href="module-unlockroom.html">unlockroom</a></li><li><a href="module-updateMessage.html">updateMessage</a></li><li><a href="module-whisper.html">whisper</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.10</a> on Thu May 05 2022 00:29:35 GMT-0700 (Pacific Daylight Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.10</a> on Fri Dec 29 2023 23:22:35 GMT-0800 (Pacific Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>

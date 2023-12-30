@@ -155,7 +155,7 @@ export function initHooks(server) {
   * hook incoming chat commands, shadow-prevent chat if they are muzzled
   * @param {Object} env - Enviroment object with references to core, server, socket & payload
   * @public
-  * @return {{Object|boolean|string}} Object = same/altered payload,
+  * @return {(Object|boolean|string)} Object = same/altered payload,
   * false = suppress action,
   * string = error
   */
@@ -218,7 +218,7 @@ export function chatCheck({
   * shadow-prevent all invites from muzzled users
   * @param {Object} env - Enviroment object with references to core, server, socket & payload
   * @public
-  * @return {{Object|boolean|string}} Object = same/altered payload,
+  * @return {(Object|boolean|string)} Object = same/altered payload,
   * false = suppress action,
   * string = error
   */
@@ -290,7 +290,7 @@ export function inviteCheck({
   * shadow-prevent all whispers from muzzled users
   * @param {Object} env - Enviroment object with references to core, server, socket & payload
   * @public
-  * @return {{Object|boolean|string}} Object = same/altered payload,
+  * @return {(Object|boolean|string)} Object = same/altered payload,
   * false = suppress action,
   * string = error
   */

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Source: mod/speak.js</title>
+    <title>JSDoc: Source: mod/disablecaptcha.js</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,7 +17,7 @@
 
 <div id="main">
 
-    <h1 class="page-title">Source: mod/speak.js</h1>
+    <h1 class="page-title">Source: mod/disablecaptcha.js</h1>
 
     
 
@@ -26,14 +26,13 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>/* eslint no-param-reassign: 0 */
-
-/**
-  * @author OpSimple ( https://github.com/OpSimple )
-  * @summary Unmuzzle a user
+            <pre class="prettyprint source linenums"><code>/**
+  * @author Marzavec ( https://github.com/marzavec )
+  * @summary Disables the captcha
   * @version 1.0.0
-  * @description Pardon a dumb user to be able to speak again
-  * @module speak
+  * @description Disables the captcha on the channel specified in the channel property,
+  *              default is current channel
+  * @module disablecaptcha
   */
 
 import {
@@ -46,9 +45,9 @@ import {
   * @public
   * @return {void}
   */
-export function init(core) {
-  if (typeof core.muzzledHashes === 'undefined') {
-    core.muzzledHashes = {};
+export async function init(core) {
+  if (typeof core.captchas === 'undefined') {
+    core.captchas = {};
   }
 }
 
@@ -66,51 +65,33 @@ export async function run({
     return server.police.frisk(socket, 10);
   }
 
-  // check user input
-  if (typeof payload.ip !== 'string' &amp;&amp; typeof payload.hash !== 'string') {
+  let targetChannel;
+
+  if (typeof payload.channel !== 'string') {
+    if (typeof socket.channel !== 'string') { // @todo Multichannel
+      return false; // silently fail
+    }
+
+    targetChannel = socket.channel;
+  } else {
+    targetChannel = payload.channel;
+  }
+
+  if (!core.captchas[targetChannel]) {
     return server.reply({
-      cmd: 'warn', // @todo Add numeric error code as `id`
-      text: "hash:'targethash' or ip:'1.2.3.4' is required",
+      cmd: 'info',
+      text: 'Captcha is not enabled.',
       channel: socket.channel, // @todo Multichannel
     }, socket);
   }
 
-  if (typeof payload.ip === 'string') {
-    if (payload.ip === '*') {
-      core.muzzledHashes = {};
+  core.captchas[targetChannel] = false;
 
-      return server.broadcast({
-        cmd: 'info',
-        text: `${socket.nick} unmuzzled all users`,
-        channel: false, // @todo Multichannel, false for global
-      }, { level: isModerator });
-    }
-  } else if (payload.hash === '*') {
-    core.muzzledHashes = {};
-
-    return server.broadcast({
-      cmd: 'info',
-      text: `${socket.nick} unmuzzled all users`,
-      channel: false, // @todo Multichannel, false for global
-    }, { level: isModerator });
-  }
-
-  // find target &amp; remove mute status
-  let target;
-  if (typeof payload.ip === 'string') {
-    target = server.getSocketHash(payload.ip);
-  } else {
-    target = payload.hash;
-  }
-
-  delete core.muzzledHashes[target];
-
-  // notify mods
   server.broadcast({
     cmd: 'info',
-    text: `${socket.nick}#${socket.trip} unmuzzled : ${target}`,
-    channel: false, // @todo Multichannel, false for global
-  }, { level: isModerator });
+    text: `Captcha disabled on: ${targetChannel}`,
+    channel: false, // @todo Multichannel, false for global info
+  }, { channel: targetChannel, level: isModerator });
 
   return true;
 }
@@ -118,20 +99,18 @@ export async function run({
 /**
   * Module meta information
   * @public
-  * @typedef {Object} speak/info
+  * @typedef {Object} disablecaptcha/info
   * @property {string} name - Module command name
   * @property {string} category - Module category name
   * @property {string} description - Information about module
-  * @property {Array} aliases - An array of alternative cmd names
   * @property {string} usage - Information about module usage
   */
 export const info = {
-  name: 'speak',
+  name: 'disablecaptcha',
   category: 'moderators',
-  description: 'Pardon a dumb user to be able to speak again',
-  aliases: ['unmuzzle', 'unmute'],
+  description: 'Disables the captcha on the channel specified in the channel property, default is current channel',
   usage: `
-    API: { cmd: 'speak', ip/hash: '&lt;target ip or hash>' }`,
+    API: { cmd: 'disablecaptcha', channel: '&lt;optional channel, defaults to your current channel' }`,
 };
 </code></pre>
         </article>
