@@ -47,15 +47,7 @@ export async function run({
     }, socket);
   }
 
-  if (typeof payload.level !== 'string') {
-    return server.reply({
-      cmd: 'warn', // @todo Add numeric error code as `id`
-      text: 'Failed to set level: Invalid level label. Refer to `/help setlevel` for instructions on how to use this command.',
-      channel: socket.channel, // @todo Multichannel
-    }, socket);
-  }
-
-  if (core.levelLabels.indexOf(payload.level) === -1) {
+  if (typeof payload.level !== 'string' || core.levelLabels.indexOf(payload.level) === -1) {
     return server.reply({
       cmd: 'warn', // @todo Add numeric error code as `id`
       text: `Failed to set level: Invalid level label; choices are case sensitive: ${core.levelLabels.join(', ')}`,
@@ -141,7 +133,7 @@ export function setlevelCheck({
     if (!input[1]) {
       server.reply({
         cmd: 'warn', // @todo Add numeric error code as `id`
-        text: 'Failed to set level: Invalid trip. Refer to `/help setlevel` for instructions on how to use this command.',
+        text: 'Failed to set level: Missing trip. Refer to `/help setlevel` for instructions on how to use this command.',
         channel: socket.channel, // @todo Multichannel
       }, socket);
 
@@ -152,7 +144,7 @@ export function setlevelCheck({
     if (!input[2]) {
       server.reply({
         cmd: 'warn', // @todo Add numeric error code as `id`
-        text: 'Failed to set level: Invalid level label. Refer to `/help setlevel` for instructions on how to use this command.',
+        text: 'Failed to set level: Missing level label. Refer to `/help setlevel` for instructions on how to use this command.',
         channel: socket.channel, // @todo Multichannel
       }, socket);
 
