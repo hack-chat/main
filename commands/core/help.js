@@ -6,9 +6,13 @@
   * @module help
   */
 
+import {
+  CodebaseVersion,
+} from '../utility/_Constants.js';
+
 /**
   * Executes when invoked by a remote client
-  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @param {Object} env - Environment object with references to core, server, socket & payload
   * @public
   * @return {void}
   */
@@ -43,6 +47,7 @@ export async function run({
     }
 
     reply += '---\nFor specific help on certain commands, use either:\nText: `/help <command name>`\nAPI: `{cmd: \'help\', command: \'<command name>\'}`';
+    reply += `\n\nHackChat ${CodebaseVersion}`;
   } else {
     const command = core.commands.get(payload.command);
 
@@ -73,7 +78,7 @@ export async function run({
 
 /**
   * Automatically executes once after server is ready to register this modules hooks
-  * @param {Object} server - Reference to server enviroment object
+  * @param {Object} server - Reference to server environment object
   * @public
   * @return {void}
   */
@@ -84,7 +89,7 @@ export function initHooks(server) {
 /**
   * Executes every time an incoming chat command is invoked;
   * hooks chat commands checking for /help
-  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @param {Object} env - Environment object with references to core, server, socket & payload
   * @public
   * @return {(Object|boolean|string)} Object = same/altered payload,
   * false = suppress action,

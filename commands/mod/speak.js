@@ -14,7 +14,7 @@ import {
 
 /**
   * Automatically executes once after server is ready
-  * @param {Object} core - Reference to core enviroment object
+  * @param {Object} core - Reference to core environment object
   * @public
   * @return {void}
   */
@@ -26,7 +26,7 @@ export function init(core) {
 
 /**
   * Executes when invoked by a remote client
-  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @param {Object} env - Environment object with references to core, server, socket & payload
   * @public
   * @return {void}
   */

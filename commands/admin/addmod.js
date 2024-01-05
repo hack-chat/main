@@ -15,7 +15,7 @@ import {
 
 /**
   * Executes when invoked by a remote client
-  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @param {Object} env - Environment object with references to core, server, socket & payload
   * @public
   * @return {void}
   */

@@ -1,8 +1,19 @@
 /* eslint-disable no-await-in-loop */
 /* eslint import/no-unresolved: 0 */
 
-import fs from 'fs';
-import { Low, JSONFile } from 'lowdb';
+import {
+  existsSync,
+  readFileSync,
+  writeFile,
+  writeFileSync,
+} from 'node:fs';
+import {
+  createHash,
+} from 'node:crypto';
+import {
+  Low,
+  JSONFile,
+} from 'lowdb';
 import crypto from 'crypto';
 import enquirerPkg from 'enquirer';
 
@@ -45,7 +56,7 @@ const config = new Low(adapter);
 
 // check for missing cert, generate if needed
 const checkCert = async () => {
-  if (fs.existsSync(SessionLocation) === false) {
+  if (existsSync(SessionLocation) === false) {
     const prompt = new Confirm({
       name: 'certDialogue',
       message: 'Missing session key, create new?',
@@ -54,7 +65,7 @@ const checkCert = async () => {
     if (await prompt.run() !== false) {
       const data = crypto.randomBytes(4096);
 
-      fs.writeFile(SessionLocation, data, (err) => {
+      writeFile(SessionLocation, data, (err) => {
         if (err) throw err;
       });
     }
@@ -75,7 +86,7 @@ const checkConfig = async () => {
 
 // check for missing or uninitialized salt
 const checkTripSalt = async () => {
-  if (fs.existsSync(SaltLocation) === false) {
+  if (existsSync(SaltLocation) === false) {
     const prompt = new Confirm({
       name: 'overwrite',
       message: 'Missing trip salt, create new?',
@@ -84,7 +95,7 @@ const checkTripSalt = async () => {
     if (await prompt.run() !== false) {
       const data = crypto.randomBytes(4096);
 
-      fs.writeFileSync(SaltLocation, data);
+      writeFileSync(SaltLocation, data);
     }
   } else {
     console.log('Found existing trip salt.');
@@ -94,7 +105,7 @@ const checkTripSalt = async () => {
 // verify config has an admin account
 const checkPermissions = async () => {
   if (typeof config.data.adminTrip === 'undefined' || config.data.adminTrip === '') {
-    const salt = fs.readFileSync(SaltLocation);
+    const salt = readFileSync(SaltLocation);
 
     const prompt = new Password({
       name: 'adminPassword',
@@ -103,9 +114,7 @@ const checkPermissions = async () => {
 
     const password = await prompt.run();
 
-    const sha = crypto.createHash('sha256');
-    sha.update(password + salt);
-    config.data.adminTrip = sha.digest('base64').substr(0, 6);
+    config.data.adminTrip = createHash('sha256').update(password + salt, 'utf8').digest('base64').substr(0, 6);
 
     await config.write();
   } else {

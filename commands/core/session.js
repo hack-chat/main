@@ -8,9 +8,10 @@
   * @module session
   */
 
-import fs from 'fs';
+import {
+  readFileSync,
+} from 'node:fs';
 import jsonwebtoken from 'jsonwebtoken';
-
 import {
   isModerator,
   verifyNickname,
@@ -66,7 +67,7 @@ function notifyFailure(server, socket) {
 
 /**
   * Executes when invoked by a remote client
-  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @param {Object} env - Environment object with references to core, server, socket & payload
   * @public
   * @return {void}
   */
@@ -171,14 +172,14 @@ export async function run({
 
 /**
   * Automatically executes once after server is ready
-  * @param {Object} core - Reference to core enviroment object
+  * @param {Object} core - Reference to core environment object
   * @public
   * @return {void}
   */
 export function init(core) {
   // load the encryption key if required
   if (typeof core.sessionKey === 'undefined') {
-    core.sessionKey = fs.readFileSync(SessionLocation);
+    core.sessionKey = readFileSync(SessionLocation);
   }
 }
 

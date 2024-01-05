@@ -1,10 +1,16 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
-  * @summary Error ID list
+  * @summary App settings
   * @version 1.0.0
-  * @description Exports an object that hold common global error IDs
+  * @description Exports an object that hold common constants
   * @module Constants
   */
+
+/**
+  * Internal version, used mainly for debugging
+  * @typedef {object} CodebaseVersion
+  */
+export const CodebaseVersion = '2.2.21b';
 
 /* Base error ranges */
 const GlobalErrors = 10;
@@ -45,5 +51,31 @@ export const Errors = {
     BAD_SESSION: SessionErrors + 1,
   },
 };
+
+/**
+  * The settings structure of a default, unowned channel
+  * @typedef {object} DefaultChannelSettings
+  */
+export const DefaultChannelSettings = {
+  owned: false,
+  ownerTrip: '',
+  lastAccessed: new Date(),
+  claimExpires: new Date(),
+  motd: '',
+  lockLevel: 0,
+  tripLevels: {},
+};
+
+/**
+  * Maximum number of specialized trip levels, per channel
+  * @typedef {number} MaxChannelTrips
+  */
+export const MaxChannelTrips = 250;
+
+/**
+  * How many days until a claim will expire
+  * @typedef {number} ClaimExpirationDays
+  */
+export const ClaimExpirationDays = 7;
 
 export default Errors;

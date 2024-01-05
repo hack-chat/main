@@ -31,7 +31,7 @@ const parseText = (text) => {
 
 /**
   * Executes when invoked by a remote client
-  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @param {Object} env - Environment object with references to core, server, socket & payload
   * @public
   * @return {void}
   */
@@ -78,7 +78,7 @@ export async function run({ server, socket, payload }) {
 
 /**
   * Automatically executes once after server is ready to register this modules hooks
-  * @param {Object} server - Reference to server enviroment object
+  * @param {Object} server - Reference to server environment object
   * @public
   * @return {void}
   */
@@ -89,7 +89,7 @@ export function initHooks(server) {
 /**
   * Executes every time an incoming chat command is invoked;
   * hooks chat commands checking for /me
-  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @param {Object} env - Environment object with references to core, server, socket & payload
   * @public
   * @return {(Object|boolean|string)} Object = same/altered payload,
   * false = suppress action,

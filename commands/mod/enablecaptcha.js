@@ -30,7 +30,7 @@ import {
 
 /**
   * Automatically executes once after server is ready
-  * @param {Object} core - Reference to core enviroment object
+  * @param {Object} core - Reference to core environment object
   * @public
   * @return {void}
   */
@@ -42,7 +42,7 @@ export async function init(core) {
 
 /**
   * Executes when invoked by a remote client
-  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @param {Object} env - Environment object with references to core, server, socket & payload
   * @public
   * @return {void}
   */
@@ -87,7 +87,7 @@ export async function run({
 
 /**
   * Automatically executes once after server is ready to register this modules hooks
-  * @param {Object} server - Reference to server enviroment object
+  * @param {Object} server - Reference to server environment object
   * @public
   * @return {void}
   */
@@ -99,7 +99,7 @@ export function initHooks(server) {
 /**
   * Executes every time an incoming chat command is invoked;
   * hook incoming chat commands, check if they are answering a captcha
-  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @param {Object} env - Environment object with references to core, server, socket & payload
   * @public
   * @return {(Object|boolean|string)} Object = same/altered payload,
   * false = suppress action,
@@ -154,7 +154,7 @@ export function chatCheck({
 /**
   * Executes every time an incoming join command is invoked;
   * hook incoming join commands, check if they are joining a captcha protected channel
-  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @param {Object} env - Environment object with references to core, server, socket & payload
   * @public
   * @return {(Object|boolean|string)} Object = same/altered payload,
   * false = suppress action,

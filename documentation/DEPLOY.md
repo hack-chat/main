@@ -1,4 +1,4 @@
-# Development Enviroment
+# Development Environment
 
 1. [Clone](https://help.github.com/articles/cloning-a-repository/) the repository.
     * Terminal Command: `git clone https://github.com/hack-chat/main.git hackchat`

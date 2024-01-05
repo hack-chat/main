@@ -50,7 +50,7 @@ const danteQuotes = [
 
 /**
   * Automatically executes once after server is ready
-  * @param {Object} core - Reference to core enviroment object
+  * @param {Object} core - Reference to core environment object
   * @public
   * @return {void}
   */
@@ -62,7 +62,7 @@ export async function init(core) {
 
 /**
   * Executes when invoked by a remote client
-  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @param {Object} env - Environment object with references to core, server, socket & payload
   * @public
   * @return {void}
   */
@@ -109,7 +109,7 @@ export async function run({
 
 /**
   * Automatically executes once after server is ready to register this modules hooks
-  * @param {Object} server - Reference to server enviroment object
+  * @param {Object} server - Reference to server environment object
   * @public
   * @return {void}
   */
@@ -124,7 +124,7 @@ export function initHooks(server) {
 /**
   * Executes every time an incoming changenick command is invoked;
   * hook incoming changenick commands, reject them if the channel is 'purgatory'
-  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @param {Object} env - Environment object with references to core, server, socket & payload
   * @public
   * @return {(Object|boolean|string)} Object = same/altered payload,
   * false = suppress action,
@@ -143,7 +143,7 @@ export function changeNickCheck({
 /**
   * Executes every time an incoming whisper command is invoked;
   * hook incoming whisper commands, reject them if the channel is 'purgatory'
-  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @param {Object} env - Environment object with references to core, server, socket & payload
   * @public
   * @return {(Object|boolean|string)} Object = same/altered payload,
   * false = suppress action,
@@ -162,7 +162,7 @@ export function whisperCheck({
 /**
   * Executes every time an incoming chat command is invoked;
   * hook incoming chat commands, reject them if the channel is 'purgatory'
-  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @param {Object} env - Environment object with references to core, server, socket & payload
   * @public
   * @return {(Object|boolean|string)} Object = same/altered payload,
   * false = suppress action,
@@ -185,7 +185,7 @@ export function chatCheck({
 /**
   * Executes every time an incoming invite command is invoked;
   * hook incoming invite commands, reject them if the channel is 'purgatory'
-  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @param {Object} env - Environment object with references to core, server, socket & payload
   * @public
   * @return {(Object|boolean|string)} Object = same/altered payload,
   * false = suppress action,
@@ -204,7 +204,7 @@ export function inviteCheck({
 /**
   * Executes every time an incoming join command is invoked;
   * hook incoming join commands, shunt them to purgatory if needed
-  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @param {Object} env - Environment object with references to core, server, socket & payload
   * @public
   * @return {(Object|boolean|string)} Object = same/altered payload,
   * false = suppress action,

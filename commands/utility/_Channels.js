@@ -1,3 +1,5 @@
+/* eslint import/no-cycle: [0, { ignoreExternal: true }] */
+
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Channel helper
@@ -7,7 +9,20 @@
   */
 
 import {
+  existsSync,
+  readFileSync,
+  writeFile,
+} from 'node:fs';
+import {
+  createHash,
+} from 'node:crypto';
+import {
+  levels,
+} from './_UAC.js';
+import {
   Errors,
+  DefaultChannelSettings,
+  MaxChannelTrips,
 } from './_Constants.js';
 
 /**
@@ -29,6 +44,55 @@ export function canJoinChannel(channel, socket) {
 }
 
 /**
+  * Returns the target channel's hash
+  * @public
+  * @param {string} channel Target channel
+  * @return {string}
+  */
+export function getChannelHash(channel) {
+  return createHash('sha256').update(channel, 'utf8').digest('hex');
+}
+
+/**
+  * Caches the target channel settings to storage
+  * @public
+  * @param {string} config Server config object
+  * @param {string} channel Target channel
+  * @return {boolean}
+  */
+export function storeChannelSettings(config, channel) {
+  const channelHash = getChannelHash(channel);
+  const configPath = `../../channels/${channelHash[0]}/${channelHash}.json`;
+
+  delete config.permissions[channelHash].channelHash;
+
+  writeFile(configPath, JSON.stringify(config.permissions[channelHash] || DefaultChannelSettings));
+
+  return true;
+}
+
+/**
+  * Applies new settings into the specified channel settings
+  * @public
+  * @param {string} config Server config object
+  * @param {string} channel Target channel
+  * @param {string} newSettings Updated channel settings
+  * @return {object}
+  */
+export function updateChannelSettings(config, channel, newSettings) {
+  const channelHash = getChannelHash(channel);
+  const updatedSettings = {
+    ...newSettings,
+    ...config.permissions[channelHash],
+  };
+
+  config.permissions[channelHash] = updatedSettings;
+  config.permissions[channelHash].lastAccessed = new Date();
+
+  return updatedSettings;
+}
+
+/**
   * Returns an object containing info about the specified channel,
   * including if it is owned, mods, permissions
   * @public
@@ -37,15 +101,70 @@ export function canJoinChannel(channel, socket) {
   * @return {object}
   */
 export function getChannelSettings(config, channel) {
-  if (typeof config.permissions !== 'undefined') {
-    if (typeof config.permissions[channel] !== 'undefined') {
-      return config.permissions[channel];
+  const channelHash = getChannelHash(channel);
+
+  if (typeof config.permissions[channelHash] === 'undefined') {
+    const configPath = `../../channels/${channelHash[0]}/${channelHash}.json`;
+
+    if (!existsSync(configPath)) {
+      return DefaultChannelSettings;
     }
+
+    let configData;
+    try {
+      configData = JSON.parse(readFileSync(configPath, 'utf8'));
+    } catch (e) {
+      console.log(`Corrupted channel config: ${configPath}`);
+
+      return DefaultChannelSettings;
+    }
+
+    // Check last access date here, if too old; delete file and return DefaultChannelSettings
+
+    config.permissions[channelHash] = configData;
   }
 
-  return {
-    owned: false,
-  };
+  config.permissions[channelHash].lastAccessed = new Date();
+  config.permissions[channelHash].channelHash = channelHash;
+
+  return config.permissions[channelHash];
+}
+
+/**
+  * Apply a new permission level to the provided trip, within the provided channel
+  * @public
+  * @param {string} config Server config object
+  * @param {string} channel Target channel name
+  * @param {string} trip Target trip
+  * @param {number} level New level
+  * @return {(string)}
+  */
+export function setChannelTripLevel(config, channel, trip, level) {
+  const channelSettings = getChannelSettings(config, channel);
+
+  if (!channelSettings.owned) {
+    return 'This channel has no owner.';
+  }
+
+  const currentTrips = Object.keys(config.permissions[channelSettings.channelHash].tripLevels);
+
+  if (currentTrips.length >= MaxChannelTrips) {
+    if (level !== levels.default) {
+      return 'Too many trips used. Remove trips by setting their level to default level.';
+    }
+
+    if (currentTrips.indexOf(trip) === -1) {
+      return 'Invalid trip';
+    }
+
+    delete config.permissions[channelSettings.channelHash].tripLevels[trip];
+
+    return '';
+  }
+
+  config.permissions[channelSettings.channelHash].tripLevels[trip] = level;
+
+  return '';
 }
 
 /**

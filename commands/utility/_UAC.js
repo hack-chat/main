@@ -1,3 +1,5 @@
+/* eslint import/no-cycle: [0, { ignoreExternal: true }] */
+
 /**
   * User Account Control information containing level constants
   * and simple helper functions related to users
@@ -8,12 +10,11 @@
   */
 
 import {
+  createHash,
+} from 'node:crypto';
+import {
   getChannelSettings,
 } from './_Channels.js';
-
-const {
-  createHash,
-} = await import('crypto');
 
 /**
   * Object defining labels for default permission ranges
@@ -148,9 +149,7 @@ export function getUserPerms(pass, salt, config, channel) {
     };
   }
 
-  const sha = createHash('sha256');
-  sha.update(pass + salt);
-  const trip = sha.digest('base64').substr(0, 6);
+  const trip = createHash('sha256').update(pass + salt, 'utf8').digest('base64').substr(0, 6);
 
   // check if user is global admin
   if (trip === config.adminTrip) {
@@ -171,18 +170,12 @@ export function getUserPerms(pass, salt, config, channel) {
 
   const channelSettings = getChannelSettings(config, channel);
   if (channelSettings.owned) {
-    // check if user is channel owner
-    // @todo channel ownership patch
-
-    // check if user is channel mod
-    // @todo channel ownership patch
-
-    // check if user is channel trusted
-    // @todo channel ownership patch
+    if (channelSettings.ownerTrip === trip) {
+      level = levels.channelOwner;
+    } else if (typeof channelSettings.tripLevels[trip] !== 'undefined') {
+      level = channelSettings.tripLevels[trip];
+    }
   }
-
-  // check if user is global trusted
-  // @todo channel ownership patch
 
   return {
     trip,

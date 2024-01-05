@@ -8,7 +8,6 @@
 
 import {
   isModerator,
-  levels,
   getUserDetails,
 } from '../utility/_UAC.js';
 import {
@@ -20,7 +19,7 @@ import {
 
 /**
   * Executes when invoked by a remote client
-  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @param {Object} env - Environment object with references to core, server, socket & payload
   * @public
   * @return {void}
   */
@@ -126,7 +125,7 @@ export async function run({
     cmd: 'info',
     text: `Kicked ${kicked.map((k) => k.nick).join(', ')}`,
     channel: socket.channel, // @todo Multichannel
-  }, { channel: socket.channel, level: (level) => level < levels.moderator });
+  }, { channel: socket.channel, level: (level) => isModerator(level) });
 
   // stats are fun
   core.stats.increment('users-kicked', kicked.length);

@@ -1,8 +1,14 @@
-import fs from 'fs';
-import { join, dirname } from 'path';
-import { Low, JSONFile } from 'lowdb';
-import { fileURLToPath } from 'url';
-import { CoreApp } from 'hackchat-server';
+import {
+  existsSync,
+  readFileSync,
+} from 'node:fs';
+import {
+  Low,
+  JSONFile,
+} from 'lowdb';
+import {
+  CoreApp,
+} from 'hackchat-server';
 
 // required file paths
 const SessionLocation = './session.key';
@@ -10,15 +16,15 @@ const SaltLocation = './salt.key';
 const AppConfigLocation = './config.json';
 
 // verify required files exist
-if (fs.existsSync(SessionLocation) === false) {
+if (existsSync(SessionLocation) === false) {
   throw Error('Missing session key, you may need to run: npm run config');
 }
 
-if (fs.existsSync(SaltLocation) === false) {
+if (existsSync(SaltLocation) === false) {
   throw Error('Missing salt key, you may need to run: npm run config');
 }
 
-if (fs.existsSync(AppConfigLocation) === false) {
+if (existsSync(AppConfigLocation) === false) {
   throw Error('Missing config, you may need to run: npm run config');
 }
 
@@ -30,10 +36,10 @@ const server = new CoreApp({
 });
 
 // load sessoin key data
-server.sessionKey = fs.readFileSync(SessionLocation);
+server.sessionKey = readFileSync(SessionLocation);
 
 // load salt key data
-server.saltKey = fs.readFileSync(SaltLocation);
+server.saltKey = readFileSync(SaltLocation);
 
 // load the configuration data
 const adapter = new JSONFile(AppConfigLocation);
