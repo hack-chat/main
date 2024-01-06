@@ -67,6 +67,21 @@ export const DefaultChannelSettings = {
 };
 
 /**
+  * An array of strings that may be used if the channel motd is empty
+  * @typedef {object} SystemMOTDs
+  */
+export const SystemMOTDs = [
+  'Protip: Using any hex color code, you can change your name color- for example: /color #FFFFFF`',
+  'Protip: You can easily change your name with a command: /nick bob`',
+];
+
+/**
+  * Maximum length of a channels MOTD string
+  * @typedef {object} MaxMOTDLength
+  */
+export const MaxMOTDLength = 250;
+
+/**
   * Maximum number of specialized trip levels, per channel
   * @typedef {number} MaxChannelTrips
   */
