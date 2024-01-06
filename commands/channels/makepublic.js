@@ -1,22 +1,23 @@
 /**
   * @author Marzavec
-  * @summary Renews the claim
+  * @summary Sets channel to public
   * @version 1.0.0
-  * @description Extend the ownership expiration date, before it expires
-  * @module renewclaim
+  * @description Make channel publicly listed on the front page
+  * @module makepublic
   */
 
 import captcha from 'ascii-captcha';
 import {
+  isChannelOwner,
   isModerator,
 } from '../utility/_UAC.js';
+/*
 import {
-  // Errors,
-  ClaimExpirationDays,
+  Errors,
 } from '../utility/_Constants.js';
+*/
 import {
   getChannelSettings,
-  updateChannelSettings,
 } from '../utility/_Channels.js';
 
 /**
@@ -26,7 +27,7 @@ import {
   * @return {void}
   */
 export async function run({
-  core, server, socket,
+  server, socket,
 }) {
   // must be in a channel to run this command
   if (typeof socket.channel === 'undefined') {
@@ -36,52 +37,32 @@ export async function run({
   if (!socket.trip) {
     return server.reply({
       cmd: 'warn', // @todo Add numeric error code as `id`
-      text: 'Failed to renew ownership: Missing trip code.',
+      text: 'Failed to make channel public: Missing trip code.',
       channel: socket.channel, // @todo Multichannel
     }, socket);
   }
 
-  if (isModerator(socket.level)) {
+  if (isModerator(socket.level) || !isChannelOwner(socket.level)) {
     return server.reply({
       cmd: 'info', // @todo Add numeric error code as `id`
-      text: "Failed to renew ownership: You're already a global moderator; it's free real estate. . .",
+      text: 'Failed to make channel public: You may not do that',
       channel: socket.channel, // @todo Multichannel
     }, socket);
   }
 
-  const channelSettings = getChannelSettings(core.appConfig.data, socket.channel);
-
-  if (channelSettings.owned === false || socket.trip !== channelSettings.ownerTrip) {
-    return server.reply({
-      cmd: 'warn', // @todo Add numeric error code as `id`
-      text: 'Failed to renew ownership: You may not do that',
-      channel: socket.channel, // @todo Multichannel
-    }, socket);
-  }
-
-  const hoursLeft = Math.abs(channelSettings.claimExpires - new Date()) / (60 * 60 * 1000);
-
-  if (hoursLeft > 24) {
-    return server.reply({
-      cmd: 'warn', // @todo Add numeric error code as `id`
-      text: `Failed to renew ownership: You must wait. Hours until renewable: ${hoursLeft - 24}`,
-      channel: socket.channel, // @todo Multichannel
-    }, socket);
-  }
-
-  socket.renewCaptcha = {
+  socket.pubCaptcha = {
     solution: captcha.generateRandomText(7),
   };
 
   server.reply({
     cmd: 'warn',
-    text: 'Enter the following to renew ownership (case-sensitive):',
+    text: 'Enter the following to make channel public (case-sensitive):',
     channel: socket.channel, // @todo Multichannel
   }, socket);
 
   server.reply({
     cmd: 'captcha',
-    text: captcha.word2Transformedstr(socket.renewCaptcha.solution),
+    text: captcha.word2Transformedstr(socket.pubCaptcha.solution),
     channel: socket.channel, // @todo Multichannel
   }, socket);
 
@@ -111,29 +92,39 @@ export function chatHook({
     return false;
   }
 
-  if (typeof socket.renewCaptcha !== 'undefined') {
-    if (payload.text === socket.renewCaptcha.solution) {
-      socket.renewCaptcha = undefined;
+  if (typeof socket.pubCaptcha !== 'undefined') {
+    if (payload.text === socket.pubCaptcha.solution) {
+      socket.pubCaptcha = undefined;
 
       const channelSettings = getChannelSettings(core.appConfig.data, socket.channel);
 
       if (channelSettings.owned === false || socket.trip !== channelSettings.ownerTrip) {
         return server.reply({
           cmd: 'warn', // @todo Add numeric error code as `id`
-          text: 'Failed to renew ownership: You may not do that',
+          text: 'Failed to make channel public: You may not do that',
           channel: socket.channel, // @todo Multichannel
         }, socket);
       }
 
-      const expirationDate = new Date();
-      expirationDate.setDate(expirationDate.getDate() + ClaimExpirationDays);
-      channelSettings.claimExpires = expirationDate;
+      if (core.appConfig.data.publicChannels.indexOf(socket.channel) !== -1) {
+        return server.reply({
+          cmd: 'warn', // @todo Add numeric error code as `id`
+          text: 'Failed to make channel public: This channel is already public',
+          channel: socket.channel, // @todo Multichannel
+        }, socket);
+      }
 
-      updateChannelSettings(core.appConfig.data, socket.channel, channelSettings);
+      core.appConfig.data.publicChannels.push(socket.channel);
+
+      server.broadcast({
+        cmd: 'info',
+        text: `A new channel has been made public: ?${socket.channel}`,
+        channel: socket.channel, // @todo Multichannel
+      }, { level: (level) => isModerator(level) });
 
       server.reply({
         cmd: 'info', // @todo Add numeric error code as `id`
-        text: `Your claim has been renewed until ${expirationDate}`,
+        text: 'This channel has been added to the list of public channels',
         channel: socket.channel, // @todo Multichannel
       }, socket);
 
@@ -146,13 +137,13 @@ export function chatHook({
     return false;
   }
 
-  if (payload.text.startsWith('/renewclaim')) {
+  if (payload.text.startsWith('/makepublic')) {
     this.run({
       core,
       server,
       socket,
       payload: {
-        cmd: 'renewclaim',
+        cmd: 'makepublic',
       },
     });
 
@@ -165,17 +156,17 @@ export function chatHook({
 /**
   * Module meta information
   * @public
-  * @typedef {Object} renewclaim/info
+  * @typedef {Object} makepublic/info
   * @property {string} name - Module command name
   * @property {string} category - Module category name
   * @property {string} description - Information about module
   * @property {string} usage - Information about module usage
   */
 export const info = {
-  name: 'renewclaim',
+  name: 'makepublic',
   category: 'channels',
-  description: 'Extend the ownership expiration date, before it expires.',
+  description: 'Make channel publicly listed on the front page',
   usage: `
-  API: { cmd: 'renewclaim' }
-  Text: /renewclaim`,
+  API: { cmd: 'makepublic' }
+  Text: /makepublic`,
 };
