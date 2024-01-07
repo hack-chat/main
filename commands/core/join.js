@@ -15,9 +15,11 @@ import {
 import {
   canJoinChannel,
   socketInChannel,
+  getChannelSettings,
 } from '../utility/_Channels.js';
 import {
   Errors,
+  SystemMOTDs,
 } from '../utility/_Constants.js';
 import {
   upgradeLegacyJoin,
@@ -93,6 +95,17 @@ export async function run({
   // get trip and level
   const { trip, level } = getUserPerms(pass, core.saltKey, core.appConfig.data, channel);
 
+  const channelSettings = getChannelSettings(core.appConfig.data, channel);
+
+  if (level < channelSettings.lockLevel) {
+    return server.reply({
+      cmd: 'warn',
+      text: 'You may not join that channel.',
+      // id: Errors.Join., // @todo Add numeric error code as `id`
+      channel: false, // @todo Multichannel, false for global event
+    }, socket);
+  }
+
   // store the user values
   const userInfo = {
     nick,
@@ -166,6 +179,17 @@ export async function run({
     nicks, /* @legacy */
     users,
     channel, // @todo Multichannel (?)
+  }, socket);
+
+  var motd = channelSettings.motd;
+  if (motd === '') {
+    motd = SystemMOTDs[Math.floor(Math.random() * SystemMOTDs.length)];
+  }
+
+  server.reply({
+    cmd: 'info',
+    text: motd,
+    channel,
   }, socket);
 
   // update client with new session info

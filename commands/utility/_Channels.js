@@ -104,24 +104,25 @@ export function getChannelSettings(config, channel) {
   const channelHash = getChannelHash(channel);
 
   if (typeof config.permissions[channelHash] === 'undefined') {
-    const configPath = `../../channels/${channelHash[0]}/${channelHash}.json`;
+    const configPath = `./channels/${channelHash[0]}/${channelHash}.json`;
 
     if (!existsSync(configPath)) {
-      return DefaultChannelSettings;
+      config.permissions[channelHash] = {
+        ...DefaultChannelSettings,
+      };
+    } else {
+      try {
+        config.permissions[channelHash] = JSON.parse(readFileSync(configPath, 'utf8'));
+      } catch (e) {
+        console.log(`Corrupted channel config: ${configPath}`);
+
+        config.permissions[channelHash] = {
+          ...DefaultChannelSettings,
+        };
+      }
     }
 
-    let configData;
-    try {
-      configData = JSON.parse(readFileSync(configPath, 'utf8'));
-    } catch (e) {
-      console.log(`Corrupted channel config: ${configPath}`);
-
-      return DefaultChannelSettings;
-    }
-
-    // Check last access date here, if too old; delete file and return DefaultChannelSettings
-
-    config.permissions[channelHash] = configData;
+    // @todo Check last access date here, if too old; delete file and use DefaultChannelSettings
   }
 
   config.permissions[channelHash].lastAccessed = new Date();

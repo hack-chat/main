@@ -16,6 +16,12 @@ import {
 } from 'lowdb';
 import crypto from 'crypto';
 import enquirerPkg from 'enquirer';
+import {
+  getChannelHash,
+} from '../commands/utility/_Channels.js';
+import {
+  DefaultChannelSettings,
+} from '../commands/utility/_Constants.js';
 
 const {
   Select,
@@ -150,8 +156,6 @@ const setupChannels = async () => {
 
   if (mode === standardMode) {
     config.data.publicChannels = defaultChannels;
-
-    await config.write();
   } else {
     const channels = [];
     let newChannel = '';
@@ -168,9 +172,31 @@ const setupChannels = async () => {
     }
 
     config.data.publicChannels = channels;
-
-    await config.write();
   }
+
+  const now = new Date();
+  const expirationDate = new Date();
+  expirationDate.setDate(expirationDate.getDate() + 1825);
+  const channelSettings = {
+    ...DefaultChannelSettings,
+    ...{
+      owned: true,
+      ownerTrip: 'Admin',
+      lastAccessed: now,
+      claimExpires: expirationDate,
+    }
+  }
+
+  for (let i = 0, j = config.data.publicChannels.length; i < j; i += 1) {
+    const channelHash = getChannelHash(config.data.publicChannels[i]);
+    const configPath = `./channels/${channelHash[0]}/${channelHash}.json`;
+
+    console.log(`Storing ${config.data.publicChannels[i]} -> ${configPath}`);
+
+    writeFileSync(configPath, JSON.stringify(channelSettings));
+  }
+
+  await config.write();
 };
 
 // check if pulic channels have been initialized

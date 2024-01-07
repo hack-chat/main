@@ -10,7 +10,7 @@
   * Internal version, used mainly for debugging
   * @typedef {object} CodebaseVersion
   */
-export const CodebaseVersion = '2.2.21b';
+export const CodebaseVersion = '2.2.23b';
 
 /* Base error ranges */
 const GlobalErrors = 10;
@@ -71,8 +71,8 @@ export const DefaultChannelSettings = {
   * @typedef {object} SystemMOTDs
   */
 export const SystemMOTDs = [
-  'Protip: Using any hex color code, you can change your name color- for example: /color #FFFFFF`',
-  'Protip: You can easily change your name with a command: /nick bob`',
+  'Protip: Using any hex color code, you can change your name color- for example: /color #FFFFFF',
+  'Protip: You can easily change your name with a command: /nick bob',
 ];
 
 /**
