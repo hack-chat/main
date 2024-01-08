@@ -102,7 +102,7 @@ export async function run({
     kicked[i].channel = destChannel;
 
     server.broadcast({
-      cmd: 'info',
+      cmd: 'info', // @todo Add numeric info code as `id`
       text: `${kicked[i].nick} was banished to ?${destChannel}`,
       channel: socket.channel, // @todo Multichannel
     }, { channel: socket.channel, level: isModerator });
@@ -122,7 +122,7 @@ export async function run({
 
   // publicly broadcast kick event
   server.broadcast({
-    cmd: 'info',
+    cmd: 'info', // @todo Add numeric info code as `id`
     text: `Kicked ${kicked.map((k) => k.nick).join(', ')}`,
     channel: socket.channel, // @todo Multichannel
   }, { channel: socket.channel, level: (level) => isModerator(level) });

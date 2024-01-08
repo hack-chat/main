@@ -60,6 +60,7 @@ export async function run({
     return server.reply({
       cmd: 'warn',
       text: 'Invalid color! Color must be in hex value',
+      id: Errors.ChangeColor.INVALID_COLOR,
       channel, // @todo Multichannel
     }, socket);
   }
@@ -137,6 +138,7 @@ export function colorCheck({
       server.reply({
         cmd: 'warn',
         text: 'Refer to `/help forcecolor` for instructions on how to use this command.',
+        id: Errors.ForceColor.MISSING_NICK,
         channel: socket.channel, // @todo Multichannel
       }, socket);
 
@@ -146,7 +148,8 @@ export function colorCheck({
     if (input[2] === undefined) {
       server.reply({
         cmd: 'warn',
-        text: 'Refer to `/help forcecolor` for instructions on how to use this command.',
+        text: 'Invalid color! Color must be in hex value',
+        id: Errors.ChangeColor.INVALID_COLOR,
         channel: socket.channel, // @todo Multichannel
       }, socket);
 

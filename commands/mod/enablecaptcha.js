@@ -68,7 +68,7 @@ export async function run({
 
   if (core.captchas[targetChannel]) {
     return server.reply({
-      cmd: 'info',
+      cmd: 'info', // @todo Add numeric info code as `id`
       text: 'Captcha is already enabled.',
       channel: socket.channel, // @todo Multichannel
     }, socket);
@@ -77,7 +77,7 @@ export async function run({
   core.captchas[targetChannel] = true;
 
   server.broadcast({
-    cmd: 'info',
+    cmd: 'info', // @todo Add numeric info code as `id`
     text: `Captcha enabled on: ${targetChannel}`,
     channel: socket.channel, // @todo Multichannel, false for global info
   }, { channel: socket.channel, level: isModerator });
@@ -192,7 +192,7 @@ export function joinCheck({
   // @todo multichannel update, will remove
   if (typeof socket.channel !== 'undefined') {
     return server.reply({
-      cmd: 'warn', // @todo Remove this
+      cmd: 'warn',
       text: 'Joining more than one channel is not currently supported',
       id: Errors.Join.ALREADY_JOINED,
       channel: false, // @todo Multichannel, false for global event
@@ -240,6 +240,7 @@ export function joinCheck({
         server.reply({
           cmd: 'warn',
           text: 'Enter the following to join (case-sensitive):',
+          id: Errors.Captcha.MUST_SOLVE,
           channel: payload.channel, // @todo Multichannel
         }, socket);
 

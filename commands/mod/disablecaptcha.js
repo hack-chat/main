@@ -51,7 +51,7 @@ export async function run({
 
   if (!core.captchas[targetChannel]) {
     return server.reply({
-      cmd: 'info',
+      cmd: 'info', // @todo Add numeric info code as `id`
       text: 'Captcha is not enabled.',
       channel: socket.channel, // @todo Multichannel
     }, socket);
@@ -60,7 +60,7 @@ export async function run({
   core.captchas[targetChannel] = false;
 
   server.broadcast({
-    cmd: 'info',
+    cmd: 'info', // @todo Add numeric info code as `id`
     text: `Captcha disabled on: ${targetChannel}`,
     channel: false, // @todo Multichannel, false for global info
   }, { channel: targetChannel, level: isModerator });

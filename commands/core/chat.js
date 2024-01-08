@@ -13,6 +13,9 @@ import {
   isAdmin,
   isModerator,
 } from '../utility/_UAC.js';
+import {
+  Errors,
+} from '../utility/_Constants.js';
 
 /**
   * Maximum length of the customId property
@@ -95,8 +98,9 @@ export async function run({
   const score = text.length / 83 / 4;
   if (server.police.frisk(socket, score)) {
     return server.reply({
-      cmd: 'warn', // @todo Add numeric error code as `id`
+      cmd: 'warn',
       text: 'You are sending too much text. Wait a moment and try again.\nPress the up arrow key to restore your last message.',
+      id: Errors.Global.RATELIMIT,
       channel: socket.channel, // @todo Multichannel
     }, socket);
   }
@@ -172,7 +176,7 @@ export function commandCheckIn({ server, socket, payload }) {
 
   if (payload.text.startsWith('/myhash')) {
     server.reply({
-      cmd: 'info',
+      cmd: 'info', // @todo Add numeric info code as `id`
       text: `Your hash: ${socket.hash}`,
       channel: socket.channel, // @todo Multichannel
     }, socket);
@@ -208,8 +212,9 @@ export function finalCmdCheck({ server, socket, payload }) {
   }
 
   server.reply({
-    cmd: 'warn', // @todo Add numeric error code as `id`
+    cmd: 'warn',
     text: `Unknown command: ${payload.text}`,
+    id: Errors.Global.UNKNOWN_CMD,
     channel: socket.channel, // @todo Multichannel
   }, socket);
 

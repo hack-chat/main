@@ -88,7 +88,7 @@ export async function run({
 
   if (core.locked[targetChannel]) {
     return server.reply({
-      cmd: 'info',
+      cmd: 'info', // @todo Add numeric info code as `id`
       text: 'Channel is already locked.',
       channel: socket.channel, // @todo Multichannel
     }, socket);
@@ -99,7 +99,7 @@ export async function run({
 
   // inform mods
   server.broadcast({
-    cmd: 'info',
+    cmd: 'info', // @todo Add numeric info code as `id`
     text: `Channel: ?${targetChannel} lock enabled by [${socket.trip}]${socket.nick}`,
     channel: false, // @todo Multichannel, false for global info
   }, { level: isModerator });
@@ -243,7 +243,7 @@ export function joinCheck({
   // @todo multichannel update, will remove
   if (typeof socket.channel !== 'undefined') {
     return server.reply({
-      cmd: 'warn', // @todo Remove this
+      cmd: 'warn',
       text: 'Joining more than one channel is not currently supported',
       id: Errors.Join.ALREADY_JOINED,
       channel: false, // @todo Multichannel, false for global event
@@ -296,14 +296,14 @@ export function joinCheck({
 
       setTimeout(() => {
         server.reply({
-          cmd: 'info',
+          cmd: 'info', // @todo Add numeric info code as `id`
           text: danteQuotes[Math.floor(Math.random() * danteQuotes.length)],
           channel: 'purgatory', // @todo Multichannel
         }, socket);
       }, 100);
 
       server.broadcast({
-        cmd: 'info',
+        cmd: 'info', // @todo Add numeric info code as `id`
         text: `${payload.nick} is: ${origNick}\ntrip: ${userInfo.trip || 'none'}\ntried to join: ?${origChannel}\nhash: ${userInfo.hash}`,
         channel: 'purgatory', // @todo Multichannel, false for global info
       }, { channel: 'purgatory', level: isModerator });

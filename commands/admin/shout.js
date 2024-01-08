@@ -24,7 +24,7 @@ export async function run({ server, socket, payload }) {
 
   // send text to all channels
   server.broadcast({
-    cmd: 'info',
+    cmd: 'info', // @todo Add numeric info code as `id`
     text: `Server Notice: ${payload.text}`,
     channel: false, // @todo Multichannel, false for global
   }, {});

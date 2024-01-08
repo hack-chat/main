@@ -8,6 +8,7 @@
 
 import {
   CodebaseVersion,
+  Errors,
 } from '../utility/_Constants.js';
 
 /**
@@ -22,8 +23,9 @@ export async function run({
   // check for spam
   if (server.police.frisk(socket, 2)) {
     return server.reply({
-      cmd: 'warn', // @todo Add numeric error code as `id`
+      cmd: 'warn',
       text: 'You are sending too much text. Wait a moment and try again.\nPress the up arrow key to restore your last message.',
+      id: Errors.Global.RATELIMIT,
       channel: socket.channel, // @todo Multichannel
     }, socket);
   }
@@ -68,7 +70,7 @@ export async function run({
 
   // output reply
   server.reply({
-    cmd: 'info',
+    cmd: 'info', // @todo Add numeric info code as `id`
     text: reply,
     channel: socket.channel, // @todo Multichannel
   }, socket);

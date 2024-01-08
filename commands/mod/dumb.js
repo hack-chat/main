@@ -130,7 +130,7 @@ export async function run({
 
   // notify mods
   server.broadcast({
-    cmd: 'info',
+    cmd: 'info', // @todo Add numeric info code as `id`
     text: `${socket.nick}#${socket.trip} muzzled ${targetUser.nick} in ${payload.channel}, userhash: ${targetUser.hash}`,
     channel: false, // @todo Multichannel, false for global
   }, { level: isModerator });
@@ -315,8 +315,9 @@ export function whisperCheck({
     const score = text.length / 83 / 4;
     if (server.police.frisk(socket, score)) {
       return server.reply({
-        cmd: 'warn', // @todo Add numeric error code as `id`
+        cmd: 'warn',
         text: 'You are sending too much text. Wait a moment and try again.\nPress the up arrow key to restore your last message.',
+        id: Errors.Global.RATELIMIT,
         channel: socket.channel, // @todo Multichannel
       }, socket);
     }

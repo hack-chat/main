@@ -13,7 +13,7 @@ import {
   levels,
 } from '../utility/_UAC.js';
 import {
-  // Errors,
+  Errors,
   ClaimExpirationDays,
 } from '../utility/_Constants.js';
 import {
@@ -37,16 +37,18 @@ export async function run({
 
   if (!socket.trip) {
     return server.reply({
-      cmd: 'warn', // @todo Add numeric error code as `id`
-      text: 'Failed to take ownership: Missing trip code.',
+      cmd: 'warn',
+      text: 'Failed to run command: Missing trip code.',
+      id: Errors.Global.MISSING_TRIPCODE,
       channel: socket.channel, // @todo Multichannel
     }, socket);
   }
 
   if (isModerator(socket.level)) {
     return server.reply({
-      cmd: 'info', // @todo Add numeric error code as `id`
+      cmd: 'warn',
       text: "Failed to take ownership: You're already a global moderator; it's free real estate. . .",
+      id: Errors.ClaimChannel.MODS_CANT,
       channel: socket.channel, // @todo Multichannel
     }, socket);
   }
@@ -55,8 +57,11 @@ export async function run({
 
   if (channelSettings.owned) {
     return server.reply({
-      cmd: 'warn', // @todo Add numeric error code as `id`
+      cmd: 'warn',
       text: `Failed to take ownership: This channel is already owned by the trip "${channelSettings.ownerTrip}", until ${channelSettings.claimExpires}`,
+      ownerTrip: channelSettings.ownerTrip,
+      claimExpires: channelSettings.claimExpires,
+      id: Errors.ClaimChannel.ALREADY_OWNED,
       channel: socket.channel, // @todo Multichannel
     }, socket);
   }
@@ -68,6 +73,7 @@ export async function run({
   server.reply({
     cmd: 'warn',
     text: 'Enter the following to take ownership (case-sensitive):',
+    id: Errors.Captcha.MUST_SOLVE,
     channel: socket.channel, // @todo Multichannel
   }, socket);
 
@@ -111,8 +117,11 @@ export function chatHook({
 
       if (channelSettings.owned) {
         return server.reply({
-          cmd: 'warn', // @todo Add numeric error code as `id`
+          cmd: 'warn',
           text: `Failed to take ownership: This channel is already owned by the trip "${channelSettings.ownerTrip}", until ${channelSettings.claimExpires}`,
+          ownerTrip: channelSettings.ownerTrip,
+          claimExpires: channelSettings.claimExpires,
+          id: Errors.ClaimChannel.ALREADY_OWNED,
           channel: socket.channel, // @todo Multichannel
         }, socket);
       }
@@ -126,7 +135,7 @@ export function chatHook({
       updateChannelSettings(core.appConfig.data, socket.channel, channelSettings);
 
       server.broadcast({
-        cmd: 'info',
+        cmd: 'info', // @todo Add numeric info code as `id`
         text: `Channel now owned by "${socket.trip}", until ${channelSettings.claimExpires}`,
         channel: socket.channel,
       }, { channel: socket.channel });

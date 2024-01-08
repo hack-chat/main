@@ -11,6 +11,9 @@
 import {
   isModerator,
 } from '../utility/_UAC.js';
+import {
+  Errors,
+} from '../utility/_Constants.js';
 
 /**
   * Automatically executes once after server is ready
@@ -41,8 +44,9 @@ export async function run({
   // check user input
   if (typeof payload.ip !== 'string' && typeof payload.hash !== 'string') {
     return server.reply({
-      cmd: 'warn', // @todo Add numeric error code as `id`
+      cmd: 'warn',
       text: "hash:'targethash' or ip:'1.2.3.4' is required",
+      id: Errors.Users.BAD_HASH_OR_IP,
       channel: socket.channel, // @todo Multichannel
     }, socket);
   }
@@ -52,7 +56,7 @@ export async function run({
       core.muzzledHashes = {};
 
       return server.broadcast({
-        cmd: 'info',
+        cmd: 'info', // @todo Add numeric info code as `id`
         text: `${socket.nick} unmuzzled all users`,
         channel: false, // @todo Multichannel, false for global
       }, { level: isModerator });
@@ -61,7 +65,7 @@ export async function run({
     core.muzzledHashes = {};
 
     return server.broadcast({
-      cmd: 'info',
+      cmd: 'info', // @todo Add numeric info code as `id`
       text: `${socket.nick} unmuzzled all users`,
       channel: false, // @todo Multichannel, false for global
     }, { level: isModerator });
@@ -79,7 +83,7 @@ export async function run({
 
   // notify mods
   server.broadcast({
-    cmd: 'info',
+    cmd: 'info', // @todo Add numeric info code as `id`
     text: `${socket.nick}#${socket.trip} unmuzzled : ${target}`,
     channel: false, // @todo Multichannel, false for global
   }, { level: isModerator });

@@ -31,14 +31,14 @@ export async function run({ core, server, socket }) {
 
   // reply with success
   server.reply({
-    cmd: 'info',
+    cmd: 'info', // @todo Add numeric info code as `id`
     text: 'Unbanned all ip addresses',
     channel: socket.channel, // @todo Multichannel
   }, socket);
 
   // notify mods
   server.broadcast({
-    cmd: 'info',
+    cmd: 'info', // @todo Add numeric info code as `id`
     text: `${socket.nick}#${socket.trip} unbanned all ip addresses`,
     channel: false, // @todo Multichannel, false for global
   }, { level: isModerator });

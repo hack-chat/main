@@ -11,11 +11,9 @@ import {
   isChannelOwner,
   isModerator,
 } from '../utility/_UAC.js';
-/*
 import {
   Errors,
 } from '../utility/_Constants.js';
-*/
 import {
   getChannelSettings,
 } from '../utility/_Channels.js';
@@ -36,16 +34,18 @@ export async function run({
 
   if (!socket.trip) {
     return server.reply({
-      cmd: 'warn', // @todo Add numeric error code as `id`
-      text: 'Failed to make channel public: Missing trip code.',
+      cmd: 'warn',
+      text: 'Failed to run command: Missing trip code.',
+      id: Errors.Global.MISSING_TRIPCODE,
       channel: socket.channel, // @todo Multichannel
     }, socket);
   }
 
   if (isModerator(socket.level) || !isChannelOwner(socket.level)) {
     return server.reply({
-      cmd: 'info', // @todo Add numeric error code as `id`
+      cmd: 'warn',
       text: 'Failed to make channel public: You may not do that',
+      id: Errors.MakePublic.MISSING_PERMS,
       channel: socket.channel, // @todo Multichannel
     }, socket);
   }
@@ -57,6 +57,7 @@ export async function run({
   server.reply({
     cmd: 'warn',
     text: 'Enter the following to make channel public (case-sensitive):',
+    id: Errors.Captcha.MUST_SOLVE,
     channel: socket.channel, // @todo Multichannel
   }, socket);
 
@@ -100,16 +101,18 @@ export function chatHook({
 
       if (channelSettings.owned === false || socket.trip !== channelSettings.ownerTrip) {
         return server.reply({
-          cmd: 'warn', // @todo Add numeric error code as `id`
+          cmd: 'warn',
           text: 'Failed to make channel public: You may not do that',
+          id: Errors.MakePublic.MISSING_PERMS,
           channel: socket.channel, // @todo Multichannel
         }, socket);
       }
 
       if (core.appConfig.data.publicChannels.indexOf(socket.channel) !== -1) {
         return server.reply({
-          cmd: 'warn', // @todo Add numeric error code as `id`
+          cmd: 'warn',
           text: 'Failed to make channel public: This channel is already public',
+          id: Errors.MakePublic.ALREADY_PUBLIC,
           channel: socket.channel, // @todo Multichannel
         }, socket);
       }
@@ -117,13 +120,13 @@ export function chatHook({
       core.appConfig.data.publicChannels.push(socket.channel);
 
       server.broadcast({
-        cmd: 'info',
+        cmd: 'info', // @todo Add numeric info code as `id`
         text: `A new channel has been made public: ?${socket.channel}`,
         channel: socket.channel, // @todo Multichannel
       }, { level: (level) => isModerator(level) });
 
       server.reply({
-        cmd: 'info', // @todo Add numeric error code as `id`
+        cmd: 'info', // @todo Add numeric info code as `id`
         text: 'This channel has been added to the list of public channels',
         channel: socket.channel, // @todo Multichannel
       }, socket);

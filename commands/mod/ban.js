@@ -71,7 +71,7 @@ export async function run({
 
   // notify normal users
   server.broadcast({
-    cmd: 'info',
+    cmd: 'info', // @todo Add numeric info code as `id`
     text: `Banned ${targetNick}`,
     user: getUserDetails(targetUser),
     channel: socket.channel, // @todo Multichannel
@@ -79,7 +79,7 @@ export async function run({
 
   // notify mods
   server.broadcast({
-    cmd: 'info',
+    cmd: 'info', // @todo Add numeric info code as `id`
     text: `${socket.nick}#${socket.trip} banned ${targetNick} in ${payload.channel}, userhash: ${targetUser.hash}`,
     channel: socket.channel, // @todo Multichannel
     inChannel: payload.channel,

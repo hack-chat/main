@@ -12,7 +12,7 @@ import {
   levels,
 } from '../utility/_UAC.js';
 import {
-  // Errors,
+  Errors,
   DefaultChannelSettings,
 } from '../utility/_Constants.js';
 import {
@@ -36,8 +36,9 @@ export async function run({
 
   if (!socket.trip) {
     return server.reply({
-      cmd: 'warn', // @todo Add numeric error code as `id`
-      text: 'Failed to release ownership: Missing trip code.',
+      cmd: 'warn',
+      text: 'Failed to run command: Missing trip code.',
+      id: Errors.Global.MISSING_TRIPCODE,
       channel: socket.channel, // @todo Multichannel
     }, socket);
   }
@@ -46,16 +47,18 @@ export async function run({
 
   if (channelSettings.owned === false) {
     return server.reply({
-      cmd: 'info', // @todo Add numeric error code as `id`
+      cmd: 'warn',
       text: 'Failed to release ownership: That which is not owned may not be unowned, and with strange aeons. . .',
+      id: Errors.UnclaimChannel.NOT_OWNED,
       channel: socket.channel, // @todo Multichannel
     }, socket);
   }
 
   if (channelSettings.ownerTrip !== socket.trip && !isModerator(socket.level)) {
     return server.reply({
-      cmd: 'warn', // @todo Add numeric error code as `id`
+      cmd: 'warn',
       text: 'Failed to release ownership: Wrong trip code.',
+      id: Errors.UnclaimChannel.FAKE_OWNER,
       channel: socket.channel, // @todo Multichannel
     }, socket);
   }
@@ -63,7 +66,7 @@ export async function run({
   updateChannelSettings(core.appConfig.data, socket.channel, DefaultChannelSettings);
 
   server.broadcast({
-    cmd: 'info',
+    cmd: 'info', // @todo Add numeric info code as `id`
     text: 'Channel ownership has been removed and the channel settings have been reset',
     channel: socket.channel,
   }, { channel: socket.channel });

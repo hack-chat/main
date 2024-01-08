@@ -9,11 +9,9 @@
 import {
   isChannelOwner,
 } from '../utility/_UAC.js';
-/*
 import {
   Errors,
 } from '../utility/_Constants.js';
-*/
 
 /**
   * Executes when invoked by a remote client
@@ -31,16 +29,18 @@ export async function run({
 
   if (!socket.trip) {
     return server.reply({
-      cmd: 'warn', // @todo Add numeric error code as `id`
-      text: 'Failed to make channel private: Missing trip code.',
+      cmd: 'warn',
+      text: 'Failed to run command: Missing trip code.',
+      id: Errors.Global.MISSING_TRIPCODE,
       channel: socket.channel, // @todo Multichannel
     }, socket);
   }
 
   if (!isChannelOwner(socket.level)) {
     return server.reply({
-      cmd: 'info', // @todo Add numeric error code as `id`
+      cmd: 'warn',
       text: 'Failed to make channel private: You may not do that',
+      id: Errors.MakePrivate.MISSING_PERMS,
       channel: socket.channel, // @todo Multichannel
     }, socket);
   }
@@ -49,8 +49,9 @@ export async function run({
 
   if (listingIndex === -1) {
     return server.reply({
-      cmd: 'warn', // @todo Add numeric error code as `id`
+      cmd: 'warn',
       text: 'Failed to make channel private: This channel is already private',
+      id: Errors.MakePrivate.ALREADY_PRIVATE,
       channel: socket.channel, // @todo Multichannel
     }, socket);
   }
@@ -58,7 +59,7 @@ export async function run({
   core.appConfig.data.publicChannels.splice(listingIndex, 1);
 
   server.reply({
-    cmd: 'info', // @todo Add numeric error code as `id`
+    cmd: 'info', // @todo Add numeric info code as `id`
     text: 'This channel has been removed from the list of public channels',
     channel: socket.channel, // @todo Multichannel
   }, socket);

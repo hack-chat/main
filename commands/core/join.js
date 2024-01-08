@@ -74,7 +74,7 @@ export async function run({
   // @todo multichannel update, will remove
   if (typeof socket.channel !== 'undefined') {
     return server.reply({
-      cmd: 'warn', // @todo Remove this
+      cmd: 'warn',
       text: 'Joining more than one channel is not currently supported',
       id: Errors.Join.ALREADY_JOINED,
       channel: false, // @todo Multichannel, false for global event
@@ -101,7 +101,7 @@ export async function run({
     return server.reply({
       cmd: 'warn',
       text: 'You may not join that channel.',
-      // id: Errors.Join., // @todo Add numeric error code as `id`
+      id: Errors.Join.CHANNEL_LOCKED,
       channel: false, // @todo Multichannel, false for global event
     }, socket);
   }
@@ -181,13 +181,13 @@ export async function run({
     channel, // @todo Multichannel (?)
   }, socket);
 
-  var motd = channelSettings.motd;
+  let { motd } = channelSettings;
   if (motd === '') {
     motd = SystemMOTDs[Math.floor(Math.random() * SystemMOTDs.length)];
   }
 
   server.reply({
-    cmd: 'info',
+    cmd: 'info', // @todo Add numeric info code as `id`
     text: motd,
     channel,
   }, socket);

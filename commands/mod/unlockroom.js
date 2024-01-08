@@ -52,7 +52,7 @@ export async function run({
 
   if (!core.locked[targetChannel]) {
     return server.reply({
-      cmd: 'info',
+      cmd: 'info', // @todo Add numeric info code as `id`
       text: 'Channel is not locked.',
       channel: socket.channel, // @todo Multichannel
     }, socket);
@@ -61,7 +61,7 @@ export async function run({
   core.locked[targetChannel] = false;
 
   server.broadcast({
-    cmd: 'info',
+    cmd: 'info', // @todo Add numeric info code as `id`
     text: `Channel: ?${targetChannel} unlocked by [${socket.trip}]${socket.nick}`,
     channel: targetChannel, // @todo Multichannel, false for global info
   }, { channel: targetChannel, level: isModerator });

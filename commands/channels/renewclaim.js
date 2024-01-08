@@ -11,7 +11,7 @@ import {
   isModerator,
 } from '../utility/_UAC.js';
 import {
-  // Errors,
+  Errors,
   ClaimExpirationDays,
 } from '../utility/_Constants.js';
 import {
@@ -35,16 +35,18 @@ export async function run({
 
   if (!socket.trip) {
     return server.reply({
-      cmd: 'warn', // @todo Add numeric error code as `id`
-      text: 'Failed to renew ownership: Missing trip code.',
+      cmd: 'warn',
+      text: 'Failed to run command: Missing trip code.',
+      id: Errors.Global.MISSING_TRIPCODE,
       channel: socket.channel, // @todo Multichannel
     }, socket);
   }
 
   if (isModerator(socket.level)) {
     return server.reply({
-      cmd: 'info', // @todo Add numeric error code as `id`
+      cmd: 'warn',
       text: "Failed to renew ownership: You're already a global moderator; it's free real estate. . .",
+      id: Errors.RenewClaim.MODS_CANT,
       channel: socket.channel, // @todo Multichannel
     }, socket);
   }
@@ -53,8 +55,9 @@ export async function run({
 
   if (channelSettings.owned === false || socket.trip !== channelSettings.ownerTrip) {
     return server.reply({
-      cmd: 'warn', // @todo Add numeric error code as `id`
+      cmd: 'warn',
       text: 'Failed to renew ownership: You may not do that',
+      id: Errors.RenewClaim.NOT_OWNER,
       channel: socket.channel, // @todo Multichannel
     }, socket);
   }
@@ -62,9 +65,13 @@ export async function run({
   const hoursLeft = Math.abs(channelSettings.claimExpires - new Date()) / (60 * 60 * 1000);
 
   if (hoursLeft > 24) {
+    const timeLeft = hoursLeft - 24;
+
     return server.reply({
-      cmd: 'warn', // @todo Add numeric error code as `id`
-      text: `Failed to renew ownership: You must wait. Hours until renewable: ${hoursLeft - 24}`,
+      cmd: 'warn',
+      text: `Failed to renew ownership: You must wait. Hours until renewable: ${timeLeft}`,
+      timeLeft,
+      id: Errors.RenewClaim.TOO_SOON,
       channel: socket.channel, // @todo Multichannel
     }, socket);
   }
@@ -76,6 +83,7 @@ export async function run({
   server.reply({
     cmd: 'warn',
     text: 'Enter the following to renew ownership (case-sensitive):',
+    id: Errors.Captcha.MUST_SOLVE,
     channel: socket.channel, // @todo Multichannel
   }, socket);
 
@@ -119,8 +127,9 @@ export function chatHook({
 
       if (channelSettings.owned === false || socket.trip !== channelSettings.ownerTrip) {
         return server.reply({
-          cmd: 'warn', // @todo Add numeric error code as `id`
+          cmd: 'warn',
           text: 'Failed to renew ownership: You may not do that',
+          id: Errors.RenewClaim.NOT_OWNER,
           channel: socket.channel, // @todo Multichannel
         }, socket);
       }
@@ -132,7 +141,7 @@ export function chatHook({
       updateChannelSettings(core.appConfig.data, socket.channel, channelSettings);
 
       server.reply({
-        cmd: 'info', // @todo Add numeric error code as `id`
+        cmd: 'info', // @todo Add numeric info code as `id`
         text: `Your claim has been renewed until ${expirationDate}`,
         channel: socket.channel, // @todo Multichannel
       }, socket);

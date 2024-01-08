@@ -9,6 +9,9 @@
 import {
   getUserDetails,
 } from '../utility/_UAC.js';
+import {
+  Errors,
+} from '../utility/_Constants.js';
 
 /**
   * Validate a string as a valid hex color string
@@ -32,8 +35,9 @@ export async function run({
 
   if (server.police.frisk(socket, 1)) {
     return server.reply({
-      cmd: 'warn', // @todo Add numeric error code as `id`
+      cmd: 'warn',
       text: 'You are changing colors too fast. Wait a moment before trying again.',
+      id: Errors.Global.RATELIMIT,
       channel, // @todo Multichannel
     }, socket);
   }
@@ -49,6 +53,7 @@ export async function run({
     return server.reply({
       cmd: 'warn',
       text: 'Invalid color! Color must be in hex value',
+      id: Errors.ChangeColor.INVALID_COLOR,
       channel, // @todo Multichannel
     }, socket);
   }
@@ -107,7 +112,8 @@ export function colorCheck({
     if (input[1] === undefined) {
       server.reply({
         cmd: 'warn',
-        text: 'Refer to `/help changecolor` for instructions on how to use this command.',
+        text: 'Invalid color! Color must be in hex value',
+        id: Errors.ChangeColor.INVALID_COLOR,
         channel: socket.channel, // @todo Multichannel
       }, socket);
 

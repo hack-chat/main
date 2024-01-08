@@ -50,7 +50,7 @@ export async function run({
 
       // inform new mod
       server.send({
-        cmd: 'info',
+        cmd: 'info', // @todo Add numeric info code as `id`
         text: 'You are now a mod.',
         channel: newMod[i].channel, // @todo Multichannel
       }, newMod[i]);
@@ -67,14 +67,14 @@ export async function run({
 
   // return success message
   server.reply({
-    cmd: 'info',
+    cmd: 'info', // @todo Add numeric info code as `id`
     text: `Added mod trip: ${payload.trip}, remember to run 'saveconfig' to make it permanent`,
     channel: socket.channel, // @todo Multichannel
   }, socket);
 
   // notify all mods
   server.broadcast({
-    cmd: 'info',
+    cmd: 'info', // @todo Add numeric info code as `id`
     text: `Added mod: ${payload.trip}`,
     channel: false, // @todo Multichannel, false for global info
   }, { level: isModerator });

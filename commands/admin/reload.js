@@ -45,7 +45,7 @@ export async function run({
 
   // send results to moderators (which the user using this command is higher than)
   server.broadcast({
-    cmd: 'info',
+    cmd: 'info', // @todo Add numeric info code as `id`
     text: loadResult,
     channel: false, // @todo Multichannel, false for global
   }, { level: isModerator });

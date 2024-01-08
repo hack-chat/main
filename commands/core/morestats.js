@@ -74,7 +74,7 @@ export async function run({ core, server, socket }) {
 
   // dispatch info
   server.reply({
-    cmd: 'info',
+    cmd: 'info', // @todo Add numeric info code as `id`
     users: uniqueClientCount,
     chans: uniqueChannels,
     joins,

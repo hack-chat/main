@@ -7,6 +7,10 @@
   * @module socketreply
   */
 
+import {
+  Errors,
+} from '../utility/_Constants.js';
+
 /**
   * Executes when invoked by a remote client
   * @param {Object} env - Environment object with references to core, server, socket & payload
@@ -23,6 +27,8 @@ export async function run({ server, socket, payload }) {
   return server.reply({
     cmd: 'warn',
     text: payload.text,
+    id: Errors.Global.INTERNAL_ERROR,
+    channel: false,
   }, socket);
 }
 

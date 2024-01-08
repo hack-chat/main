@@ -51,7 +51,7 @@ export async function run({ server, socket }) {
 
   // send reply
   server.reply({
-    cmd: 'info',
+    cmd: 'info', // @todo Add numeric info code as `id`
     text: lines.join('\n'),
     channel: socket.channel, // @todo Multichannel
   }, socket);

@@ -53,7 +53,7 @@ export async function run({
 
       // inform ex-mod
       server.send({
-        cmd: 'info',
+        cmd: 'info', // @todo Add numeric info code as `id`
         text: 'You are now a user.',
         channel: targetMod[i].channel, // @todo Multichannel
       }, targetMod[i]);
@@ -70,7 +70,7 @@ export async function run({
 
   // return success message
   server.reply({
-    cmd: 'info',
+    cmd: 'info', // @todo Add numeric info code as `id`
     text: `Removed mod trip: ${
       payload.trip
     }, remember to run 'saveconfig' to make it permanent`,
@@ -79,7 +79,7 @@ export async function run({
 
   // notify all mods
   server.broadcast({
-    cmd: 'info',
+    cmd: 'info', // @todo Add numeric info code as `id`
     text: `Removed mod: ${payload.trip}`,
     channel: false, // @todo Multichannel, false for global
   }, { level: isModerator });

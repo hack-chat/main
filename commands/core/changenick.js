@@ -12,6 +12,9 @@ import {
   verifyNickname,
   getUserDetails,
 } from '../utility/_UAC.js';
+import {
+  Errors,
+} from '../utility/_Constants.js';
 
 /**
   * Executes when invoked by a remote client
@@ -26,8 +29,9 @@ export async function run({
 
   if (server.police.frisk(socket, 6)) {
     return server.reply({
-      cmd: 'warn', // @todo Add numeric error code as `id`
+      cmd: 'warn',
       text: 'You are changing nicknames too fast. Wait a moment before trying again.',
+      id: Errors.Global.RATELIMIT,
       channel, // @todo Multichannel
     }, socket);
   }
@@ -43,16 +47,18 @@ export async function run({
   const newNick = payload.nick.trim();
   if (!verifyNickname(newNick)) {
     return server.reply({
-      cmd: 'warn', // @todo Add numeric error code as `id`
+      cmd: 'warn',
       text: 'Nickname must consist of up to 24 letters, numbers, and underscores',
+      id: Errors.Join.INVALID_NICK,
       channel, // @todo Multichannel
     }, socket);
   }
 
   if (newNick == previousNick) {
     return server.reply({
-      cmd: 'warn', // @todo Add numeric error code as `id`
-      text: 'You already have that name',
+      cmd: 'warn',
+      text: 'Nickname taken',
+      id: Errors.Join.NAME_TAKEN,
       channel, // @todo Multichannel
     }, socket);
   }
@@ -69,8 +75,9 @@ export async function run({
   if (userExists.length > 0) {
     // That nickname is already in that channel
     return server.reply({
-      cmd: 'warn', // @todo Add numeric error code as `id`
+      cmd: 'warn',
       text: 'Nickname taken',
+      id: Errors.Join.NAME_TAKEN,
       channel, // @todo Multichannel
     }, socket);
   }
@@ -118,7 +125,7 @@ export async function run({
 
   // notify channel that the user has changed their name
   server.broadcast({
-    cmd: 'info',
+    cmd: 'info', // @todo Add numeric info code as `id`
     text: `${socket.nick} is now ${newNick}`,
     channel, // @todo Multichannel
   }, { channel });
@@ -160,8 +167,9 @@ export function nickCheck({
     // If there is no nickname target parameter
     if (!input[1]) {
       server.reply({
-        cmd: 'warn', // @todo Add numeric error code as `id`
-        text: 'Refer to `/help nick` for instructions on how to use this command.',
+        cmd: 'warn',
+        text: 'Nickname must consist of up to 24 letters, numbers, and underscores',
+        id: Errors.Join.INVALID_NICK,
         channel: socket.channel, // @todo Multichannel
       }, socket);
 

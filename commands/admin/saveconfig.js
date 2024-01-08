@@ -10,6 +10,9 @@ import {
   isAdmin,
   isModerator,
 } from '../utility/_UAC.js';
+import {
+  Errors,
+} from '../utility/_Constants.js';
 
 /**
   * Executes when invoked by a remote client
@@ -28,15 +31,16 @@ export async function run({ core, server, socket }) {
     await core.appConfig.write();
   } catch (err) {
     return server.reply({
-      cmd: 'warn', // @todo Add numeric error code as `id`
+      cmd: 'warn',
       text: 'Failed to save config, check logs.',
+      id: Errors.SaveConfig.GENERAL_FAILURE,
       channel: socket.channel, // @todo Multichannel
     }, socket);
   }
 
   // return success message to moderators and admins
   server.broadcast({
-    cmd: 'info',
+    cmd: 'info', // @todo Add numeric info code as `id`
     text: 'Config saved!',
     channel: false, // @todo Multichannel
   }, { level: isModerator });

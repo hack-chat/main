@@ -14,6 +14,7 @@ import {
   updateChannelSettings,
 } from '../utility/_Channels.js';
 import {
+  Errors,
   MaxMOTDLength,
 } from '../utility/_Constants.js';
 
@@ -28,8 +29,9 @@ export async function run({
 }) {
   if (server.police.frisk(socket, 6)) {
     return server.reply({
-      cmd: 'warn', // @todo Add numeric error code as `id`
+      cmd: 'warn',
       text: 'Issuing commands too quickly. Wait a moment before trying again.',
+      id: Errors.Global.RATELIMIT,
       channel: socket.channel, // @todo Multichannel
     }, socket);
   }
@@ -41,8 +43,10 @@ export async function run({
 
   if (typeof payload.motd !== 'string' || payload.motd.length >= MaxMOTDLength) {
     return server.reply({
-      cmd: 'warn', // @todo Add numeric error code as `id`
+      cmd: 'warn',
       text: `Failed to set motd: Invalid motd, max length: ${MaxMOTDLength}`,
+      MaxLength: MaxMOTDLength,
+      id: Errors.SetMOTD.TOO_LONG,
       channel: socket.channel, // @todo Multichannel
     }, socket);
   }
@@ -54,13 +58,13 @@ export async function run({
   updateChannelSettings(core.appConfig.data, socket.channel, channelSettings);
 
   server.broadcast({
-    cmd: 'info', // @todo Add numeric error code as `id`
+    cmd: 'info', // @todo Add numeric info code as `id`
     text: `MOTD changed by [${socket.trip}]${socket.nick}, new motd:`,
     channel: socket.channel, // @todo Multichannel
   }, { channel: socket.channel });
 
   server.broadcast({
-    cmd: 'info', // @todo Add numeric error code as `id`
+    cmd: 'info', // @todo Add numeric info code as `id`
     text: channelSettings.motd,
     channel: socket.channel, // @todo Multichannel
   }, { channel: socket.channel });

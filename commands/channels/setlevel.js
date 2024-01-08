@@ -14,6 +14,9 @@ import {
 import {
   setChannelTripLevel,
 } from '../utility/_Channels.js';
+import {
+  Errors,
+} from '../utility/_Constants.js';
 
 /**
   * Automatically executes once after server is ready
@@ -41,16 +44,18 @@ export async function run({
 
   if (typeof payload.trip !== 'string' || payload.trip.length !== 6) {
     return server.reply({
-      cmd: 'warn', // @todo Add numeric error code as `id`
+      cmd: 'warn',
       text: 'Failed to set level: Invalid trip. Refer to `/help setlevel` for instructions on how to use this command.',
+      id: Errors.SetLevel.BAD_TRIP,
       channel: socket.channel, // @todo Multichannel
     }, socket);
   }
 
   if (typeof payload.level !== 'string' || core.levelLabels.indexOf(payload.level) === -1) {
     return server.reply({
-      cmd: 'warn', // @todo Add numeric error code as `id`
+      cmd: 'warn',
       text: `Failed to set level: Invalid level label; choices are case sensitive: ${core.levelLabels.join(', ')}`,
+      id: Errors.SetLevel.BAD_LABEL,
       channel: socket.channel, // @todo Multichannel
     }, socket);
   }
@@ -59,8 +64,9 @@ export async function run({
 
   if (newLevel >= socket.level) {
     return server.reply({
-      cmd: 'warn', // @todo Add numeric error code as `id`
+      cmd: 'warn',
       text: 'Failed to set level: New level may not be the same or greater than your own.',
+      id: Errors.SetLevel.BAD_LEVEL,
       channel: socket.channel, // @todo Multichannel
     }, socket);
   }
@@ -69,8 +75,9 @@ export async function run({
 
   if (setError !== '') {
     return server.reply({
-      cmd: 'warn', // @todo Add numeric error code as `id`
+      cmd: 'warn',
       text: `Failed to set level: ${setError}`,
+      id: Errors.SetLevel.APPLY_ERROR,
       channel: socket.channel, // @todo Multichannel
     }, socket);
   }
@@ -93,7 +100,7 @@ export async function run({
   }
 
   server.broadcast({
-    cmd: 'info', // @todo Add numeric error code as `id`
+    cmd: 'info', // @todo Add numeric info code as `id`
     text: `Changed permission level of "${payload.trip}" to "${payload.level}"`,
     channel: socket.channel, // @todo Multichannel
   }, { channel: socket.channel });
@@ -132,8 +139,9 @@ export function setlevelCheck({
     // If there is no trip parameter
     if (!input[1]) {
       server.reply({
-        cmd: 'warn', // @todo Add numeric error code as `id`
+        cmd: 'warn',
         text: 'Failed to set level: Missing trip. Refer to `/help setlevel` for instructions on how to use this command.',
+        id: Errors.SetLevel.BAD_TRIP,
         channel: socket.channel, // @todo Multichannel
       }, socket);
 
@@ -143,8 +151,9 @@ export function setlevelCheck({
     // If there is no level parameter
     if (!input[2]) {
       server.reply({
-        cmd: 'warn', // @todo Add numeric error code as `id`
+        cmd: 'warn',
         text: 'Failed to set level: Missing level label. Refer to `/help setlevel` for instructions on how to use this command.',
+        id: Errors.SetLevel.BAD_LABEL,
         channel: socket.channel, // @todo Multichannel
       }, socket);
 

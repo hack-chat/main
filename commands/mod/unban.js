@@ -9,6 +9,9 @@
 import {
   isModerator,
 } from '../utility/_UAC.js';
+import {
+  Errors,
+} from '../utility/_Constants.js';
 
 /**
   * Executes when invoked by a remote client
@@ -27,8 +30,9 @@ export async function run({
   // check user input
   if (typeof payload.ip !== 'string' && typeof payload.hash !== 'string') {
     return server.reply({
-      cmd: 'warn', // @todo Add numeric error code as `id`
+      cmd: 'warn',
       text: "hash:'targethash' or ip:'1.2.3.4' is required",
+      id: Errors.Users.BAD_HASH_OR_IP,
       channel: socket.channel, // @todo Multichannel
     }, socket);
   }
@@ -55,14 +59,14 @@ export async function run({
 
   // reply with success
   server.reply({
-    cmd: 'info',
+    cmd: 'info', // @todo Add numeric info code as `id`
     text: `Unbanned ${target}`,
     channel: socket.channel, // @todo Multichannel
   }, socket);
 
   // notify mods
   server.broadcast({
-    cmd: 'info',
+    cmd: 'info', // @todo Add numeric info code as `id`
     text: `${socket.nick}#${socket.trip} unbanned: ${target}`,
     channel: false, // @todo Multichannel, false for global
   }, { level: isModerator });
