@@ -87,7 +87,11 @@ export async function run({
     trip: payload.trip,
   });
 
+  const { color, flair } = getAppearance(newLevel);
+
   for (let i = 0, j = targetClients.length; i < j; i += 1) {
+    targetClients[i].color = color;
+    targetClients[i].flair = flair;
     targetClients[i].level = newLevel;
 
     server.broadcast({

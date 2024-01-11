@@ -11,6 +11,7 @@ import {
   isModerator,
   getUserDetails,
   levels,
+  getAppearance,
 } from '../utility/_UAC.js';
 import {
   Errors,
@@ -140,6 +141,9 @@ export function chatHook({
         channel: socket.channel,
       }, { channel: socket.channel });
 
+      const { color, flair } = getAppearance(levels.channelOwner);
+      socket.color = color;
+      socket.flair = flair;
       socket.level = levels.channelOwner;
 
       const updateNotice = {

@@ -30,6 +30,7 @@ import {
   getUserPerms,
   getUserDetails,
   isModerator,
+  getAppearance,
 } from '../utility/_UAC.js';
 
 /**
@@ -106,6 +107,10 @@ export async function run({
     }, socket);
   }
 
+  const { color, flair } = getAppearance(level);
+  socket.color = color;
+  socket.flair = flair;
+
   // store the user values
   const userInfo = {
     nick,
@@ -115,7 +120,8 @@ export async function run({
     level,
     userid: socket.userid,
     isBot: socket.isBot,
-    color: socket.color,
+    color,
+    flair,
     channel,
   };
 

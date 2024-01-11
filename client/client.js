@@ -566,8 +566,8 @@ function pushMessage(args) {
 	if (args.trip) {
 		var tripEl = document.createElement('span');
 
-		if (args.mod) {
-			tripEl.textContent = String.fromCodePoint(11088) + " " + args.trip + " ";
+		if (args.flair) {
+			tripEl.textContent = args.flair + " " + args.trip + " ";
 		} else {
 			tripEl.textContent = args.trip + " ";
 		}

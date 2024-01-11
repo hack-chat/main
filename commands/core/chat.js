@@ -121,6 +121,7 @@ export async function run({
     channel: socket.channel,
     text,
     level: socket.level,
+    flair: socket.flair,
     customId,
   };
 

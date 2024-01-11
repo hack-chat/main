@@ -17,6 +17,26 @@ import {
 } from './_Channels.js';
 
 /**
+  * Returns random rgb code
+  * @return {string}
+  */
+const randomRGB = () => {
+  const saturation = 0.80;
+  const lightness = 0.65;
+  const hue = Math.floor(Math.random() * 360);
+
+  const k = (n) => (n + hue / 30) % 12;
+  const a = saturation * Math.min(lightness, 1 - lightness);
+  const f = (n) => lightness - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+
+  const r = `${Math.floor(255 * f(0)).toString(16)}`;
+  const g = `${Math.floor(255 * f(8)).toString(16)}`;
+  const b = `${Math.floor(255 * f(4)).toString(16)}`;
+
+  return `${r}${g}${b}`;
+};
+
+/**
   * Object defining labels for default permission ranges
   * @typedef {Object} levels
   * @property {number} admin Global administrator range
@@ -37,6 +57,35 @@ export const levels = {
 
   trustedUser: 500,
   default: 100,
+  bot: 99,
+};
+
+/**
+  * Object defining labels for default permission ranges
+  * @typedef {Object} levelAppearance
+  * @property {number} admin Global administrator range
+  */
+export const levelAppearance = {
+  [levels.admin]: {
+    color: 'd73737',
+    flair: String.fromCodePoint(127775), // 🌟
+  },
+  [levels.moderator]: {
+    color: '1fad83',
+    flair: String.fromCodePoint(11088), // ⭐
+  },
+  [levels.channelOwner]: {
+    color: 'dd8800',
+    flair: String.fromCodePoint(128081), // 👑
+  },
+  [levels.channelModerator]: {
+    color: '2fa1ee',
+    flair: String.fromCodePoint(128171), // 💫
+  },
+  [levels.bot]: {
+    color: '2fa1ee',
+    flair: String.fromCodePoint(129302), // 🤖
+  },
 };
 
 /**
@@ -115,6 +164,7 @@ export function getUserDetails(socket) {
     userid: socket.userid,
     isBot: socket.isBot,
     color: socket.color,
+    flair: socket.flair,
     online: true,
   };
 }
@@ -129,6 +179,24 @@ export function verifyNickname(nick) {
   if (typeof nick === 'undefined') return false;
 
   return /^[a-zA-Z0-9_]{1,24}$/.test(nick);
+}
+
+/**
+  * Returns an object with 'color' and 'flair' properties
+  * associated by level
+  * @public
+  * @param {number} level Provided level
+  * @return {object}
+  */
+export function getAppearance(level) {
+  if (typeof levelAppearance[level] !== 'undefined') {
+    return levelAppearance[level];
+  }
+
+  return {
+    color: randomRGB(),
+    flair: false,
+  };
 }
 
 /**
