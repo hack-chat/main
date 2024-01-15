@@ -13,11 +13,10 @@ import {
 } from '../utility/_UAC.js';
 import {
   Errors,
-  DefaultChannelSettings,
 } from '../utility/_Constants.js';
 import {
   getChannelSettings,
-  updateChannelSettings,
+  deleteChannelSettings,
 } from '../utility/_Channels.js';
 
 /**
@@ -63,7 +62,7 @@ export async function run({
     }, socket);
   }
 
-  updateChannelSettings(core.appConfig.data, socket.channel, DefaultChannelSettings);
+  deleteChannelSettings(core.appConfig.data, socket.channel);
 
   server.broadcast({
     cmd: 'info', // @todo Add numeric info code as `id`

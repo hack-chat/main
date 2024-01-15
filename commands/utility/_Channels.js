@@ -12,6 +12,7 @@ import {
   existsSync,
   readFileSync,
   writeFile,
+  unlinkSync,
 } from 'node:fs';
 import {
   createHash,
@@ -62,11 +63,31 @@ export function getChannelHash(channel) {
   */
 export function storeChannelSettings(config, channel) {
   const channelHash = getChannelHash(channel);
-  const configPath = `../../channels/${channelHash[0]}/${channelHash}.json`;
+  const configPath = `./channels/${channelHash[0]}/${channelHash}.json`;
 
   delete config.permissions[channelHash].channelHash;
 
   writeFile(configPath, JSON.stringify(config.permissions[channelHash] || DefaultChannelSettings));
+
+  return true;
+}
+
+/**
+  * Deletes the target channel config file from storage and memory
+  * @public
+  * @param {string} config Server config object
+  * @param {string} channel Target channel
+  * @return {boolean}
+  */
+export function deleteChannelSettings(config, channel) {
+  const channelHash = getChannelHash(channel);
+  const configPath = `./channels/${channelHash[0]}/${channelHash}.json`;
+
+  try {
+    unlinkSync(configPath);
+  } catch (e) { /* Error handling not needed */ }
+
+  delete config.permissions[channelHash];
 
   return true;
 }
