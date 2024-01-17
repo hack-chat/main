@@ -177,4 +177,16 @@ export const MaxChannelTrips = 250;
   */
 export const ClaimExpirationDays = 7;
 
+/**
+  * Minutes between inactive channel checking
+  * @typedef {number} ChannelCheckInterval
+  */
+export const ChannelCheckInterval = 1000 * 60 * 10; // 10 minutes
+
+/**
+  * How many minutes until a channel is considered inactive
+  * @typedef {number} InactiveAfter
+  */
+export const InactiveAfter = 1000 * 60 * 60; // 1 hour
+
 export default Errors;

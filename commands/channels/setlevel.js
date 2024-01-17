@@ -10,6 +10,7 @@ import {
   levels,
   isChannelModerator,
   getUserDetails,
+  getAppearance,
 } from '../utility/_UAC.js';
 import {
   setChannelTripLevel,

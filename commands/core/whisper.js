@@ -4,8 +4,6 @@
   * @version 1.0.0
   * @description Display text on target users screen that only they can see
   * @module whisper
-  * @todo This should be changed to it's own event type, instead of `info`
-        and accept a `userid` rather than `nick`
   */
 
 import {
@@ -18,29 +16,9 @@ import {
   legacyWhisperOut,
   legacyWhisperReply,
 } from '../utility/_LegacyFunctions.js';
-
-/**
-  * Check and trim string provided by remote client
-  * @param {string} text - Subject string
-  * @private
-  * @todo Move into utility module
-  * @return {string|boolean}
-  */
-const parseText = (text) => {
-  // verifies user input is text
-  if (typeof text !== 'string') {
-    return false;
-  }
-
-  let sanitizedText = text;
-
-  // strip newlines from beginning and end
-  sanitizedText = sanitizedText.replace(/^\s*\n|^\s+$|\n\s*$/g, '');
-  // replace 3+ newlines with just 2 newlines
-  sanitizedText = sanitizedText.replace(/\n{3,}/g, '\n\n');
-
-  return sanitizedText;
-};
+import {
+  parseText,
+} from '../utility/_Text.js';
 
 /**
   * Executes when invoked by a remote client

@@ -24,6 +24,7 @@ import {
   Errors,
   DefaultChannelSettings,
   MaxChannelTrips,
+  InactiveAfter,
 } from './_Constants.js';
 
 /**
@@ -58,16 +59,16 @@ export function getChannelHash(channel) {
   * Caches the target channel settings to storage
   * @public
   * @param {string} config Server config object
-  * @param {string} channel Target channel
+  * @param {string} channelHash Target channel hash
+  * @param {function} cb Function to run after storing
   * @return {boolean}
   */
-export function storeChannelSettings(config, channel) {
-  const channelHash = getChannelHash(channel);
+export function storeChannelSettings(config, channelHash, cb) {
   const configPath = `./channels/${channelHash[0]}/${channelHash}.json`;
 
   delete config.permissions[channelHash].channelHash;
 
-  writeFile(configPath, JSON.stringify(config.permissions[channelHash] || DefaultChannelSettings));
+  writeFile(configPath, JSON.stringify(config.permissions[channelHash]), cb);
 
   return true;
 }
@@ -141,9 +142,9 @@ export function getChannelSettings(config, channel) {
           ...DefaultChannelSettings,
         };
       }
-    }
 
-    // @todo Check last access date here, if too old; delete file and use DefaultChannelSettings
+      // @todo Check expire date here, if too old; delete file and use DefaultChannelSettings
+    }
   }
 
   config.permissions[channelHash].lastAccessed = new Date();
@@ -153,13 +154,38 @@ export function getChannelSettings(config, channel) {
 }
 
 /**
+  * Check for and remove inactive channels from memory
+  * @public
+  * @param {object} config Core config settings
+  * @return {boolean}
+  */
+export function purgeInactiveChannels(config) {
+  const inactiveDate = Date.now() - InactiveAfter;
+  const recordNames = Object.keys(config.permissions);
+
+  for (let i = 0; i < recordNames.length; i += 1) {
+    if (config.permissions[recordNames[i]].lastAccessed <= inactiveDate) {
+      if (config.permissions[recordNames[i]].owned) {
+        storeChannelSettings(config, recordNames[i], () => {
+          delete config.permissions[recordNames[i]];
+        });
+      } else {
+        delete config.permissions[recordNames[i]];
+      }
+    }
+  }
+
+  return true;
+}
+
+/**
   * Apply a new permission level to the provided trip, within the provided channel
   * @public
   * @param {string} config Server config object
   * @param {string} channel Target channel name
   * @param {string} trip Target trip
   * @param {number} level New level
-  * @return {(string)}
+  * @return {string}
   */
 export function setChannelTripLevel(config, channel, trip, level) {
   const channelSettings = getChannelSettings(config, channel);

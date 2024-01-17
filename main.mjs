@@ -9,6 +9,12 @@ import {
 import {
   CoreApp,
 } from 'hackchat-server';
+import {
+  ChannelCheckInterval,
+} from './commands/utility/_Constants.js';
+import {
+  purgeInactiveChannels,
+} from './commands/utility/_Channels.js';
 
 // required file paths
 const SessionLocation = './session.key';
@@ -46,6 +52,14 @@ const adapter = new JSONFile(AppConfigLocation);
 server.appConfig = new Low(adapter);
 await server.appConfig.read();
 
+// create channel memory management job
+setInterval(() => {
+  purgeInactiveChannels(server.appConfig.data);
+}, ChannelCheckInterval);
+
+// @todo create storage management job
+
+// start the server
 server.init();
 
 console.log('Websocket server ready');
