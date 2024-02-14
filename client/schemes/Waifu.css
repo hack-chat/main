@@ -1,0 +1,56 @@
+body {
+  background-color: #2C001E;
+  color: #E95420;
+  margin: 0;
+  font-family: 'Arial', sans-serif;
+  overflow: hidden;
+}
+
+.container {
+  padding: 20px;
+  overflow-y: auto;
+  max-height: calc(100vh - 70px);
+}
+
+.message {
+  border-left: 2px solid #E95420;
+  margin: 10px 0;
+  padding-left: 10px;
+}
+
+.nick {
+  color: #E95420;
+}
+
+#footer {
+  background: #2C001E;
+  padding: 10px;
+}
+
+/* Add Makima in the top right corner */
+body::after {
+  content: "";
+  display: block;
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  width: 50px;
+  height: 50px;
+  background: url('https://static.wikia.nocookie.net/chainsaw-man/images/d/d9/Makima_anime_design_2.png/revision/latest?cb=20220919121118') no-repeat;
+  background-size: cover;
+  border-radius: 50%;
+  z-index: 9999;
+  filter: drop-shadow(2px 2px 4px #000);
+}
+
+/* Additional styles for a kawaii touch */
+.message:hover {
+  background-color: #3E002A;
+  transition: background-color 0.3s ease;
+}
+
+.message img {
+  max-width: 100%;
+  border-radius: 10px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+}
