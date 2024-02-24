@@ -977,7 +977,9 @@ var schemes = [
 	'fried-egg',
 	'rainbow',
 	'amoled',
-	'retro'
+	'retro',
+	"Waifu",
+	"flamingo",
 ];
 
 var highlights = [
