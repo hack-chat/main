@@ -97,7 +97,7 @@ export async function run({
     },
   };
 
-  // notify channel that the user has changed their name
+  // notify channel that the user has changed their color
   // @todo this should be sent to every channel the user is in (multichannel)
   server.broadcast(updateNotice, { channel: socket.channel });
 

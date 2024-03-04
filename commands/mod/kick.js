@@ -41,7 +41,6 @@ export async function run({
 
     payload.channel = socket.channel; // eslint-disable-line no-param-reassign
   } else if (typeof payload.userid !== 'number') {
-    // @todo create multi-ban ui
     if (typeof payload.userid !== 'object' && !Array.isArray(payload.userid)) {
       return true;
     }
@@ -98,7 +97,7 @@ export async function run({
 
   // Move all kicked clients to the new channel
   for (let i = 0; i < kicked.length; i += 1) {
-    // @todo multi-channel update
+    // @todo Multichannel
     kicked[i].channel = destChannel;
 
     server.broadcast({

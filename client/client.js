@@ -978,8 +978,8 @@ var schemes = [
 	'rainbow',
 	'amoled',
 	'retro',
-	"Waifu",
-	"flamingo",
+	'Waifu',
+	'flamingo'
 ];
 
 var highlights = [
