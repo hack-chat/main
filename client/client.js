@@ -971,6 +971,7 @@ var schemes = [
 	'tomorrow',
 	'tk-night',
 	'carrot',
+	'catppuccin',
 	'lax',
 	'Ubuntu',
 	'gruvbox-light',
