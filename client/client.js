@@ -1011,15 +1011,22 @@ function setHighlight(scheme) {
 	localStorageSet('highlight', scheme);
 }
 
+function sortArrayCaseInsenstive(array) {
+  return array.sort((a, b) => {
+    return a.toLowerCase().localeCompare(b.toLowerCase());
+  });
+}
+
+
 // Add scheme options to dropdown selector
-schemes.forEach(function (scheme) {
+sortArrayCaseInsenstive(schemes).forEach(function (scheme) {
 	var option = document.createElement('option');
 	option.textContent = scheme;
 	option.value = scheme;
 	$('#scheme-selector').appendChild(option);
 });
 
-highlights.forEach(function (scheme) {
+sortArrayCaseInsenstive(highlights).forEach(function (scheme) {
 	var option = document.createElement('option');
 	option.textContent = scheme;
 	option.value = scheme;
