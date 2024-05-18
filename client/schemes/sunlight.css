@@ -1,0 +1,39 @@
+body {
+  background-color: #8ac7f5;
+  background-image: radial-gradient(circle at top left, #f9f9f8 2%, #f4c760 3%, #ff7f16);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  color: #000;
+}
+.message {
+    border-left: 1px solid black;
+}
+.refmessage {
+    border-left: 1px solid black;
+}
+.nick {
+    color: #6684e1;
+}
+.trip {
+    color: #6e6b5e;
+}
+.text a {
+    color: #e8e4cf;
+}
+.admin .nick {
+    color: #d73737;
+}
+.mod .nick {
+    color: #1fad83;
+}
+.me .nick {
+    color: #b854d4;
+}
+.info .nick,
+.info .text {
+  color: #60ac39;
+}
+.warn .nick,
+.warn .text {
+  color: #eb2902;
+}
