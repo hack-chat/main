@@ -1,0 +1,49 @@
+body {
+    background: #dfcdb5;
+    color: #615c56;
+  }
+  input, textarea {
+    color: #473f3c;
+  }
+  .message {
+    border-left: 1px solid rgba(125, 122, 104, 0.5);
+  }
+  .refmessage {
+    border-left: 1px solid rgba(125, 122, 104, 1);
+  }
+  .nick {
+    color: #928bff;
+  }
+  .trip {
+    color: #5b5650;
+  }
+  .text a {
+    color: #e8e4cf;
+  }
+  .admin .nick {
+    color: #d73737;
+  }
+  .mod .nick {
+    color: #1fad83;
+  }
+  .me .nick {
+    color: #928bff;
+  }
+  .info .nick,
+  .info .text {
+    color: #06b449;
+  }
+  .warn .nick,
+  .warn .text {
+    color: #ff6c6c;
+  }
+  #footer {
+    background: #dfcdb5;
+  }
+  #sidebar {
+    background: #312b2b;
+    border-color: #a78f73;
+  }
+  #chatform {
+    border-color: #a78f73;
+  }
