@@ -1,17 +1,16 @@
 body {
   background-color: #2C001E;
   color: #E95420;
+  
 }
 input,
 textarea {
   color: #ccc;
   background-color: #111;
+
 }
-.message {
-  border-left: 1px solid #2C001E;
-}
-.refmessage {
-  border-left: 1px solid #2C001E;
+.message, .refmessage {
+  border-left: solid 1px #E9541F;
 }
 .nick {
   color: #E95420;
@@ -48,4 +47,9 @@ textarea {
 }
 #charform {
   border-color: #5E2750;
+  background: #101010;
+  border-left: solid 1px #E9541F;
+}
+form.message {
+  background-color:#101010;
 }
