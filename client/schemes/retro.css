@@ -143,6 +143,20 @@ label[for=pin-sidebar] {
   height:12px;
   color:#7F7F7F;
   background-color:#7F7F7F;
+  flex:0 0 100%;
+}
+#sidebar-content {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: column-reverse;
+  justify-content:start;
+  align-items:start;
+}
+#sidebar-content > :nth-child(21) {
+  display: none;
+}
+#sidebar-content > :nth-child(1) {
+  display: none;
 }
 #sidebar-content select, #sidebar-content button {
   border-radius: 0;
@@ -151,6 +165,20 @@ label[for=pin-sidebar] {
 #sidebar-content > :nth-child(19) > button {
   border: 2px outset red;
   background-color:darkred;
+}
+#sidebar:hover {
+  #sidebar-content > :nth-child(-n+22) {
+    display:block;
+  }
+  #sidebar-content > :nth-child(1) {
+    display: none;
+  }
+  #sidebar-content > :nth-child(21) {
+    display: none;
+  }
+}
+#sidebar-content > :nth-child(-n+22) {
+  display:none;
 }
 
 /* chat form */
@@ -269,3 +297,4 @@ pre {
   width: auto;
   margin-left: 320px;
 }
+
