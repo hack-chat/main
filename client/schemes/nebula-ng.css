@@ -3,12 +3,23 @@ body{
   background-image: radial-gradient(circle at top left, #23a1d377 5%, #dd6d7983, transparent);
   background-repeat: no-repeat;
   background-attachment: fixed;
+  color:#ffffff;
+}
+input, textarea, {
+  color:#ffffff;
+  border-color:#ffffff;
 }
 .message {
-  border-left: 1px solid #131114;
+  border-left: 1px solid #ffffff;
 }
 .refmessage {
-  border-left: 1px solid #131114;
+  border-left: 1px solid #ffffff;
+}
+#sidebar {
+  background-color: #131114;
+  background-image: radial-gradient(circle at bottom right, #23a1d377 5%, #dd6d7983, transparent);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
 }
 .nick {
   color: #83c9cd;
