@@ -51,6 +51,7 @@ var allowImages = false;
 var imgHostWhitelist = [
 	'i.imgur.com',
 	'imgur.com',
+  'imgs.xkcd.com',
 ];
 
 function getDomain(link) {
