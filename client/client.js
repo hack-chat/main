@@ -972,7 +972,6 @@ var schemes = [
 	'mocha',
 	'monokai',
 	'nebula',
-	'nebula-ng',
 	'nese',
 	'ocean',
 	'omega',
@@ -985,7 +984,6 @@ var schemes = [
 	'tomorrow',
 	'tk-night',
 	'ubuntu',
-	'ubuntu-ng',
 	'waifu'
 ];
 
