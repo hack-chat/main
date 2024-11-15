@@ -116,7 +116,7 @@ label[for=pin-sidebar] {
   left: 36px;
   height: 14px;
   padding: 2px 3px;
-  content: "#programming [+ver 1.0] :: https://hack.chat - The Next Frontier of Unknown Pleasures";
+  content: "#programming [+ver 1.0] :: https://hack.chat - a minimal, distraction-free chat application";
   border: 2px solid gray;
   border-bottom: 2px solid gray;
   background: linear-gradient(to right, #000080, #1084d0);
@@ -131,38 +131,54 @@ label[for=pin-sidebar] {
 }
 #sidebar {
   width: 195px;
+  color: #7F7F7F;
 }
 #users li {
   list-style-type: none!important;
   margin-left: -1.3em;
   margin-top: 0.5em;
 }
+#sidebar-content hr {
+  border:none;
+  height:12px;
+  color:#7F7F7F;
+  background-color:#7F7F7F;
+  flex:0 0 100%;
+}
 #sidebar-content {
   display: flex;
+  flex-wrap: wrap;
   flex-direction: column-reverse;
   justify-content:start;
   align-items:start;
-}
-#sidebar-content hr {
-  display:none;
-}
-#sidebar-content select, #sidebar-content button {
-  border-radius: 0;
-  margin-bottom: 0.5em;
-}
-#sidebar-content > :nth-child(19) {
-  /*         border: 1px solid red; */
-  margin-top: 80vh;
-  margin-bottom: 2.5em;
-}
-#sidebar-content > :nth-child(22) {
-  display: none;
 }
 #sidebar-content > :nth-child(21) {
   display: none;
 }
 #sidebar-content > :nth-child(1) {
   display: none;
+}
+#sidebar-content select, #sidebar-content button {
+  border-radius: 0;
+  margin-bottom: 0.5em;
+}
+#sidebar-content > :nth-child(19) > button {
+  border: 2px outset red;
+  background-color:darkred;
+}
+#sidebar:hover {
+  #sidebar-content > :nth-child(-n+22) {
+    display:block;
+  }
+  #sidebar-content > :nth-child(1) {
+    display: none;
+  }
+  #sidebar-content > :nth-child(21) {
+    display: none;
+  }
+}
+#sidebar-content > :nth-child(-n+22) {
+  display:none;
 }
 
 /* chat form */
@@ -281,5 +297,4 @@ pre {
   width: auto;
   margin-left: 320px;
 }
-
 

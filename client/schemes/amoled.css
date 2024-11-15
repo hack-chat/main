@@ -6,11 +6,12 @@ input,
 textarea {
   color: #a6a28c;
 }
-.message {
-  border-left: #000000;
+.refmessage, .message, #sidebar {
+  border-left: 1px solid #404040;
+  background: #000000;
 }
-.refmessage {
-  border-left: #000000;
+#chatform {
+  border-top: 1px solid #404040;
 }
 .nick {
   color: #778fd8;
@@ -40,11 +41,4 @@ textarea {
 }
 #footer {
   background: #000000;
-}
-#sidebar {
-  background: #000000;
-  border-color: #000000;
-}
-#chatform {
-  border-color: #000000;
 }
