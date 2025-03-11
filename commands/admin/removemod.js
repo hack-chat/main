@@ -11,6 +11,7 @@ import {
   isModerator,
   levels,
   getUserDetails,
+  getAppearance,
 } from '../utility/_UAC.js';
 
 /**

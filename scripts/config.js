@@ -184,8 +184,8 @@ const setupChannels = async () => {
       ownerTrip: 'Admin',
       lastAccessed: now,
       claimExpires: expirationDate,
-    }
-  }
+    },
+  };
 
   for (let i = 0, j = config.data.publicChannels.length; i < j; i += 1) {
     const channelHash = getChannelHash(config.data.publicChannels[i]);

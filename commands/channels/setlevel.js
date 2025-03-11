@@ -81,9 +81,19 @@ export async function run({
 
   for (let i = 0, j = targetClients.length; i < j; i += 1) {
     if (targetClients[i].level >= socket.level) {
-
+      server.reply({
+        cmd: 'warn',
+        text: 'Failed to set level: Target has same or better credentials.',
+        id: Errors.SetLevel.BAD_LEVEL,
+        channel: socket.channel, // @todo Multichannel
+      }, socket);
     } else {
-      const setError = setChannelTripLevel(core.appConfig.data, socket.channel, payload.trip, newLevel);
+      const setError = setChannelTripLevel(
+        core.appConfig.data,
+        socket.channel,
+        payload.trip,
+        newLevel,
+      );
 
       if (setError !== '') {
         return server.reply({
@@ -97,7 +107,7 @@ export async function run({
       targetClients[i].color = color;
       targetClients[i].flair = flair;
       targetClients[i].level = newLevel;
-  
+
       server.broadcast({
         ...getUserDetails(targetClients[i]),
         ...{
