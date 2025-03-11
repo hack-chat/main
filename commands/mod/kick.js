@@ -7,7 +7,7 @@
   */
 
 import {
-  isModerator,
+  isChannelModerator,
   getUserDetails,
 } from '../utility/_UAC.js';
 import {
@@ -27,7 +27,7 @@ export async function run({
   core, server, socket, payload,
 }) {
   // increase rate limit chance and ignore if not admin or mod
-  if (!isModerator(socket.level)) {
+  if (!isChannelModerator(socket.level)) {
     return server.police.frisk(socket, 10);
   }
 
@@ -41,8 +41,11 @@ export async function run({
 
     payload.channel = socket.channel; // eslint-disable-line no-param-reassign
   } else if (typeof payload.userid !== 'number') {
+    // @todo create multi-ban ui
     if (typeof payload.userid !== 'object' && !Array.isArray(payload.userid)) {
-      return true;
+      if (typeof payload.nick !== 'string') {
+        return true;
+      }
     }
   }
 
@@ -97,14 +100,14 @@ export async function run({
 
   // Move all kicked clients to the new channel
   for (let i = 0; i < kicked.length; i += 1) {
-    // @todo Multichannel
+    // @todo multi-channel update
     kicked[i].channel = destChannel;
 
     server.broadcast({
       cmd: 'info', // @todo Add numeric info code as `id`
       text: `${kicked[i].nick} was banished to ?${destChannel}`,
       channel: socket.channel, // @todo Multichannel
-    }, { channel: socket.channel, level: isModerator });
+    }, { channel: socket.channel, level: isChannelModerator });
 
     console.log(`${socket.nick} [${socket.trip}] kicked ${kicked[i].nick} in ${socket.channel} to ${destChannel} `);
   }
@@ -124,12 +127,68 @@ export async function run({
     cmd: 'info', // @todo Add numeric info code as `id`
     text: `Kicked ${kicked.map((k) => k.nick).join(', ')}`,
     channel: socket.channel, // @todo Multichannel
-  }, { channel: socket.channel, level: (level) => isModerator(level) });
+  }, { channel: socket.channel, level: (level) => isChannelModerator(level) });
 
   // stats are fun
   core.stats.increment('users-kicked', kicked.length);
 
   return true;
+}
+
+/**
+  * Automatically executes once after server is ready to register this modules hooks
+  * @param {Object} server - Reference to server environment object
+  * @public
+  * @return {void}
+  */
+export function initHooks(server) {
+  server.registerHook('in', 'chat', this.runKickCheck.bind(this), 29);
+}
+
+/**
+  * Executes every time an incoming chat command is invoked
+  * @param {Object} env - Environment object with references to core, server, socket & payload
+  * @public
+  * @return {(Object|boolean|string)} Object = same/altered payload,
+  * false = suppress action,
+  * string = error
+  */
+export function runKickCheck({
+  core, server, socket, payload,
+}) {
+  if (typeof payload.text !== 'string') {
+    return false;
+  }
+
+  if (payload.text.startsWith('/kick ')) {
+    const input = payload.text.split(' ');
+
+    // If there is no trip parameter
+    if (!input[1]) {
+      server.reply({
+        cmd: 'warn',
+        text: 'Failed to kick: Missing name. Refer to `/help kick` for instructions on how to use this command.',
+        id: 111111, // Errors.SetLevel.BAD_TRIP,
+        channel: socket.channel, // @todo Multichannel
+      }, socket);
+
+      return false;
+    }
+
+    this.run({
+      core,
+      server,
+      socket,
+      payload: {
+        cmd: 'kick',
+        nick: input[1],
+      },
+    });
+
+    return false;
+  }
+
+  return payload;
 }
 
 /**
@@ -146,5 +205,6 @@ export const info = {
   category: 'moderators',
   description: 'Silently forces target client(s) into another channel. `nick` may be string or array of strings',
   usage: `
-    API: { cmd: 'kick', nick: '<target nick>', to: '<optional target channel>' }`,
+    API: { cmd: 'kick', nick: '<target nick>', to: '<optional target channel>' }
+    Text: /kick <target nick>`,
 };

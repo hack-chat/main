@@ -157,6 +157,11 @@ export const DefaultChannelSettings = {
 export const SystemMOTDs = [
   'Protip: Using any hex color code, you can change your name color- for example: /color #FFFFFF',
   'Protip: You can easily change your name with a command: /nick bob',
+  'Enjoying hack.chat? Support us: https://patreon.com/marzavec',
+  'We have a Twitter for some reason: https://x.com/HackDotChat',
+  'Protip: Use a password or add a "#" followed by a password to get a trip code',
+  'Protip: You can claim an unclaimed channel by using /claimchannel',
+  'Protip: You can send emotes like: /me does a thing',
 ];
 
 /**

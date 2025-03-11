@@ -23,7 +23,7 @@
     "config": "node ./scripts/config.js",
     "lint": "eslint -- . ",
     "lint:fix": "eslint --fix -- . ",
-    "test_run": "cls && npm run refresh && npm start && npm run logs && npm run stop",
+    "test_run": "clear && npm run refresh && npm start && npm run logs && npm run stop",
     "test": "npm run lint && c8 mocha --exit ./test/*.test.js",
     "makedocs": "jsdoc -c jsdoc.json"
   },

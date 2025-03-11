@@ -11,6 +11,7 @@ import {
   isModerator,
   levels,
   getUserDetails,
+  getAppearance,
 } from '../utility/_UAC.js';
 
 /**
@@ -30,6 +31,8 @@ export async function run({
   // add new trip to config
   core.appConfig.data.globalMods.push({ trip: payload.trip });
 
+  const { color, flair } = getAppearance(levels.moderator);
+
   // find targets current connections
   const newMod = server.findSockets({ trip: payload.trip });
   if (newMod.length !== 0) {
@@ -47,6 +50,8 @@ export async function run({
       // upgrade privileges
       newMod[i].uType = 'mod'; // @todo use legacyLevelToLabel from _LegacyFunctions.js
       newMod[i].level = levels.moderator;
+      newMod[i].color = color;
+      newMod[i].flair = flair;
 
       // inform new mod
       server.send({

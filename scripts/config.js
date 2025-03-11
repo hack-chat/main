@@ -184,14 +184,12 @@ const setupChannels = async () => {
       ownerTrip: 'Admin',
       lastAccessed: now,
       claimExpires: expirationDate,
-    },
-  };
+    }
+  }
 
   for (let i = 0, j = config.data.publicChannels.length; i < j; i += 1) {
     const channelHash = getChannelHash(config.data.publicChannels[i]);
     const configPath = `./channels/${channelHash[0]}/${channelHash}.json`;
-
-    console.log(`Storing ${config.data.publicChannels[i]} -> ${configPath}`);
 
     writeFileSync(configPath, JSON.stringify(channelSettings));
   }

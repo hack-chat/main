@@ -72,17 +72,6 @@ export async function run({
     }, socket);
   }
 
-  const setError = setChannelTripLevel(core.appConfig.data, socket.channel, payload.trip, newLevel);
-
-  if (setError !== '') {
-    return server.reply({
-      cmd: 'warn',
-      text: `Failed to set level: ${setError}`,
-      id: Errors.SetLevel.APPLY_ERROR,
-      channel: socket.channel, // @todo Multichannel
-    }, socket);
-  }
-
   const targetClients = server.findSockets({
     channel: socket.channel,
     trip: payload.trip,
@@ -91,24 +80,39 @@ export async function run({
   const { color, flair } = getAppearance(newLevel);
 
   for (let i = 0, j = targetClients.length; i < j; i += 1) {
-    targetClients[i].color = color;
-    targetClients[i].flair = flair;
-    targetClients[i].level = newLevel;
+    if (targetClients[i].level >= socket.level) {
 
-    server.broadcast({
-      ...getUserDetails(targetClients[i]),
-      ...{
-        cmd: 'updateUser',
-        channel: socket.channel,
-      },
-    }, { channel: socket.channel });
+    } else {
+      const setError = setChannelTripLevel(core.appConfig.data, socket.channel, payload.trip, newLevel);
+
+      if (setError !== '') {
+        return server.reply({
+          cmd: 'warn',
+          text: `Failed to set level: ${setError}`,
+          id: Errors.SetLevel.APPLY_ERROR,
+          channel: socket.channel, // @todo Multichannel
+        }, socket);
+      }
+
+      targetClients[i].color = color;
+      targetClients[i].flair = flair;
+      targetClients[i].level = newLevel;
+  
+      server.broadcast({
+        ...getUserDetails(targetClients[i]),
+        ...{
+          cmd: 'updateUser',
+          channel: socket.channel,
+        },
+      }, { channel: socket.channel });
+
+      server.broadcast({
+        cmd: 'info', // @todo Add numeric info code as `id`
+        text: `Changed permission level of "${payload.trip}" to "${payload.level}"`,
+        channel: socket.channel, // @todo Multichannel
+      }, { channel: socket.channel });
+    }
   }
-
-  server.broadcast({
-    cmd: 'info', // @todo Add numeric info code as `id`
-    text: `Changed permission level of "${payload.trip}" to "${payload.level}"`,
-    channel: socket.channel, // @todo Multichannel
-  }, { channel: socket.channel });
 
   return true;
 }
@@ -205,5 +209,5 @@ export const info = {
   description: 'Alter the permission level a trip is allowed within current channel',
   usage: `
   API: { cmd: 'setlevel', trip: '[target trip]', level: '[level label]' }
-  Text: /setlevel <trip> <level label>`,
+  Text: /setlevel <trip> <"channelModerator" || "channelTrusted" || "trustedUser" || "default" || "bot">`,
 };
