@@ -41,6 +41,9 @@ export async function run({
   }
 
   const { channel } = socket;
+  if (typeof payload.channel === 'undefined') {
+    payload.channel = channel;
+  }
 
   // make sure requested flair meets standards
   const newFlair = payload.flair;
