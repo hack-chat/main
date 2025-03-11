@@ -36,7 +36,7 @@ export async function run({
   if (!socket.trip) {
     return server.reply({
       cmd: 'warn',
-      text: 'Failed to run command: Missing trip code.',
+      text: 'Failed to run command: You must have a trip code to do this.',
       id: Errors.Global.MISSING_TRIPCODE,
       channel: socket.channel, // @todo Multichannel
     }, socket);

@@ -67,7 +67,7 @@ export async function run({
     return server.reply({
       cmd: 'warn',
       text: 'Failed to set level: New level may not be the same or greater than your own.',
-      id: Errors.SetLevel.BAD_LEVEL,
+      id: Errors.SetLevel.LEVEL_CONFLICT,
       channel: socket.channel, // @todo Multichannel
     }, socket);
   }

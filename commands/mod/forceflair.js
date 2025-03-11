@@ -51,7 +51,7 @@ export async function run({
     return server.reply({
       cmd: 'warn',
       text: 'Invalid flair',
-      id: 11111, // Errors.ChangeColor.INVALID_COLOR,
+      id: Errors.ForceFlairErrors.INVALID_FLAIR,
       channel, // @todo Multichannel
     }, socket);
   }
@@ -124,7 +124,7 @@ export function flairCheck({
       server.reply({
         cmd: 'warn',
         text: 'Refer to `/help forceflair` for instructions on how to use this command.',
-        id: 11111, // Errors.ForceColor.MISSING_NICK,
+        id: Errors.ForceFlairErrors.MISSING_NICK,
         channel: socket.channel, // @todo Multichannel
       }, socket);
 
@@ -134,8 +134,8 @@ export function flairCheck({
     if (input[2] === undefined) {
       server.reply({
         cmd: 'warn',
-        text: 'Invalid newFlair',
-        id: 11111, // Errors.ChangeColor.INVALID_COLOR,
+        text: 'Invalid flair',
+        id: Errors.ForceFlairErrors.INVALID_FLAIR,
         channel: socket.channel, // @todo Multichannel
       }, socket);
 

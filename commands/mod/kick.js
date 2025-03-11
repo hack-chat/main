@@ -163,12 +163,12 @@ export function runKickCheck({
   if (payload.text.startsWith('/kick ')) {
     const input = payload.text.split(' ');
 
-    // If there is no trip parameter
+    // If there is no nick parameter
     if (!input[1]) {
       server.reply({
         cmd: 'warn',
         text: 'Failed to kick: Missing name. Refer to `/help kick` for instructions on how to use this command.',
-        id: 111111, // Errors.SetLevel.BAD_TRIP,
+        id: Errors.Global.UNKNOWN_USER, // this is wrong #lazydev
         channel: socket.channel, // @todo Multichannel
       }, socket);
 

@@ -31,7 +31,8 @@ const ChangeColorErrors = UnclaimChannelErrors + 10;
 const EmoteErrors = ChangeColorErrors + 10;
 const WhisperErrors = EmoteErrors + 10;
 const ForceColorErrors = WhisperErrors + 10;
-const UsersErrors = ForceColorErrors + 10;
+const ForceFlairErrors = ForceColorErrors + 10;
+const UsersErrors = ForceFlairErrors + 10;
 
 /**
   * Holds the numeric id values for each error type
@@ -103,6 +104,7 @@ export const Errors = {
     BAD_LABEL: SetLevelErrors + 2,
     BAD_LEVEL: SetLevelErrors + 3,
     APPLY_ERROR: SetLevelErrors + 4,
+    LEVEL_CONFLICT: SetLevelErrors + 5,
   },
 
   SetMOTD: {
@@ -129,6 +131,11 @@ export const Errors = {
 
   ForceColor: {
     MISSING_NICK: ForceColorErrors + 1,
+  },
+
+  ForceFlairErrors: {
+    INVALID_FLAIR: ForceFlairErrors + 1,
+    MISSING_NICK: ForceFlairErrors + 2,
   },
 
   Users: {
@@ -162,6 +169,8 @@ export const SystemMOTDs = [
   'Protip: Use a password or add a "#" followed by a password to get a trip code',
   'Protip: You can claim an unclaimed channel by using /claimchannel',
   'Protip: You can send emotes like: /me does a thing',
+  'Protip: The owner of a channel can create moderators: /setlevel <trip> channelModerator',
+  'Protip: A moderator can kick people from the room: /kick <name>',
 ];
 
 /**
