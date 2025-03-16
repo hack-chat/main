@@ -27,6 +27,11 @@ import {
 export async function run({
   core, server, socket, payload,
 }) {
+  // must be in a channel to run this command
+  if (typeof socket.channel === 'undefined') {
+    return server.police.frisk(socket, 10);
+  }
+
   if (server.police.frisk(socket, 6)) {
     return server.reply({
       cmd: 'warn',

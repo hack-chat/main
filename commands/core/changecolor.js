@@ -31,6 +31,11 @@ const verifyColor = (color) => /(^[0-9A-F]{6}$)|(^[0-9A-F]{3}$)/i.test(color);
 export async function run({
   server, socket, payload,
 }) {
+  // must be in a channel to run this command
+  if (typeof socket.channel === 'undefined') {
+    return server.police.frisk(socket, 1);
+  }
+
   const { channel } = socket;
 
   if (server.police.frisk(socket, 1)) {
@@ -61,6 +66,8 @@ export async function run({
   if (newColor === 'RESET') {
     socket.color = false; // eslint-disable-line no-param-reassign
   } else {
+    if (socket.color === newColor) return true;
+
     socket.color = newColor; // eslint-disable-line no-param-reassign
   }
 

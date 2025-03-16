@@ -132,3 +132,4 @@ dist
 session.key
 salt.key
 config.json
+commands/admin/bomb.js

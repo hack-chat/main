@@ -1,34 +1,22 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
-  * @summary Send an invite
+  * @summary Sends a hack request to the target nick.
   * @version 1.0.0
-  * @description Sends an invite to the target client with the provided channel, or a random channel
-  * @module invite
+  * @description Please note that the term 'hack' is used in jest here
+  * @module hack
   */
 
+import {
+  isChannelModerator,
+} from '../utility/_UAC.js';
 import {
   findUser,
 } from '../utility/_Channels.js';
 import {
   Errors,
 } from '../utility/_Constants.js';
-import {
-  legacyInviteOut,
-  legacyInviteReply,
-} from '../utility/_LegacyFunctions.js';
 
-/**
-  * Returns the channel that should be invited to.
-  * @param {any} channel
-  * @private
-  * @return {string}
-  */
-export function getChannel(channel = undefined) {
-  if (typeof channel === 'string') {
-    return channel;
-  }
-  return Math.random().toString(36).substr(2, 8);
-}
+const MaxUrlLength = 256;
 
 /**
   * Executes when invoked by a remote client
@@ -37,19 +25,25 @@ export function getChannel(channel = undefined) {
   * @return {void}
   */
 export async function run({
-  core, server, socket, payload,
+  /* core, */ server, socket, payload,
 }) {
-  // must be in a channel to run this command
-  if (typeof socket.channel === 'undefined') {
-    return server.police.frisk(socket, 1);
+  if (!isChannelModerator(socket.level)) {
+    server.police.frisk(socket, 10);
+
+    return server.reply({
+      cmd: 'warn',
+      text: 'You must be using a trip code that is channelModerator or higher.',
+      id: Errors.HackRequest.BAD_PERMS,
+      channel: socket.channel, // @todo Multichannel
+    }, socket);
   }
 
   // check for spam
-  if (server.police.frisk(socket, 2)) {
+  if (server.police.frisk(socket, 6)) {
     return server.reply({
       cmd: 'warn',
-      text: 'You are sending invites too fast. Wait a moment before trying again.',
-      id: Errors.Invite.RATELIMIT,
+      text: 'You are sending hack requests too fast. Wait a moment before trying again.',
+      id: Errors.HackRequest.RATELIMIT,
       channel: socket.channel, // @todo Multichannel
     }, socket);
   }
@@ -66,6 +60,28 @@ export async function run({
     return true;
   }
 
+  if (typeof payload.lib !== 'string' || !payload.lib) {
+    return true;
+  }
+
+  if (payload.lib.length > MaxUrlLength) {
+    return server.reply({
+      cmd: 'warn',
+      text: 'Your URL is too long.',
+      id: Errors.HackRequest.TOO_LONG,
+      channel: socket.channel, // @todo Multichannel
+    }, socket);
+  }
+
+  if (payload.lib.startsWith('https://') === false) {
+    return server.reply({
+      cmd: 'warn',
+      text: 'Your URL should start with https://',
+      id: Errors.HackRequest.BAD_URL,
+      channel: socket.channel, // @todo Multichannel
+    }, socket);
+  }
+
   // @todo Verify this socket is part of payload.channel - multichannel patch
   // find target user
   const targetUser = findUser(server, payload);
@@ -78,34 +94,17 @@ export async function run({
     }, socket);
   }
 
-  // generate common channel
-  const channel = getChannel(payload.to);
-
-  // build invite
+  // build request
   const outgoingPayload = {
-    cmd: 'invite',
+    cmd: 'hackAttempt',
     channel: socket.channel, // @todo Multichannel
     from: socket.userid,
-    to: targetUser.userid,
-    inviteChannel: channel,
+    fromNick: socket.nick,
+    lib: payload.lib,
   };
 
-  // send invite notice to target client
-  if (targetUser.hcProtocol === 1) {
-    server.reply(legacyInviteOut(outgoingPayload, socket.nick), targetUser);
-  } else {
-    server.reply(outgoingPayload, targetUser);
-  }
-
-  // send invite notice to this client
-  if (socket.hcProtocol === 1) {
-    server.reply(legacyInviteReply(outgoingPayload, targetUser.nick), socket);
-  } else {
-    server.reply(outgoingPayload, socket);
-  }
-
-  // stats are fun
-  core.stats.increment('invites-sent');
+  // send request
+  server.reply(outgoingPayload, targetUser);
 
   return true;
 }
@@ -113,16 +112,16 @@ export async function run({
 /**
   * Module meta information
   * @public
-  * @typedef {Object} invite/info
+  * @typedef {Object} hack/info
   * @property {string} name - Module command name
   * @property {string} category - Module category name
   * @property {string} description - Information about module
   * @property {string} usage - Information about module usage
   */
 export const info = {
-  name: 'invite',
-  category: 'core',
-  description: 'Sends an invite to the target client with the provided channel, or a random channel.',
+  name: 'hack',
+  category: 'moderators',
+  description: 'Sends a hack request to the target nick.',
   usage: `
-    API: { cmd: 'invite', nick: '<target nickname>', to: '<optional destination channel>' }`,
+    API: { cmd: 'hack', nick: '<target nickname>', lib: '<url to js>' }`,
 };

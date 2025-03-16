@@ -240,12 +240,12 @@ export function inviteCheck({
     // if this is a legacy client add missing params to payload
     if (socket.hcProtocol === 1) {
       if (typeof socket.channel === 'undefined' || typeof payload.nick !== 'string') {
-        return true;
+        return false;
       }
 
       payload.channel = socket.channel; // eslint-disable-line no-param-reassign
     } else if (typeof payload.userid !== 'number' || typeof payload.channel !== 'string') {
-      return true;
+      return false;
     }
 
     // @todo Verify this socket is part of payload.channel - multichannel patch

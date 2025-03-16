@@ -86,6 +86,11 @@ export function addActiveMessage(customId, userid) {
 export async function run({
   core, server, socket, payload,
 }) {
+  // must be in a channel to run this command
+  if (typeof socket.channel === 'undefined') {
+    return server.police.frisk(socket, 1);
+  }
+
   // check user input
   const text = parseText(payload.text);
 

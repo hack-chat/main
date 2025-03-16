@@ -10,7 +10,7 @@
   * Internal version, used mainly for debugging
   * @typedef {object} CodebaseVersion
   */
-export const CodebaseVersion = '2.2.24b';
+export const CodebaseVersion = '2.2.25b';
 
 /* Base error ranges */
 const GlobalErrors = 10;
@@ -33,6 +33,7 @@ const WhisperErrors = EmoteErrors + 10;
 const ForceColorErrors = WhisperErrors + 10;
 const ForceFlairErrors = ForceColorErrors + 10;
 const UsersErrors = ForceFlairErrors + 10;
+const HackRequest = UsersErrors + 10;
 
 /**
   * Holds the numeric id values for each error type
@@ -141,6 +142,13 @@ export const Errors = {
   Users: {
     BAD_HASH_OR_IP: UsersErrors + 1,
   },
+
+  HackRequest: {
+    BAD_PERMS: HackRequest + 1,
+    RATELIMIT: HackRequest + 2,
+    TOO_LONG: HackRequest + 3,
+    BAD_URL: HackRequest + 4,
+  },
 };
 
 /**
@@ -171,6 +179,7 @@ export const SystemMOTDs = [
   'Protip: You can send emotes like: /me does a thing',
   'Protip: The owner of a channel can create moderators: /setlevel <trip> channelModerator',
   'Protip: A moderator can kick people from the room: /kick <name>',
+  'Protip: Use /getchannels anytime to see a list of public channels',
 ];
 
 /**

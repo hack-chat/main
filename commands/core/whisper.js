@@ -27,6 +27,11 @@ import {
   * @return {void}
   */
 export async function run({ server, socket, payload }) {
+  // must be in a channel to run this command
+  if (typeof socket.channel === 'undefined') {
+    return server.police.frisk(socket, 1);
+  }
+
   // if this is a legacy client add missing params to payload
   if (socket.hcProtocol === 1) {
     payload.channel = socket.channel; // eslint-disable-line no-param-reassign

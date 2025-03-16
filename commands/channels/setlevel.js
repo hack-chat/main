@@ -38,6 +38,11 @@ export async function init(core) {
 export async function run({
   core, server, socket, payload,
 }) {
+  // must be in a channel to run this command
+  if (typeof socket.channel === 'undefined') {
+    return server.police.frisk(socket, 10);
+  }
+
   // increase rate limit chance and ignore if not channel mod or better
   if (!isChannelModerator(socket.level)) {
     return server.police.frisk(socket, 10);

@@ -114,11 +114,11 @@ export async function run({
   * @return {void}
   */
 export function initHooks(server) {
-  server.registerHook('in', 'changenick', this.changeNickCheck.bind(this), 1);
-  server.registerHook('in', 'whisper', this.whisperCheck.bind(this), 1);
-  server.registerHook('in', 'chat', this.chatCheck.bind(this), 1);
-  server.registerHook('in', 'invite', this.inviteCheck.bind(this), 1);
-  server.registerHook('in', 'join', this.joinCheck.bind(this), 1);
+  server.registerHook('in', 'changenick', this.changeNickCheck.bind(this), 4);
+  server.registerHook('in', 'whisper', this.whisperCheck.bind(this), 4);
+  server.registerHook('in', 'chat', this.chatCheck.bind(this), 4);
+  server.registerHook('in', 'invite', this.inviteCheck.bind(this), 4);
+  server.registerHook('in', 'join', this.joinCheck.bind(this), 4);
 }
 
 /**

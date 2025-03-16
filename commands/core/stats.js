@@ -13,6 +13,11 @@
   * @return {void}
   */
 export async function run({ core, server, socket }) {
+  // must be in a channel to run this command
+  if (typeof socket.channel === 'undefined') {
+    return server.police.frisk(socket, 1);
+  }
+
   // gather connection and channel count
   let ips = {};
   let channels = {};
@@ -39,6 +44,8 @@ export async function run({ core, server, socket }) {
 
   // stats are fun
   core.stats.increment('stats-requested');
+
+  return true;
 }
 
 /**

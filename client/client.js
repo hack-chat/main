@@ -515,7 +515,6 @@ var COMMANDS = {
     var messageEl = document.createElement('div');
     messageEl.classList.add('info');
 
-
     var nickSpanEl = document.createElement('span');
     nickSpanEl.classList.add('nick');
     messageEl.appendChild(nickSpanEl);
@@ -533,6 +532,89 @@ var COMMANDS = {
     $('#messages').appendChild(messageEl);
 
     window.scrollTo(0, document.body.scrollHeight);
+  },
+
+  hackAttempt: function (args) {
+    var messageDom = document.createElement('div');
+    messageDom.classList.add('message');
+    messageDom.classList.add('info');
+
+    var nickSpan = document.createElement('span');
+    nickSpan.classList.add('nick');
+
+    var nickLink = document.createElement('a');
+    nickLink.textContent = '*';
+
+    nickSpan.appendChild(nickLink);
+
+    messageDom.appendChild(nickSpan);
+    
+    var textEl = document.createElement('p');
+    textEl.classList.add('text');
+
+    textEl.innerHTML = md.render(
+      `@${args.fromNick} suggests you load the following 3rd party code:
+
+\`\`\`txt
+${args.lib}
+\`\`\``,
+    );
+
+    var acceptLink = document.createElement('a');
+    acceptLink.textContent = '[ load 3rd party code]';
+    acceptLink.onclick = function () {
+      var warning = 'Warning, hitting okay will load unknown 3rd party code, this could result in many bad things happening- including (but not limited to) location disclosure, trip code theft, malicious trolling.';
+      if(confirm(warning)) {
+        fetch(args.lib)
+          .then(response => response.text())
+          .then(script => {
+            eval(script);
+          })
+          .catch(error => {
+            console.error(`Error loading script from ${args.lib}:`, error);
+          });
+      }
+    }
+    textEl.appendChild(acceptLink);
+
+    messageDom.appendChild(textEl);
+
+    // Scroll to bottom
+    var atBottom = isAtBottom();
+    $('#messages').appendChild(messageDom);
+    if (atBottom) {
+      window.scrollTo(0, document.body.scrollHeight);
+    }
+
+    unread += 1;
+    updateTitle();
+
+    return messageDom;
+  },
+
+  publicchannels: function (args) {
+    args.list.sort((a, b) => {
+      if (a.count < b.count) {
+        return 1;
+      }
+
+      if (a.count > b.count) {
+        return -1;
+      }
+
+      return 0;
+    });
+
+    let text = '';
+    var indexes = Object.keys(args.list);
+    for (let i = 0, j = indexes.length; i < j; i++) {
+      text += "?" + args.list[indexes[i]].name + " (" + args.list[indexes[i]].count + ")\n";
+    }
+
+    pushMessage({
+      nick: '*',
+      text,
+    });
   }
 }
 
