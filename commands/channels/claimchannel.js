@@ -135,6 +135,8 @@ export function chatHook({
 
       updateChannelSettings(core.appConfig.data, socket.channel, channelSettings);
 
+      console.log(`[${socket.trip}]${socket.nick} claimed ?${socket.channel}`);
+
       server.broadcast({
         cmd: 'info', // @todo Add numeric info code as `id`
         text: `Channel now owned by "${socket.trip}", until ${channelSettings.claimExpires}`,
