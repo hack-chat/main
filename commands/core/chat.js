@@ -180,6 +180,10 @@ export function commandCheckIn({ server, socket, payload }) {
     return false;
   }
 
+  if (payload.text.startsWith('/shrug')) {
+    payload.text = payload.text.replace('/shrug', String.fromCharCode(175)+String.fromCharCode(92)+String.fromCharCode(92)+String.fromCharCode(92)+String.fromCharCode(95)+String.fromCharCode(40)+String.fromCharCode(12484)+String.fromCharCode(41)+String.fromCharCode(92)+String.fromCharCode(95)+String.fromCharCode(47)+String.fromCharCode(175));
+  }
+
   if (payload.text.startsWith('/myhash')) {
     server.reply({
       cmd: 'info', // @todo Add numeric info code as `id`

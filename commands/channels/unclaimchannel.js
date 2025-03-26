@@ -93,6 +93,8 @@ export async function run({
     }
   }
 
+  console.log(`[${socket.trip}]${socket.nick} UNCLAIMED ?${socket.channel}`);
+
   return true;
 }
 

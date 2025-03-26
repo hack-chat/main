@@ -174,12 +174,13 @@ export const SystemMOTDs = [
   'Protip: You can easily change your name with a command: /nick bob',
   'Enjoying hack.chat? Support us: https://patreon.com/marzavec',
   'We have a Twitter for some reason: https://x.com/HackDotChat',
-  'Protip: Use a password or add a "#" followed by a password to get a trip code',
+  'Protip: Use a password or add a "#" followed by a secret phrase to get a trip code',
   'Protip: You can claim an unclaimed channel by using /claimchannel',
   'Protip: You can send emotes like: /me does a thing',
   'Protip: The owner of a channel can create moderators: /setlevel <trip> channelModerator',
   'Protip: A moderator can kick people from the room: /kick <name>',
   'Protip: Use /getchannels anytime to see a list of public channels',
+  'Protip: You can do ==/help== or ==/help command== ',
 ];
 
 /**

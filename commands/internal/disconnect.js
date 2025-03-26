@@ -31,6 +31,7 @@ export async function run({ server, socket, payload }) {
       server.broadcast({
         cmd: 'onlineRemove',
         nick: socket.nick,
+        userid: socket.userid,
       }, { channel: socket.channel });
     }
   }
