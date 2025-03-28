@@ -39,6 +39,7 @@ export function getSession(socket, core) {
     isBot: socket.isBot,
     level: socket.level,
     nick: socket.nick,
+    flair: socket.flair,
     trip: socket.trip,
     userid: socket.userid,
     uType: socket.uType,
@@ -136,6 +137,7 @@ export async function run({
   socket.isBot = session.isBot;
   socket.level = session.level;
   socket.nick = session.nick;
+  socket.flair = session.flair;
   socket.trip = session.trip;
   socket.userid = session.userid;
   socket.uType = session.uType;

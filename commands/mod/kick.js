@@ -164,7 +164,8 @@ export function runKickCheck({
     const input = payload.text.split(' ');
 
     // If there is no nick parameter
-    if (!input[1]) {
+    const nick = input[1];
+    if (!nick || !nick.replace(/[^a-zA-Z0-9_]/g, '')) {
       server.reply({
         cmd: 'warn',
         text: 'Failed to kick: Missing name. Refer to `/help kick` for instructions on how to use this command.',
@@ -181,7 +182,7 @@ export function runKickCheck({
       socket,
       payload: {
         cmd: 'kick',
-        nick: input[1],
+        nick: nick.replace(/[^a-zA-Z0-9_]/g, ''),
       },
     });
 

@@ -180,7 +180,8 @@ export const SystemMOTDs = [
   'Protip: The owner of a channel can create moderators: /setlevel <trip> channelModerator',
   'Protip: A moderator can kick people from the room: /kick <name>',
   'Protip: Use /getchannels anytime to see a list of public channels',
-  'Protip: You can do ==/help== or ==/help command== ',
+  'Protip: You can do ==/help== or ==/help command==',
+  'Protip: Privately message with: /whisper @name The message',
 ];
 
 /**

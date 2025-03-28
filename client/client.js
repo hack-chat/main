@@ -567,8 +567,15 @@ ${args.lib}
       if(confirm(warning)) {
         fetch(args.lib)
           .then(response => response.text())
-          .then(script => {
-            eval(script);
+          .then(async (script) => {
+            const blob = new Blob([script], { type: 'text/javascript' });
+            const url = URL.createObjectURL(blob);
+            try {
+              const module = await import(url);
+              return module;
+            } finally {
+              URL.revokeObjectURL(url);
+            }
           })
           .catch(error => {
             console.error(`Error loading script from ${args.lib}:`, error);
