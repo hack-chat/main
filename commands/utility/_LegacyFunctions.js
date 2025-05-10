@@ -24,6 +24,8 @@ import {
 export function upgradeLegacyJoin(server, socket, payload) {
   const newPayload = payload;
 
+  if (!newPayload.pass) newPayload.pass = '';
+
   // `join` is the legacy entry point, so apply protocol version
   socket.hcProtocol = 1;
 
