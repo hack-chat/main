@@ -9,6 +9,7 @@
 import {
   CodebaseVersion,
   Errors,
+  Info,
 } from '../utility/_Constants.js';
 
 /**
@@ -75,8 +76,9 @@ export async function run({
 
   // output reply
   server.reply({
-    cmd: 'info', // @todo Add numeric info code as `id`
+    cmd: 'info',
     text: reply,
+    id: Info.Core.HELP_TEXT,
     channel: socket.channel, // @todo Multichannel
   }, socket);
 

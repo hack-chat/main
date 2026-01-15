@@ -1,10 +1,14 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Get stats
-  * @version 1.0.0
+  * @version 1.1.0
   * @description Sends back current server stats to the calling client
   * @module morestats
   */
+
+import {
+  Info,
+} from '../utility/_Constants.js';
 
 /**
   * Format input time into string
@@ -42,26 +46,20 @@ export async function run({ core, server, socket }) {
   // gather connection and channel count
   const ips = {};
   const channels = {};
-  // @todo use public channel flag
-  const publicChanCounts = {
-    lounge: 0,
-    meta: 0,
-    math: 0,
-    physics: 0,
-    chemistry: 0,
-    technology: 0,
-    programming: 0,
-    games: 0,
-    banana: 0,
-    chinese: 0,
-  };
+  const publicChanCounts = {};
 
-  // @todo code resuage between here and `session`; should share exported function
+  if (core.appConfig.data.publicChannels) {
+    core.appConfig.data.publicChannels.forEach((channel) => {
+      publicChanCounts[channel] = 0;
+    });
+  }
+
   server.clients.forEach((client) => {
     if (client.channel) {
       channels[client.channel] = true;
       ips[client.address] = true;
-      if (typeof publicChanCounts[client.channel] !== 'undefined') {
+
+      if (Object.prototype.hasOwnProperty.call(publicChanCounts, client.channel)) {
         publicChanCounts[client.channel] += 1;
       }
     }
@@ -77,9 +75,34 @@ export async function run({ core, server, socket }) {
   const stats = core.stats.get('stats-requested') || 0;
   const uptime = formatTime(process.hrtime(core.stats.get('start-time')));
 
+  let replyText = '# Server Statistics\n';
+  replyText += '| Metric | Value |\n';
+  replyText += '| :--- | --- |\n';
+  replyText += `| **Current Connections** | ${uniqueClientCount} |\n`;
+  replyText += `| **Current Channels** | ${uniqueChannels} |\n`;
+  replyText += `| **Users Joined** | ${joins} |\n`;
+  replyText += `| **Invites Sent** | ${invites} |\n`;
+  replyText += `| **Messages Sent** | ${messages} |\n`;
+  replyText += `| **Users Banned** | ${banned} |\n`;
+  replyText += `| **Users Kicked** | ${kicked} |\n`;
+  replyText += `| **Stats Requested** | ${stats} |\n`;
+  replyText += `| **Server Uptime** | ${uptime} |\n\n`;
+
+  const sortedPublicChannels = Object.keys(publicChanCounts)
+    .map((channel) => ({ name: channel, count: publicChanCounts[channel] }))
+    .sort((a, b) => b.count - a.count);
+
+  replyText += '## Public Channels\n';
+  replyText += '| Channel | Users |\n';
+  replyText += '| :--- | --- |\n';
+
+  sortedPublicChannels.forEach((channelObj) => {
+    replyText += `| ?${channelObj.name} | ${channelObj.count} |\n`;
+  });
+
   // dispatch info
   server.reply({
-    cmd: 'info', // @todo Add numeric info code as `id`
+    cmd: 'info',
     users: uniqueClientCount,
     chans: uniqueChannels,
     joins,
@@ -90,15 +113,8 @@ export async function run({ core, server, socket }) {
     stats,
     uptime,
     public: publicChanCounts,
-    text: `current-connections: ${uniqueClientCount}
-current-channels: ${uniqueChannels}
-users-joined: ${joins}
-invites-sent: ${invites}
-messages-sent: ${messages}
-users-banned: ${banned}
-users-kicked: ${kicked}
-stats-requested: ${stats}
-server-uptime: ${uptime}`,
+    text: replyText,
+    id: Info.Core.STATS_FULL,
     channel: socket.channel, // @todo Multichannel
   }, socket);
 

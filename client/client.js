@@ -548,7 +548,7 @@ var COMMANDS = {
     nickSpan.appendChild(nickLink);
 
     messageDom.appendChild(nickSpan);
-    
+
     var textEl = document.createElement('p');
     textEl.classList.add('text');
 

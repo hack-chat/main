@@ -1,7 +1,7 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Ban a user
-  * @version 1.0.0
+  * @version 1.1.0
   * @description Bans target user by name
   * @module ban
   */
@@ -12,6 +12,7 @@ import {
 } from '../utility/_UAC.js';
 import {
   Errors,
+  Info,
 } from '../utility/_Constants.js';
 import {
   findUser,
@@ -71,16 +72,18 @@ export async function run({
 
   // notify normal users
   server.broadcast({
-    cmd: 'info', // @todo Add numeric info code as `id`
+    cmd: 'info',
     text: `Banned ${targetNick}`,
+    id: Info.Mod.BANNED,
     user: getUserDetails(targetUser),
     channel: socket.channel, // @todo Multichannel
   }, { channel: socket.channel, level: (level) => isModerator(level) });
 
   // notify mods
   server.broadcast({
-    cmd: 'info', // @todo Add numeric info code as `id`
+    cmd: 'info',
     text: `${socket.nick}#${socket.trip} banned ${targetNick} in ${payload.channel}, userhash: ${targetUser.hash}`,
+    id: Info.Mod.BANNED_DETAILED,
     channel: socket.channel, // @todo Multichannel
     inChannel: payload.channel,
     user: getUserDetails(targetUser),

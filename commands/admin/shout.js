@@ -1,11 +1,14 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Emit text everywhere
-  * @version 1.0.0
+  * @version 1.1.0
   * @description Displays passed text to every client connected
   * @module shout
   */
 
+import {
+  Info,
+} from '../utility/_Constants.js';
 import {
   isAdmin,
 } from '../utility/_UAC.js';
@@ -24,8 +27,9 @@ export async function run({ server, socket, payload }) {
 
   // send text to all channels
   server.broadcast({
-    cmd: 'info', // @todo Add numeric info code as `id`
+    cmd: 'info',
     text: `Server Notice: ${payload.text}`,
+    id: Info.Admin.SHOUT,
     channel: false, // @todo Multichannel, false for global
   }, {});
 

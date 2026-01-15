@@ -3,9 +3,9 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Enables the captcha
-  * @version 1.0.0
+  * @version 1.1.0
   * @description Enables the captcha on the channel specified in the channel property,
-  *              default is current channel
+  * default is current channel
   * @module enablecaptcha
   */
 
@@ -26,6 +26,7 @@ import {
 } from '../utility/_LegacyFunctions.js';
 import {
   Errors,
+  Info,
 } from '../utility/_Constants.js';
 
 /**
@@ -68,8 +69,9 @@ export async function run({
 
   if (core.captchas[targetChannel]) {
     return server.reply({
-      cmd: 'info', // @todo Add numeric info code as `id`
+      cmd: 'info',
       text: 'Captcha is already enabled.',
+      id: Info.Captcha.ALREADY_ENABLED,
       channel: socket.channel, // @todo Multichannel
     }, socket);
   }
@@ -77,8 +79,9 @@ export async function run({
   core.captchas[targetChannel] = true;
 
   server.broadcast({
-    cmd: 'info', // @todo Add numeric info code as `id`
+    cmd: 'info',
     text: `Captcha enabled on: ${targetChannel}`,
+    id: Info.Captcha.ENABLED,
     channel: socket.channel, // @todo Multichannel, false for global info
   }, { channel: socket.channel, level: isModerator });
 
@@ -163,6 +166,10 @@ export function chatCheck({
 export function joinCheck({
   core, server, socket, payload,
 }) {
+  if (typeof payload === 'undefined' || typeof payload.channel === 'undefined') {
+    return false;
+  }
+
   // check if channel has captcha enabled
   if (core.captchas[payload.channel] !== true) {
     return payload;
@@ -170,7 +177,7 @@ export function joinCheck({
 
   // `join` is the legacy entry point, check if it needs to be upgraded
   const origPayload = { ...payload };
-  if (typeof socket.hcProtocol === 'undefined') {
+  if (typeof socket.hcProtocol === 'undefined' || socket.hcProtocol === 1) {
     payload = upgradeLegacyJoin(server, socket, payload);
   }
 

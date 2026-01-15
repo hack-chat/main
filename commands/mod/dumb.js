@@ -4,8 +4,8 @@
 /**
   * @author OpSimple ( https://github.com/OpSimple )
   * @summary Muzzle a user
-  * @version 1.0.0
-  * @description Globally shadow mute a connection. Optional allies array will see muted messages.
+  * @version 1.1.0
+  * @description Globally shadow mute a connection. Optional allies array will see muted messages
   * @module dumb
   */
 
@@ -17,6 +17,7 @@ import {
 } from '../utility/_Channels.js';
 import {
   Errors,
+  Info,
 } from '../utility/_Constants.js';
 import {
   legacyInviteReply,
@@ -24,7 +25,7 @@ import {
 } from '../utility/_LegacyFunctions.js';
 
 /**
-  * Returns the channel that should be invited to.
+  * Returns the channel that should be invited to
   * @param {any} channel
   * @private
   * @return {string}
@@ -130,8 +131,9 @@ export async function run({
 
   // notify mods
   server.broadcast({
-    cmd: 'info', // @todo Add numeric info code as `id`
+    cmd: 'info',
     text: `${socket.nick}#${socket.trip} muzzled ${targetUser.nick} in ${payload.channel}, userhash: ${targetUser.hash}`,
+    id: Info.Mod.MUZZLED_DETAILED,
     channel: false, // @todo Multichannel, false for global
   }, { level: isModerator });
 
@@ -176,6 +178,7 @@ export function chatCheck({
       channel: socket.channel,
       text: payload.text,
       level: socket.level,
+      flair: socket.flair,
     };
 
     if (socket.trip) {
@@ -201,7 +204,7 @@ export function chatCheck({
     }
 
     /**
-      * Blanket "spam" protection.
+      * Blanket "spam" protection
       * May expose the ratelimiting lines from `chat` and use that
       * @todo one day #lazydev
       */

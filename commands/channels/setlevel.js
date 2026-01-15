@@ -1,7 +1,7 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Change user level
-  * @version 1.0.0
+  * @version 1.1.0
   * @description Alter the permission level a trip is allowed within current channel
   * @module setlevel
   */
@@ -17,6 +17,7 @@ import {
 } from '../utility/_Channels.js';
 import {
   Errors,
+  Info,
 } from '../utility/_Constants.js';
 
 /**
@@ -122,8 +123,9 @@ export async function run({
       }, { channel: socket.channel });
 
       server.broadcast({
-        cmd: 'info', // @todo Add numeric info code as `id`
+        cmd: 'info',
         text: `Changed permission level of "${payload.trip}" to "${payload.level}"`,
+        id: Info.Admin.SHOUT,
         channel: socket.channel, // @todo Multichannel
       }, { channel: socket.channel });
     }
@@ -160,28 +162,24 @@ export function setlevelCheck({
   if (payload.text.startsWith('/setlevel')) {
     const input = payload.text.split(' ');
 
-    // If there is no trip parameter
+    // if there is no trip parameter
     if (!input[1]) {
-      server.reply({
+      return server.reply({
         cmd: 'warn',
         text: 'Failed to set level: Missing trip. Refer to `/help setlevel` for instructions on how to use this command.',
         id: Errors.SetLevel.BAD_TRIP,
         channel: socket.channel, // @todo Multichannel
       }, socket);
-
-      return false;
     }
 
-    // If there is no level parameter
+    // if there is no level parameter
     if (!input[2]) {
-      server.reply({
+      return server.reply({
         cmd: 'warn',
         text: 'Failed to set level: Missing level label. Refer to `/help setlevel` for instructions on how to use this command.',
         id: Errors.SetLevel.BAD_LABEL,
         channel: socket.channel, // @todo Multichannel
       }, socket);
-
-      return false;
     }
 
     this.run({
@@ -223,6 +221,6 @@ export const info = {
   category: 'channels',
   description: 'Alter the permission level a trip is allowed within current channel',
   usage: `
-  API: { cmd: 'setlevel', trip: '[target trip]', level: '[level label]' }
-  Text: /setlevel <trip> <"channelModerator" || "channelTrusted" || "trustedUser" || "default" || "bot">`,
+    API: { cmd: 'setlevel', trip: '[target trip]', level: '[level label]' }
+    Text: /setlevel <trip> <"channelModerator" || "channelTrusted" || "trustedUser" || "default" || "bot">`,
 };

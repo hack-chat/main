@@ -6,6 +6,10 @@
   * @module stats
   */
 
+import {
+  Info,
+} from '../utility/_Constants.js';
+
 /**
   * Executes when invoked by a remote client
   * @param {Object} env - Environment object with references to core, server, socket & payload
@@ -21,7 +25,7 @@ export async function run({ core, server, socket }) {
   // gather connection and channel count
   let ips = {};
   let channels = {};
-  // for (const client of server.clients) {
+
   server.clients.forEach((client) => {
     if (client.channel) {
       channels[client.channel] = true;
@@ -37,8 +41,9 @@ export async function run({ core, server, socket }) {
 
   // dispatch info
   server.reply({
-    cmd: 'info', // @todo Add numeric info code as `id`
+    cmd: 'info',
     text: `${uniqueClientCount} unique IPs in ${uniqueChannels} channels`,
+    id: Info.Core.STATS_BASIC,
     channel: socket.channel, // @todo Multichannel
   }, socket);
 

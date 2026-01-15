@@ -133,3 +133,4 @@ session.key
 salt.key
 config.json
 commands/admin/bomb.js
+commands/mod/uwuify.js

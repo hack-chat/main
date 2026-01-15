@@ -15,6 +15,7 @@ import {
 } from '../utility/_UAC.js';
 import {
   Errors,
+  Info,
 } from '../utility/_Constants.js';
 
 /**
@@ -24,51 +25,57 @@ import {
 export const MAX_MESSAGE_ID_LENGTH = 6;
 
 /**
-  * The time in milliseconds before a message is considered stale, and thus no longer allowed
-  * to be edited.
+  * The time in milliseconds before a message is considered stale
   * @type {number}
   */
 const ACTIVE_TIMEOUT = 5 * 60 * 1000;
 
 /**
-  * The time in milliseconds that a check for stale messages should be performed.
+  * The time in milliseconds that a check for stale messages should be performed
   * @type {number}
   */
 const TIMEOUT_CHECK_INTERVAL = 30 * 1000;
 
 /**
-  * Stores active messages that can be edited.
+  * Stores active messages that can be edited
   * @type {Array}
   */
 export const ACTIVE_MESSAGES = [];
 
 /**
-  * Cleans up stale messages.
+  * Interval reference for cleanup
+  */
+let cleanupInterval = null;
+
+/**
+  * Cleans up stale messages
   * @public
   * @return {void}
   */
 export function cleanActiveMessages() {
   const now = Date.now();
-  for (let i = 0; i < ACTIVE_MESSAGES.length; i += 1) {
+  for (let i = ACTIVE_MESSAGES.length - 1; i >= 0; i -= 1) {
     const message = ACTIVE_MESSAGES[i];
     if (now - message.sent > ACTIVE_TIMEOUT || message.toDelete) {
       ACTIVE_MESSAGES.splice(i, 1);
-      i -= 1;
     }
   }
 }
 
-// TODO: This won't get cleared on module reload.
-setInterval(cleanActiveMessages, TIMEOUT_CHECK_INTERVAL);
+if (!cleanupInterval) {
+  cleanupInterval = setInterval(cleanActiveMessages, TIMEOUT_CHECK_INTERVAL);
+}
 
 /**
-  * Adds a message to the active messages map.
+  * Adds a message to the active messages map
   * @public
-  * @param {string} id
+  * @param {string} customId
   * @param {number} userid
   * @return {void}
   */
 export function addActiveMessage(customId, userid) {
+  if (!customId) return;
+
   ACTIVE_MESSAGES.push({
     customId,
     userid,
@@ -112,10 +119,11 @@ export async function run({
 
   const { customId } = payload;
 
-  if (typeof (customId) === 'string' && customId.length > MAX_MESSAGE_ID_LENGTH) {
-    // There's a limit on the custom id length.
+  if (typeof customId === 'string' && customId.length > MAX_MESSAGE_ID_LENGTH) {
     return server.police.frisk(socket, 13);
   }
+
+  const messageId = Math.floor(Math.random() * 999999) + 1;
 
   // build chat payload
   const outgoingPayload = {
@@ -128,6 +136,7 @@ export async function run({
     level: socket.level,
     flair: socket.flair,
     customId,
+    id: messageId,
   };
 
   if (isAdmin(socket.level)) {
@@ -144,7 +153,9 @@ export async function run({
     outgoingPayload.color = socket.color;
   }
 
-  addActiveMessage(outgoingPayload.customId, socket.userid);
+  if (outgoingPayload.customId) {
+    addActiveMessage(outgoingPayload.customId, socket.userid);
+  }
 
   // broadcast to channel peers
   server.broadcast(outgoingPayload, { channel: socket.channel });
@@ -181,13 +192,14 @@ export function commandCheckIn({ server, socket, payload }) {
   }
 
   if (payload.text.startsWith('/shrug')) {
-    payload.text = payload.text.replace('/shrug', String.fromCharCode(175)+String.fromCharCode(92)+String.fromCharCode(92)+String.fromCharCode(92)+String.fromCharCode(95)+String.fromCharCode(40)+String.fromCharCode(12484)+String.fromCharCode(41)+String.fromCharCode(92)+String.fromCharCode(95)+String.fromCharCode(47)+String.fromCharCode(175));
+    payload.text = payload.text.replace('/shrug', String.fromCharCode(175, 92, 92, 92, 95, 40, 12484, 41, 92, 95, 47, 175));
   }
 
   if (payload.text.startsWith('/myhash')) {
     server.reply({
-      cmd: 'info', // @todo Add numeric info code as `id`
+      cmd: 'info',
       text: `Your hash: ${socket.hash}`,
+      id: Info.Core.MY_HASH,
       channel: socket.channel, // @todo Multichannel
     }, socket);
 

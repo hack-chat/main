@@ -3,16 +3,17 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Locks the channel
-  * @version 1.0.0
+  * @version 1.1.0
   * @description Locks a channel preventing default levels from joining
   * @module lockroom
   */
 
 import {
-  isTrustedUser,
   isModerator,
+  isChannelModerator,
   verifyNickname,
   getUserPerms,
+  levels,
 } from '../utility/_UAC.js';
 import {
   upgradeLegacyJoin,
@@ -20,6 +21,7 @@ import {
 } from '../utility/_LegacyFunctions.js';
 import {
   Errors,
+  Info,
 } from '../utility/_Constants.js';
 import {
   canJoinChannel,
@@ -69,40 +71,73 @@ export async function init(core) {
 export async function run({
   core, server, socket, payload,
 }) {
+  if (typeof socket.channel !== 'string') { // @todo Multichannel
+    return false; // silently fail
+  }
+
   // increase rate limit chance and ignore if not admin or mod
-  if (!isModerator(socket.level)) {
+  if (!isChannelModerator(socket.level)) {
     return server.police.frisk(socket, 10);
   }
 
-  let targetChannel;
+  const targetChannel = socket.channel;
 
-  if (typeof payload.channel !== 'string') {
-    if (typeof socket.channel !== 'string') { // @todo Multichannel
-      return false; // silently fail
-    }
-
-    targetChannel = socket.channel;
-  } else {
-    targetChannel = payload.channel;
-  }
-
-  if (core.locked[targetChannel]) {
+  if (typeof core.locked[targetChannel] !== 'undefined' && core.locked[targetChannel] !== false) {
     return server.reply({
-      cmd: 'info', // @todo Add numeric info code as `id`
+      cmd: 'warn',
       text: 'Channel is already locked.',
-      channel: socket.channel, // @todo Multichannel
+      id: Errors.Global.INVALID_DATA,
+      channel: targetChannel, // @todo Multichannel
     }, socket);
   }
 
-  // apply lock flag to channel list
-  core.locked[targetChannel] = true;
+  let lockLevel = socket.level;
+  if (typeof payload.level !== 'undefined') {
+    if (typeof payload.level === 'string') {
+      if (typeof levels[payload.level] === 'number') {
+        lockLevel = levels[payload.level];
+      }
+    } else if (typeof payload.level === 'number') {
+      if (lockLevel > 1) {
+        lockLevel = payload.level;
+      }
+    } else {
+      return server.reply({
+        cmd: 'warn',
+        text: `Expected "level" to be a number or string label: ${Object.keys(levels).join(', ')}`,
+        id: Errors.LockRoom.LEVEL_REQUIRED,
+        channel: targetChannel, // @todo Multichannel
+      }, socket);
+    }
+  }
+
+  if (lockLevel > socket.level) {
+    return server.reply({
+      cmd: 'warn',
+      text: `Target level too high (${lockLevel}). You may only lock up to ${socket.level}`,
+      id: Errors.LockRoom.LEVEL_TOO_HIGH,
+      channel: targetChannel, // @todo Multichannel
+    }, socket);
+  }
+
+  core.locked[targetChannel] = lockLevel;
 
   // inform mods
   server.broadcast({
-    cmd: 'info', // @todo Add numeric info code as `id`
-    text: `Channel: ?${targetChannel} lock enabled by [${socket.trip}]${socket.nick}`,
+    cmd: 'info',
+    text: `Channel: ?${targetChannel} locked to ${lockLevel} by [${socket.trip}]${socket.nick}`,
+    id: Info.Mod.LOCKED_DETAILED,
+    channel: targetChannel, // @todo Multichannel
+  }, { channel: targetChannel, level: isChannelModerator });
+
+  server.broadcast({
+    cmd: 'info',
+    text: `Channel: ?${targetChannel} locked to ${lockLevel} by [${socket.trip}]${socket.nick}`,
+    id: Info.Mod.LOCKED_GLOBAL_NOTIFY,
     channel: false, // @todo Multichannel, false for global info
   }, { level: isModerator });
+
+  console.log(`Channel: ?${targetChannel} locked to ${lockLevel} by [${socket.trip}]${socket.nick}`);
 
   return true;
 }
@@ -169,12 +204,38 @@ export function whisperCheck({
   * string = error
   */
 export function chatCheck({
-  socket, payload,
+  core, server, socket, payload,
 }) {
   if (socket.channel === 'purgatory') {
     if (isModerator(socket.level)) {
       return payload;
     }
+
+    return false;
+  }
+
+  if (typeof payload.text !== 'string') {
+    return false;
+  }
+
+  if (payload.text.startsWith('/lockroom')) {
+    const [, levelArg] = payload.text.split(' ');
+
+    const newPayload = {
+      cmd: 'lockroom',
+    };
+
+    if (levelArg) {
+      const parsedLevel = Number(levelArg);
+      newPayload.level = !Number.isNaN(parsedLevel) ? parsedLevel : levelArg;
+    }
+
+    run({
+      core,
+      server,
+      socket,
+      payload: newPayload,
+    });
 
     return false;
   }
@@ -214,14 +275,14 @@ export function joinCheck({
   core, server, socket, payload,
 }) {
   // check if target channel is locked
-  if (typeof core.locked[payload.channel] === 'undefined' || core.locked[payload.channel] !== true) {
+  if (typeof core.locked[payload.channel] === 'undefined' || core.locked[payload.channel] === false) {
     if (payload.channel !== 'purgatory') {
       return payload;
     }
   }
 
   // `join` is the legacy entry point, check if it needs to be upgraded
-  if (typeof socket.hcProtocol === 'undefined') {
+  if (typeof socket.hcProtocol === 'undefined' || socket.hcProtocol === 1) {
     payload = upgradeLegacyJoin(server, socket, payload);
   }
 
@@ -278,8 +339,8 @@ export function joinCheck({
   };
 
   // check if trip is allowed
-  if (userInfo.uType === 'user') {
-    if (userInfo.trip == null || isTrustedUser(level) === false) {
+  if (!isModerator(userInfo.level)) {
+    if (core.locked[channel] > userInfo.level) {
       const origNick = userInfo.nick;
       const origChannel = payload.channel;
 
@@ -296,15 +357,17 @@ export function joinCheck({
 
       setTimeout(() => {
         server.reply({
-          cmd: 'info', // @todo Add numeric info code as `id`
+          cmd: 'info',
           text: danteQuotes[Math.floor(Math.random() * danteQuotes.length)],
+          id: Info.Core.PURGATORY_QUOTE,
           channel: 'purgatory', // @todo Multichannel
         }, socket);
       }, 100);
 
       server.broadcast({
-        cmd: 'info', // @todo Add numeric info code as `id`
+        cmd: 'info',
         text: `${payload.nick} is: ${origNick}\ntrip: ${userInfo.trip || 'none'}\ntried to join: ?${origChannel}\nhash: ${userInfo.hash}`,
+        id: Info.Core.PURGATORY_NOTIFY,
         channel: 'purgatory', // @todo Multichannel, false for global info
       }, { channel: 'purgatory', level: isModerator });
     }
@@ -327,5 +390,6 @@ export const info = {
   category: 'moderators',
   description: 'Locks a channel preventing default levels from joining',
   usage: `
-    API: { cmd: 'lockroom', channel: '<optional channel, defaults to your current channel>' }`,
+    API: { cmd: 'lockroom', channel: '<optional channel, defaults to your current channel>', level: <optional string or number> }
+    Text: /lockroom`,
 };

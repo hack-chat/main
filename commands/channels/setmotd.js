@@ -1,10 +1,10 @@
 /**
-* @author Marzavec ( https://github.com/marzavec )
-* @summary Change motd
-* @version 1.0.0
-* @description Update the channel motd to something new
-* @module setmotd
-*/
+  * @author Marzavec ( https://github.com/marzavec )
+  * @summary Change motd
+  * @version 1.1.0
+  * @description Update the channel motd to something new
+  * @module setmotd
+  */
 
 import {
   isChannelModerator,
@@ -15,6 +15,7 @@ import {
 } from '../utility/_Channels.js';
 import {
   Errors,
+  Info,
   MaxMOTDLength,
 } from '../utility/_Constants.js';
 
@@ -63,16 +64,18 @@ export async function run({
   updateChannelSettings(core.appConfig.data, socket.channel, channelSettings);
 
   server.broadcast({
-    cmd: 'info', // @todo Add numeric info code as `id`
+    cmd: 'info',
     text: `MOTD changed by [${socket.trip}]${socket.nick}, new motd:`,
+    id: Info.Admin.SHOUT,
     channel: socket.channel, // @todo Multichannel
-  }, { channel: socket.channel });
+  }, { channel: socket.channel, level: isChannelModerator });
 
   server.broadcast({
-    cmd: 'info', // @todo Add numeric info code as `id`
+    cmd: 'info',
     text: channelSettings.motd,
+    id: Info.Core.MOTD,
     channel: socket.channel, // @todo Multichannel
-  }, { channel: socket.channel });
+  }, { channel: socket.channel, level: isChannelModerator });
 
   return true;
 }
@@ -141,6 +144,6 @@ export const info = {
   category: 'channels',
   description: 'Update the channel motd to something new',
   usage: `
-  API: { cmd: 'setmotd', motd: '[new motd]' }
-  Text: /setmotd <new motd>`,
+    API: { cmd: 'setmotd', motd: '[new motd]' }
+    Text: /setmotd <new motd>`,
 };

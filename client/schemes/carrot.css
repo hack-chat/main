@@ -6,7 +6,7 @@ input,
 textarea {
   color: #ee600d;
 }
-  
+
 .message {
   border-left: 1px solid #ee600d;
 }
@@ -39,17 +39,16 @@ textarea {
 .warn .text {
   color: #ffbb00;
 }
-  
+
 #footer {
   background: #000000;
 }
-  
+
 #sidebar {
   background: #000000;
   border-color: #000000;
 }
-    
+
 #chatform {
   border-color: #ee600d;
 }
-  

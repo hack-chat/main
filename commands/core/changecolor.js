@@ -1,26 +1,23 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Update name color
-  * @version 1.0.0
+  * @version 1.1.0
   * @description Allows calling client to change their nickname color
   * @module changecolor
   */
 
 import {
+  getSession,
+} from './session.js';
+import {
   getUserDetails,
 } from '../utility/_UAC.js';
 import {
+  verifyColor,
+} from '../utility/_Text.js';
+import {
   Errors,
 } from '../utility/_Constants.js';
-
-/**
-  * Validate a string as a valid hex color string
-  * @param {string} color - Color string to validate
-  * @private
-  * @todo Move into utility module
-  * @return {boolean}
-  */
-const verifyColor = (color) => /(^[0-9A-F]{6}$)|(^[0-9A-F]{3}$)/i.test(color);
 
 /**
   * Executes when invoked by a remote client
@@ -29,7 +26,7 @@ const verifyColor = (color) => /(^[0-9A-F]{6}$)|(^[0-9A-F]{3}$)/i.test(color);
   * @return {void}
   */
 export async function run({
-  server, socket, payload,
+  core, server, socket, payload,
 }) {
   // must be in a channel to run this command
   if (typeof socket.channel === 'undefined') {
@@ -84,6 +81,13 @@ export async function run({
   // @todo this should be sent to every channel the user is in (multichannel)
   server.broadcast(updateNotice, { channel: socket.channel });
 
+  server.reply({
+    cmd: 'session',
+    restored: false,
+    token: getSession(socket, core),
+    channels: socket.channels,
+  }, socket);
+
   return true;
 }
 
@@ -115,7 +119,7 @@ export function colorCheck({
   if (payload.text.startsWith('/color ')) {
     const input = payload.text.split(' ');
 
-    // If there is no color target parameter
+    // if there is no color target parameter
     if (input[1] === undefined) {
       server.reply({
         cmd: 'warn',

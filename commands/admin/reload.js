@@ -1,11 +1,14 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Refresh modules
-  * @version 1.0.0
+  * @version 1.1.0
   * @description Allows a remote user to clear and re-import the server command modules
   * @module reload
   */
 
+import {
+  Info,
+} from '../utility/_Constants.js';
 import {
   isAdmin,
   isModerator,
@@ -77,8 +80,9 @@ ${loadResult}\n\n`;
 
   // send results to moderators (which the user using this command is higher than)
   server.broadcast({
-    cmd: 'info', // @todo Add numeric info code as `id`
+    cmd: 'info',
     text: loadReport,
+    id: Info.Admin.RELOAD_STATUS,
     channel: false, // @todo Multichannel, false for global
   }, { level: isModerator });
 

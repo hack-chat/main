@@ -1,11 +1,17 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Removes a mod
-  * @version 1.0.0
+  * @version 1.1.0
   * @description Removes target trip from the config as a mod and downgrades the socket type
   * @module removemod
   */
 
+import {
+  Info,
+} from '../utility/_Constants.js';
+import {
+  legacyLevelToLabel,
+} from '../utility/_LegacyFunctions.js';
 import {
   isAdmin,
   isModerator,
@@ -44,22 +50,23 @@ export async function run({
       ...getUserDetails(targetMod[0]),
       ...{
         cmd: 'updateUser',
-        uType: 'user', // @todo use legacyLevelToLabel from _LegacyFunctions.js
+        uType: legacyLevelToLabel(levels.default),
         level: levels.default,
       },
     };
 
     for (let i = 0, l = targetMod.length; i < l; i += 1) {
       // downgrade privileges
-      targetMod[i].uType = 'user';
+      targetMod[i].uType = legacyLevelToLabel(levels.default);
       targetMod[i].level = levels.default;
       targetMod[i].color = color;
       targetMod[i].flair = flair;
 
       // inform ex-mod
       server.send({
-        cmd: 'info', // @todo Add numeric info code as `id`
+        cmd: 'info',
         text: 'You are now a user.',
+        id: Info.Admin.YOU_ARE_USER,
         channel: targetMod[i].channel, // @todo Multichannel
       }, targetMod[i]);
 
@@ -75,17 +82,19 @@ export async function run({
 
   // return success message
   server.reply({
-    cmd: 'info', // @todo Add numeric info code as `id`
+    cmd: 'info',
     text: `Removed mod trip: ${
       payload.trip
     }, remember to run 'saveconfig' to make it permanent`,
+    id: Info.Admin.MOD_REMOVED,
     channel: socket.channel, // @todo Multichannel
   }, socket);
 
   // notify all mods
   server.broadcast({
-    cmd: 'info', // @todo Add numeric info code as `id`
+    cmd: 'info',
     text: `Removed mod: ${payload.trip}`,
+    id: Info.Admin.MOD_REMOVED_BROADCAST,
     channel: false, // @todo Multichannel, false for global
   }, { level: isModerator });
 

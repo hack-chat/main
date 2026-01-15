@@ -1,7 +1,7 @@
 /**
   * @author Marzavec
   * @summary Sets channel to public
-  * @version 1.0.0
+  * @version 1.1.0
   * @description Make channel publicly listed on the front page
   * @module makepublic
   */
@@ -13,6 +13,7 @@ import {
 } from '../utility/_UAC.js';
 import {
   Errors,
+  Info,
 } from '../utility/_Constants.js';
 import {
   getChannelSettings,
@@ -120,14 +121,16 @@ export function chatHook({
       core.appConfig.data.publicChannels.push(socket.channel);
 
       server.broadcast({
-        cmd: 'info', // @todo Add numeric info code as `id`
+        cmd: 'info',
         text: `A new channel has been made public: ?${socket.channel}`,
+        id: Info.Admin.SHOUT,
         channel: socket.channel, // @todo Multichannel
       }, { level: (level) => isModerator(level) });
 
       server.reply({
-        cmd: 'info', // @todo Add numeric info code as `id`
+        cmd: 'info',
         text: 'This channel has been added to the list of public channels',
+        id: Info.Admin.CONFIG_SAVED,
         channel: socket.channel, // @todo Multichannel
       }, socket);
 
@@ -170,6 +173,6 @@ export const info = {
   category: 'channels',
   description: 'Make channel publicly listed on the front page',
   usage: `
-  API: { cmd: 'makepublic' }
-  Text: /makepublic`,
+    API: { cmd: 'makepublic' }
+    Text: /makepublic`,
 };

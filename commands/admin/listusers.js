@@ -5,11 +5,14 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Show users and channels
-  * @version 1.0.0
+  * @version 1.1.0
   * @description Outputs all current channels and sockets in those channels
   * @module listusers
   */
 
+import {
+  Info,
+} from '../utility/_Constants.js';
 import {
   isAdmin,
 } from '../utility/_UAC.js';
@@ -28,31 +31,51 @@ export async function run({ server, socket }) {
 
   // find all users currently in a channel
   const currentUsers = server.findSockets({
-    channel: (channel) => true,
+    channel: () => true,
   });
 
-  // compile channel and user list
   const channels = {};
   for (let i = 0, j = currentUsers.length; i < j; i += 1) {
-    if (typeof channels[currentUsers[i].channel] === 'undefined') {
-      channels[currentUsers[i].channel] = [];
+    const user = currentUsers[i];
+    if (typeof channels[user.channel] === 'undefined') {
+      channels[user.channel] = [];
     }
 
-    channels[currentUsers[i].channel].push(
-      `[${currentUsers[i].trip || 'null'}]${currentUsers[i].nick}`,
-    );
+    channels[user.channel].push(user);
   }
 
-  // build output
-  const lines = [];
-  for (const channel in channels) {
-    lines.push(`?${channel} ${channels[channel].join(', ')}`);
+  const channelList = Object.keys(channels).map((name) => ({
+    name,
+    users: channels[name],
+    count: channels[name].length,
+  }));
+
+  channelList.sort((a, b) => b.count - a.count);
+
+  let reply = '| Channel | Trip | Nick | Hash |\n';
+  reply += '| :--- | :--- | :--- | :--- |\n';
+
+  for (let i = 0; i < channelList.length; i += 1) {
+    const { name, users } = channelList[i];
+
+    for (let k = 0; k < users.length; k += 1) {
+      const u = users[k];
+      const trip = u.trip || '(none)';
+      const hash = u.hash || '???';
+
+      reply += `| ?${name} | ${trip} | ${u.nick} | ${hash} |\n`;
+    }
   }
+
+  reply += '\n---\n';
+  reply += `**Total Channels:** ${channelList.length}\n`;
+  reply += `**Total Users:** ${currentUsers.length}`;
 
   // send reply
   server.reply({
-    cmd: 'info', // @todo Add numeric info code as `id`
-    text: lines.join('\n'),
+    cmd: 'info',
+    text: reply,
+    id: Info.Admin.USER_LIST,
     channel: socket.channel, // @todo Multichannel
   }, socket);
 

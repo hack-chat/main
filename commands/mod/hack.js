@@ -1,6 +1,6 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
-  * @summary Sends a hack request to the target nick.
+  * @summary Sends a hack request to the target nick
   * @version 1.0.0
   * @description Please note that the term 'hack' is used in jest here
   * @module hack
@@ -39,7 +39,7 @@ export async function run({
   }
 
   // check for spam
-  if (server.police.frisk(socket, 6)) {
+  if (server.police.frisk(socket, 4)) {
     return server.reply({
       cmd: 'warn',
       text: 'You are sending hack requests too fast. Wait a moment before trying again.',
@@ -50,13 +50,13 @@ export async function run({
 
   // verify user input
   // if this is a legacy client add missing params to payload
+  if (typeof payload.channel !== 'string') payload.channel = socket.channel;
+
   if (socket.hcProtocol === 1) {
     if (typeof socket.channel === 'undefined' || typeof payload.nick !== 'string') {
       return true;
     }
-
-    payload.channel = socket.channel; // eslint-disable-line no-param-reassign
-  } else if (typeof payload.userid !== 'number' || typeof payload.channel !== 'string') {
+  } else if (typeof payload.userid !== 'number') {
     return true;
   }
 

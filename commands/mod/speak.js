@@ -3,7 +3,7 @@
 /**
   * @author OpSimple ( https://github.com/OpSimple )
   * @summary Unmuzzle a user
-  * @version 1.0.0
+  * @version 1.1.0
   * @description Pardon a dumb user to be able to speak again
   * @module speak
   */
@@ -13,6 +13,7 @@ import {
 } from '../utility/_UAC.js';
 import {
   Errors,
+  Info,
 } from '../utility/_Constants.js';
 
 /**
@@ -56,8 +57,9 @@ export async function run({
       core.muzzledHashes = {};
 
       return server.broadcast({
-        cmd: 'info', // @todo Add numeric info code as `id`
+        cmd: 'info',
         text: `${socket.nick} unmuzzled all users`,
+        id: Info.Mod.UNMUZZLED_ALL,
         channel: false, // @todo Multichannel, false for global
       }, { level: isModerator });
     }
@@ -65,8 +67,9 @@ export async function run({
     core.muzzledHashes = {};
 
     return server.broadcast({
-      cmd: 'info', // @todo Add numeric info code as `id`
+      cmd: 'info',
       text: `${socket.nick} unmuzzled all users`,
+      id: Info.Mod.UNMUZZLED_ALL,
       channel: false, // @todo Multichannel, false for global
     }, { level: isModerator });
   }
@@ -83,8 +86,9 @@ export async function run({
 
   // notify mods
   server.broadcast({
-    cmd: 'info', // @todo Add numeric info code as `id`
+    cmd: 'info',
     text: `${socket.nick}#${socket.trip} unmuzzled : ${target}`,
+    id: Info.Mod.UNMUZZLED_DETAILED,
     channel: false, // @todo Multichannel, false for global
   }, { level: isModerator });
 

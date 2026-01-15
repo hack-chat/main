@@ -1,12 +1,15 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Disables the captcha
-  * @version 1.0.0
+  * @version 1.1.0
   * @description Disables the captcha on the channel specified in the channel property,
-  *              default is current channel
+  * default is current channel
   * @module disablecaptcha
   */
 
+import {
+  Info,
+} from '../utility/_Constants.js';
 import {
   isModerator,
 } from '../utility/_UAC.js';
@@ -51,8 +54,9 @@ export async function run({
 
   if (!core.captchas[targetChannel]) {
     return server.reply({
-      cmd: 'info', // @todo Add numeric info code as `id`
+      cmd: 'info',
       text: 'Captcha is not enabled.',
+      id: Info.Captcha.NOT_ENABLED,
       channel: socket.channel, // @todo Multichannel
     }, socket);
   }
@@ -60,8 +64,9 @@ export async function run({
   core.captchas[targetChannel] = false;
 
   server.broadcast({
-    cmd: 'info', // @todo Add numeric info code as `id`
+    cmd: 'info',
     text: `Captcha disabled on: ${targetChannel}`,
+    id: Info.Captcha.DISABLED,
     channel: false, // @todo Multichannel, false for global info
   }, { channel: targetChannel, level: isModerator });
 

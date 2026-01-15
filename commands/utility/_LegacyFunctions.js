@@ -24,10 +24,15 @@ import {
 export function upgradeLegacyJoin(server, socket, payload) {
   const newPayload = payload;
 
+  // this is why we can't have nice things
+  if (typeof payload.nick === 'undefined' || !payload.nick) {
+    payload.nick = `scarmiglione_${Math.floor(Math.random() * 99999)}`;
+  }
+
   // `join` is the legacy entry point, so apply protocol version
   socket.hcProtocol = 1;
 
-  // these would have been applied in the `session` module, apply it now
+  // these would have been applied in the `session` module, apply them now
   socket.hash = server.getSocketHash(socket);
   socket.isBot = false;
   socket.color = false;

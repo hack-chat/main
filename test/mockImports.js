@@ -62,7 +62,7 @@ const mocks = {
         }
       },
     },
-    
+
     configManager: {
       save: () => true,
     },
@@ -80,7 +80,7 @@ const mocks = {
       if (typeof filterObj.level === 'function') {
         filterObj.level();
       }
-  
+
       return true;
     },
     send: () => true,

@@ -1,7 +1,7 @@
 /**
   * @author Marzavec
   * @summary Sets channel to private
-  * @version 1.0.0
+  * @version 1.1.0
   * @description Remove channel from being listed on the front page
   * @module makeprivate
   */
@@ -11,6 +11,7 @@ import {
 } from '../utility/_UAC.js';
 import {
   Errors,
+  Info,
 } from '../utility/_Constants.js';
 
 /**
@@ -59,8 +60,9 @@ export async function run({
   core.appConfig.data.publicChannels.splice(listingIndex, 1);
 
   server.reply({
-    cmd: 'info', // @todo Add numeric info code as `id`
+    cmd: 'info',
     text: 'This channel has been removed from the list of public channels',
+    id: Info.Admin.CONFIG_SAVED,
     channel: socket.channel, // @todo Multichannel
   }, socket);
 
@@ -120,6 +122,6 @@ export const info = {
   category: 'channels',
   description: 'Remove channel from being listed on the front page',
   usage: `
-  API: { cmd: 'makeprivate' }
-  Text: /makeprivate`,
+    API: { cmd: 'makeprivate' }
+    Text: /makeprivate`,
 };

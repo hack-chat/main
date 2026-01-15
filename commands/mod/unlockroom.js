@@ -3,14 +3,18 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Unlock target channel
-  * @version 1.0.0
+  * @version 1.1.0
   * @description Unlocks a channel allowing anyone to join
   * @module unlockroom
   */
 
 import {
-  isModerator,
+  isChannelModerator,
 } from '../utility/_UAC.js';
+import {
+  Errors,
+  Info,
+} from '../utility/_Constants.js';
 
 /**
   * Automatically executes once after server is ready
@@ -31,44 +35,87 @@ export async function init(core) {
   * @return {void}
   */
 export async function run({
-  core, server, socket, payload,
+  core, server, socket,
 }) {
   // increase rate limit chance and ignore if not admin or mod
-  if (!isModerator(socket.level)) {
+  if (!isChannelModerator(socket.level)) {
     return server.police.frisk(socket, 10);
   }
 
-  let targetChannel;
+  const targetChannel = socket.channel;
 
-  if (typeof payload.channel !== 'string') {
-    if (typeof socket.channel !== 'string') { // @todo Multichannel
-      return false; // silently fail
-    }
-
-    targetChannel = socket.channel;
-  } else {
-    targetChannel = payload.channel;
+  if (typeof core.locked[targetChannel] === 'undefined' || core.locked[targetChannel] === false) {
+    return server.reply({
+      cmd: 'warn',
+      text: 'Channel is not locked.',
+      id: Errors.Global.INVALID_DATA,
+      channel: targetChannel, // @todo Multichannel
+    }, socket);
   }
 
-  if (!core.locked[targetChannel]) {
+  if (core.locked[targetChannel] > socket.level) {
     return server.reply({
-      cmd: 'info', // @todo Add numeric info code as `id`
-      text: 'Channel is not locked.',
-      channel: socket.channel, // @todo Multichannel
+      cmd: 'warn',
+      text: `Level ${core.locked[targetChannel]} required, you are level ${socket.level}`,
+      id: Errors.LockRoom.LEVEL_REQUIRED,
+      channel: targetChannel, // @todo Multichannel
     }, socket);
   }
 
   core.locked[targetChannel] = false;
 
   server.broadcast({
-    cmd: 'info', // @todo Add numeric info code as `id`
+    cmd: 'info',
     text: `Channel: ?${targetChannel} unlocked by [${socket.trip}]${socket.nick}`,
-    channel: targetChannel, // @todo Multichannel, false for global info
-  }, { channel: targetChannel, level: isModerator });
+    id: Info.Mod.UNLOCKED_DETAILED,
+    channel: targetChannel, // @todo Multichannel
+  }, { channel: targetChannel, level: isChannelModerator });
 
-  console.log(`Channel: ?${targetChannel} unlocked by [${socket.trip}]${socket.nick} in ${socket.channel}`);
+  console.log(`Channel: ?${targetChannel} unlocked by [${socket.trip}]${socket.nick}`);
 
   return true;
+}
+
+/**
+  * Automatically executes once after server is ready to register this modules hooks
+  * @param {Object} server - Reference to server environment object
+  * @public
+  * @return {void}
+  */
+export function initHooks(server) {
+  server.registerHook('in', 'chat', this.chatCheck.bind(this), 4);
+}
+
+/**
+  * Executes every time an incoming chat command is invoked;
+  * hook incoming chat commands, reject them if the channel is 'purgatory'
+  * @param {Object} env - Environment object with references to core, server, socket & payload
+  * @public
+  * @return {(Object|boolean|string)} Object = same/altered payload,
+  * false = suppress action,
+  * string = error
+  */
+export function chatCheck({
+  core, server, socket, payload,
+}) {
+  if (typeof payload.text !== 'string') {
+    return false;
+  }
+
+  if (payload.text.startsWith('/unlockroom')) {
+    this.run({
+      core,
+      server,
+      socket,
+      payload: {
+        cmd: 'unlockroom',
+      },
+    });
+
+    return false;
+  }
+
+  return payload;
 }
 
 /**

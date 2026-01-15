@@ -1,7 +1,7 @@
 /**
   * @author Marzavec
   * @summary Take channel ownership
-  * @version 1.0.0
+  * @version 1.1.0
   * @description Claim an unowned channel, enabling user management options
   * @module claimchannel
   */
@@ -15,6 +15,7 @@ import {
 } from '../utility/_UAC.js';
 import {
   Errors,
+  Info,
   ClaimExpirationDays,
 } from '../utility/_Constants.js';
 import {
@@ -29,7 +30,7 @@ import {
   * @return {void}
   */
 export async function run({
-  core, server, socket,
+  server, socket,
 }) {
   // must be in a channel to run this command
   if (typeof socket.channel === 'undefined') {
@@ -54,18 +55,36 @@ export async function run({
     }, socket);
   }
 
-  const channelSettings = getChannelSettings(core.appConfig.data, socket.channel);
+  /* const channelSettings = getChannelSettings(core.appConfig.data, socket.channel);
 
   if (channelSettings.owned) {
     return server.reply({
       cmd: 'warn',
-      text: `Failed to take ownership: This channel is already owned by the trip "${channelSettings.ownerTrip}", until ${channelSettings.claimExpires}`,
+      text: `Failed to take ownership:
+        This channel is already owned by the trip "${channelSettings.ownerTrip}",
+        until ${channelSettings.claimExpires}`,
       ownerTrip: channelSettings.ownerTrip,
       claimExpires: channelSettings.claimExpires,
       id: Errors.ClaimChannel.ALREADY_OWNED,
       channel: socket.channel, // @todo Multichannel
     }, socket);
+  } */
+
+  if (typeof socket.wallet !== 'object' || typeof socket.wallet.address !== 'string') {
+    return server.reply({
+      cmd: 'warn',
+      text: 'You must connect a wallet first',
+      id: Errors.Global.LOGIN_REQUIRED,
+      channel: socket.channel,
+    }, socket);
   }
+
+  return server.reply({
+    cmd: 'warn',
+    text: 'This command is disabled, pending reviews and updates',
+    id: Errors.Global.PERMISSION,
+    channel: socket.channel, // @todo Multichannel
+  }, socket);
 
   socket.claimCaptcha = {
     solution: captcha.generateRandomText(7),
@@ -106,6 +125,8 @@ export function initHooks(server) {
 export function chatHook({
   core, server, socket, payload,
 }) {
+  if (typeof payload === 'undefined') return false;
+
   if (typeof payload.text !== 'string') {
     return false;
   }
@@ -138,8 +159,9 @@ export function chatHook({
       console.log(`[${socket.trip}]${socket.nick} claimed ?${socket.channel}`);
 
       server.broadcast({
-        cmd: 'info', // @todo Add numeric info code as `id`
+        cmd: 'info',
         text: `Channel now owned by "${socket.trip}", until ${channelSettings.claimExpires}`,
+        id: Info.Admin.SHOUT,
         channel: socket.channel,
       }, { channel: socket.channel });
 
@@ -197,6 +219,6 @@ export const info = {
   category: 'channels',
   description: 'Claim an unowned channel, enabling user management options. You must have a trip code to run this command.',
   usage: `
-  API: { cmd: 'claimchannel' }
-  Text: /claimchannel`,
+    API: { cmd: 'claimchannel' }
+    Text: /claimchannel`,
 };

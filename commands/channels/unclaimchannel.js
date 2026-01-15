@@ -1,7 +1,7 @@
 /**
   * @author Marzavec
   * @summary Release channel ownership
-  * @version 1.0.0
+  * @version 1.1.0
   * @description Clear ownership info and channel settings
   * @module unclaimchannel
   */
@@ -14,6 +14,7 @@ import {
 } from '../utility/_UAC.js';
 import {
   Errors,
+  Info,
 } from '../utility/_Constants.js';
 import {
   getChannelSettings,
@@ -66,8 +67,9 @@ export async function run({
   deleteChannelSettings(core.appConfig.data, socket.channel);
 
   server.broadcast({
-    cmd: 'info', // @todo Add numeric info code as `id`
+    cmd: 'info',
     text: 'Channel ownership has been removed and the channel settings have been reset',
+    id: Info.Admin.SHOUT,
     channel: socket.channel,
   }, { channel: socket.channel });
 
@@ -151,6 +153,6 @@ export const info = {
   category: 'channels',
   description: 'Clear ownership info and channel settings',
   usage: `
-  API: { cmd: 'unclaimchannel' }
-  Text: /unclaimchannel`,
+    API: { cmd: 'unclaimchannel' }
+    Text: /unclaimchannel`,
 };

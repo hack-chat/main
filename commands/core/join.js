@@ -4,7 +4,7 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Join target channel
-  * @version 1.0.0
+  * @version 1.1.0
   * @description Join the target channel using the supplied nick and password
   * @module join
   */
@@ -19,6 +19,7 @@ import {
 } from '../utility/_Channels.js';
 import {
   Errors,
+  Info,
   SystemMOTDs,
 } from '../utility/_Constants.js';
 import {
@@ -72,7 +73,7 @@ export async function run({
   }
 
   // calling socket already in a channel
-  // @todo multichannel update, will remove
+  // @todo multichannel update: remove this block to allow multiple channels
   if (typeof socket.channel !== 'undefined') {
     return server.reply({
       cmd: 'warn',
@@ -81,7 +82,6 @@ export async function run({
       channel: false, // @todo Multichannel, false for global event
     }, socket);
   }
-  // end todo
 
   // validates the user input for `nick`
   if (verifyNickname(nick, socket) !== true) {
@@ -132,7 +132,6 @@ export async function run({
   });
 
   if (userExists.length > 0) {
-    // that nickname is already in that channel
     return server.reply({
       cmd: 'warn',
       text: 'Nickname taken',
@@ -167,9 +166,10 @@ export async function run({
   socket.level = userInfo.level;
   socket.uType = userInfo.uType; /* @legacy */
   socket.channel = channel; /* @legacy */
-  // @todo multi-channel patch
-  // socket.channels.push(channel);
-  socket.channels = [channel];
+
+  // initialize channels array if needed
+  if (!socket.channels) socket.channels = [];
+  if (!socket.channels.includes(channel)) socket.channels.push(channel);
 
   // global mod perks
   if (isModerator(socket.level)) {
@@ -177,14 +177,14 @@ export async function run({
   }
 
   nicks.push(userInfo.nick); /* @legacy */
-  users.push({ ...{ isme: true, isBot: socket.isBot }, ...userInfo });
+  users.push({ ...{ isme: true, isBot: socket.isBot || false }, ...userInfo });
 
   // reply with channel peer list
   server.reply({
     cmd: 'onlineSet',
     nicks, /* @legacy */
     users,
-    channel, // @todo Multichannel (?)
+    channel,
   }, socket);
 
   let { motd } = channelSettings;
@@ -193,8 +193,9 @@ export async function run({
   }
 
   server.reply({
-    cmd: 'info', // @todo Add numeric info code as `id`
+    cmd: 'info',
     text: motd,
+    id: Info.Core.MOTD,
     channel,
   }, socket);
 
@@ -236,6 +237,7 @@ export function restoreJoin({
     userid: socket.userid,
     isBot: socket.isBot,
     color: socket.color,
+    flair: socket.flair,
     channel,
   };
 
@@ -274,18 +276,19 @@ export function restoreJoin({
   }
 
   nicks.push(userInfo.nick); /* @legacy */
-  users.push({ ...{ isme: true, isBot: socket.isBot }, ...userInfo });
+  users.push({ ...{ isme: true, isBot: socket.isBot || false }, ...userInfo });
 
   // reply with channel peer list
   server.reply({
     cmd: 'onlineSet',
     nicks, /* @legacy */
     users,
-    channel, // @todo Multichannel (?)
+    channel,
   }, socket);
 
   socket.channel = channel; /* @legacy */
-  socket.channels.push(channel);
+  if (!socket.channels) socket.channels = [];
+  if (!socket.channels.includes(channel)) socket.channels.push(channel);
 
   return true;
 }

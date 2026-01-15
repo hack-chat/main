@@ -2,8 +2,9 @@
 
 /**
   * @author MinusGix ( https://github.com/MinusGix )
+  * @author Marzavec ( https://github.com/marzavec )
   * @summary General string helper functions
-  * @version v1.0.0
+  * @version v1.1.0
   * @description A library of several commonly used string functions
   * @module Text
   */
@@ -29,3 +30,11 @@ export const parseText = (text) => {
 
   return sanitizedText;
 };
+
+/**
+  * Validate a string as a valid hex color string
+  * @param {string} color - Color string to validate
+  * @public
+  * @return {boolean}
+  */
+export const verifyColor = (color) => /(^[0-9A-F]{6}$)|(^[0-9A-F]{3}$)/i.test(color);

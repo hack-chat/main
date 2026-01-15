@@ -1,7 +1,7 @@
 /**
   * @author MinusGix ( https://github.com/MinusGix )
   * @summary Change target message
-  * @version v1.0.0
+  * @version v1.1.0
   * @description Will alter a previously sent message using that message's customId
   * @module updateMessage
   */
@@ -13,6 +13,9 @@ import {
   isAdmin,
   isModerator,
 } from '../utility/_UAC.js';
+import {
+  Errors,
+} from '../utility/_Constants.js';
 import {
   ACTIVE_MESSAGES,
   MAX_MESSAGE_ID_LENGTH,
@@ -52,37 +55,37 @@ export async function run({
     return server.police.frisk(socket, 13);
   }
 
-  if (mode === 'overwrite') {
-    text = parseText(text);
+  // sanitize input regardless of mode
+  text = parseText(text);
 
-    if (text === '') {
-      text = '\u0000';
-    }
-  }
-
-  if (!text) {
+  // allow empty overwrite (clearing message), otherwise block empty text
+  if (mode === 'overwrite' && text === '') {
+    text = '\u0000';
+  } else if (!text) {
     return server.police.frisk(socket, 13);
   }
 
-  // TODO: What score should we use for this? It isn't as space filling as chat messages.
-  // But we also don't want a massive growing message.
-  // Or flashing between huge and small. Etc.
-
-  let message;
-  for (let i = 0; i < ACTIVE_MESSAGES.length; i += 1) {
-    const msg = ACTIVE_MESSAGES[i];
-
-    if (msg.userid === socket.userid && msg.customId === customId) {
-      message = ACTIVE_MESSAGES[i];
-      if (mode === 'complete') {
-        ACTIVE_MESSAGES[i].toDelete = true;
-      }
-      break;
-    }
+  const score = text.length / 83 / 4;
+  if (server.police.frisk(socket, score)) {
+    return server.reply({
+      cmd: 'warn',
+      text: 'You are sending too much text. Wait a moment and try again.',
+      id: Errors.Global.RATELIMIT,
+      channel: socket.channel,
+    }, socket);
   }
+
+  // find the target message
+  const message = ACTIVE_MESSAGES.find(
+    (msg) => msg.userid === socket.userid && msg.customId === customId,
+  );
 
   if (!message) {
     return server.police.frisk(socket, 6);
+  }
+
+  if (mode === 'complete') {
+    message.toDelete = true;
   }
 
   const outgoingPayload = {

@@ -1,7 +1,7 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Released them from the void
-  * @version 1.0.0
+  * @version 1.1.0
   * @description Clears all banned ip addresses
   * @module unbanall
   */
@@ -9,6 +9,9 @@
 import {
   isModerator,
 } from '../utility/_UAC.js';
+import {
+  Info,
+} from '../utility/_Constants.js';
 
 /**
   * Executes when invoked by a remote client
@@ -31,15 +34,17 @@ export async function run({ core, server, socket }) {
 
   // reply with success
   server.reply({
-    cmd: 'info', // @todo Add numeric info code as `id`
+    cmd: 'info',
     text: 'Unbanned all ip addresses',
+    id: Info.Mod.UNBANNED_ALL,
     channel: socket.channel, // @todo Multichannel
   }, socket);
 
   // notify mods
   server.broadcast({
-    cmd: 'info', // @todo Add numeric info code as `id`
+    cmd: 'info',
     text: `${socket.nick}#${socket.trip} unbanned all ip addresses`,
+    id: Info.Mod.UNBANNED_ALL_DETAILED,
     channel: false, // @todo Multichannel, false for global
   }, { level: isModerator });
 

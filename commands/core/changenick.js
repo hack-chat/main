@@ -3,7 +3,7 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Update nickname
-  * @version 1.0.0
+  * @version 1.1.0
   * @description Allows calling client to change their current nickname
   * @module changenick
   */
@@ -14,6 +14,7 @@ import {
 } from '../utility/_UAC.js';
 import {
   Errors,
+  Info,
 } from '../utility/_Constants.js';
 
 /**
@@ -72,13 +73,13 @@ export async function run({
   const userExists = server.findSockets({
     channel,
     nick: (targetNick) => targetNick.toLowerCase() === newNick.toLowerCase()
-      // Allow them to rename themselves to a different case
+      // allow them to rename themselves to a different case
       && targetNick != previousNick,
   });
 
   // return error if found
   if (userExists.length > 0) {
-    // That nickname is already in that channel
+    // that nickname is already in that channel
     return server.reply({
       cmd: 'warn',
       text: 'Nickname taken',
@@ -130,8 +131,9 @@ export async function run({
 
   // notify channel that the user has changed their name
   server.broadcast({
-    cmd: 'info', // @todo Add numeric info code as `id`
+    cmd: 'info',
     text: `${socket.nick} is now ${newNick}`,
+    id: Info.Core.NICK_CHANGED,
     channel, // @todo Multichannel
   }, { channel });
 
@@ -169,16 +171,14 @@ export function nickCheck({
   if (payload.text.startsWith('/nick')) {
     const input = payload.text.split(' ');
 
-    // If there is no nickname target parameter
+    // if there is no nickname target parameter
     if (!input[1]) {
-      server.reply({
+      return server.reply({
         cmd: 'warn',
         text: 'Nickname must consist of up to 24 letters, numbers, and underscores',
         id: Errors.Join.INVALID_NICK,
         channel: socket.channel, // @todo Multichannel
       }, socket);
-
-      return false;
     }
 
     const newNick = input[1].replace(/@/g, '');

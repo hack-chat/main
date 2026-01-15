@@ -1,7 +1,7 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Color a user
-  * @version 1.0.0
+  * @version 1.1.0
   * @description Forces a user nick to become a certain color
   * @module forcecolor
   */
@@ -16,15 +16,9 @@ import {
 import {
   findUser,
 } from '../utility/_Channels.js';
-
-/**
-  * Validate a string as a valid hex color string
-  * @param {string} color - Color string to validate
-  * @private
-  * @todo Move into utility module
-  * @return {boolean}
-  */
-const verifyColor = (color) => /(^[0-9A-F]{6}$)|(^[0-9A-F]{3}$)/i.test(color);
+import {
+  verifyColor,
+} from '../utility/_Text.js';
 
 /**
   * Executes when invoked by a remote client
@@ -198,5 +192,5 @@ export const info = {
   description: 'Forces a user nick to become a certain color',
   usage: `
     API: { cmd: 'forcecolor', nick: '<target nick>', color: '<color as hex>' }
-Text: /forcecolor <target nick> <color as hex>`,
+    Text: /forcecolor <target nick> <color as hex>`,
 };

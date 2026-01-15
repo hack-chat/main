@@ -1,7 +1,7 @@
 /**
   * @author Marzavec
   * @summary Renews the claim
-  * @version 1.0.0
+  * @version 1.1.0
   * @description Extend the ownership expiration date, before it expires
   * @module renewclaim
   */
@@ -12,6 +12,7 @@ import {
 } from '../utility/_UAC.js';
 import {
   Errors,
+  Info,
   ClaimExpirationDays,
 } from '../utility/_Constants.js';
 import {
@@ -141,8 +142,9 @@ export function chatHook({
       updateChannelSettings(core.appConfig.data, socket.channel, channelSettings);
 
       server.reply({
-        cmd: 'info', // @todo Add numeric info code as `id`
+        cmd: 'info',
         text: `Your claim has been renewed until ${expirationDate}`,
+        id: Info.Admin.CONFIG_SAVED,
         channel: socket.channel, // @todo Multichannel
       }, socket);
 
@@ -185,6 +187,6 @@ export const info = {
   category: 'channels',
   description: 'Extend the ownership expiration date, before it expires.',
   usage: `
-  API: { cmd: 'renewclaim' }
-  Text: /renewclaim`,
+    API: { cmd: 'renewclaim' }
+    Text: /renewclaim`,
 };

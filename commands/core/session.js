@@ -3,7 +3,7 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Create or restore session
-  * @version 1.0.0
+  * @version 1.1.0
   * @description Restore previous state by session or create new session
   * @module session
   */
@@ -15,10 +15,8 @@ import jsonwebtoken from 'jsonwebtoken';
 import {
   isModerator,
   verifyNickname,
+  levels,
 } from '../utility/_UAC.js';
-import {
-  Errors,
-} from '../utility/_Constants.js';
 import {
   restoreJoin,
 } from './join.js';
@@ -36,7 +34,7 @@ export function getSession(socket, core) {
     channel: socket.channel,
     channels: socket.channels,
     color: socket.color,
-    isBot: socket.isBot,
+    isBot: socket.isBot || false,
     level: socket.level,
     nick: socket.nick,
     flair: socket.flair,
@@ -58,12 +56,37 @@ export function getSession(socket, core) {
   */
 function notifyFailure(server, socket) {
   server.reply({
-    cmd: 'error',
-    id: Errors.Session.BAD_SESSION,
-    text: 'Invalid session',
+    cmd: 'session',
+    restored: false,
+    token: '',
+    channels: [],
   }, socket);
 
   return false;
+}
+
+/**
+  * Re-validates the user's level against the current server config
+  * Prevents clients from using old tokens to retain privileges
+  * @param {string} trip
+  * @param {object} appConfig
+  * @returns {number}
+  */
+function validateLevel(trip, appConfig) {
+  if (!trip) return levels.default;
+
+  // check admin
+  if (trip === appConfig.adminTrip) {
+    return levels.admin;
+  }
+
+  // check global Mods
+  const isGlobalMod = appConfig.globalMods.some((mod) => mod.trip === trip);
+  if (isGlobalMod) {
+    return levels.moderator;
+  }
+
+  return levels.default;
 }
 
 /**
@@ -75,6 +98,14 @@ function notifyFailure(server, socket) {
 export async function run({
   core, server, socket, payload,
 }) {
+  if (typeof socket.hcProtocol === 'undefined') socket.hcProtocol = 2;
+  if (typeof socket.userid === 'undefined') socket.userid = Math.floor(Math.random() * 9999999999999);
+  if (typeof socket.hash === 'undefined') socket.hash = server.getSocketHash(socket);
+
+  if (server.police.frisk(socket.address)) {
+    return notifyFailure(server, socket);
+  }
+
   if (typeof payload.token === 'undefined') {
     return notifyFailure(server, socket);
   }
@@ -86,49 +117,25 @@ export async function run({
     return notifyFailure(server, socket);
   }
 
-  // validate session
-  if (typeof session.channel !== 'string') {
-    return notifyFailure(server, socket);
-  }
+  if (typeof session.channel !== 'string') return notifyFailure(server, socket);
+  if (Array.isArray(session.channels) === false) return notifyFailure(server, socket);
+  if (typeof session.color !== 'string' && typeof session.color !== 'boolean') return notifyFailure(server, socket);
+  if (typeof session.isBot !== 'boolean') return notifyFailure(server, socket);
+  if (typeof session.level !== 'number') return notifyFailure(server, socket);
+  if (verifyNickname(session.nick) === false) return notifyFailure(server, socket);
+  if (typeof session.trip !== 'string') return notifyFailure(server, socket);
+  if (typeof session.userid !== 'number') return notifyFailure(server, socket);
+  if (typeof session.uType !== 'string') return notifyFailure(server, socket);
+  if (typeof session.muzzled !== 'boolean') return notifyFailure(server, socket);
+  if (typeof session.banned !== 'boolean') return notifyFailure(server, socket);
 
-  if (Array.isArray(session.channels) === false) {
-    return notifyFailure(server, socket);
-  }
+  const realLevel = validateLevel(session.trip, core.appConfig.data);
 
-  if (typeof session.color !== 'string' && typeof session.color !== 'boolean') {
-    return notifyFailure(server, socket);
-  }
-
-  if (typeof session.isBot !== 'boolean') {
-    return notifyFailure(server, socket);
-  }
-
-  if (typeof session.level !== 'number') {
-    return notifyFailure(server, socket);
-  }
-
-  if (verifyNickname(session.nick) === false) {
-    return notifyFailure(server, socket);
-  }
-
-  if (typeof session.trip !== 'string') {
-    return notifyFailure(server, socket);
-  }
-
-  if (typeof session.userid !== 'number') {
-    return notifyFailure(server, socket);
-  }
-
-  if (typeof session.uType !== 'string') {
-    return notifyFailure(server, socket);
-  }
-
-  if (typeof session.muzzled !== 'boolean') {
-    return notifyFailure(server, socket);
-  }
-
-  if (typeof session.banned !== 'boolean') {
-    return notifyFailure(server, socket);
+  if (session.level >= levels.moderator) {
+    if (realLevel < session.level) {
+      session.level = realLevel;
+      session.uType = 'user';
+    }
   }
 
   // populate socket info with validated session
@@ -152,22 +159,22 @@ export async function run({
   socket.hash = server.getSocketHash(socket);
   socket.hcProtocol = 2;
 
-  // dispatch info
-  server.reply({
-    cmd: 'session',
-    restored: true,
-    token: getSession(socket, core),
-    channels: socket.channels,
-  }, socket);
-
+  // attempt to restore all channels in the session
   for (let i = 0, j = session.channels.length; i < j; i += 1) {
     restoreJoin({
       core,
       server,
       socket,
       channel: session.channels[i],
-    }, true);
+    });
   }
+
+  server.reply({
+    cmd: 'session',
+    restored: true,
+    token: getSession(socket, core),
+    channels: socket.channels,
+  }, socket);
 
   return true;
 }

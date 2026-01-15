@@ -1,17 +1,19 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Give da boot
-  * @version 1.0.0
+  * @version 1.1.0
   * @description Silently forces target client(s) into another channel
   * @module kick
   */
 
 import {
+  isModerator,
   isChannelModerator,
   getUserDetails,
 } from '../utility/_UAC.js';
 import {
   Errors,
+  Info,
 } from '../utility/_Constants.js';
 import {
   findUsers,
@@ -31,22 +33,16 @@ export async function run({
     return server.police.frisk(socket, 10);
   }
 
-  // check user input
   if (socket.hcProtocol === 1) {
-    if (typeof payload.nick !== 'string') {
-      if (typeof payload.nick !== 'object' && !Array.isArray(payload.nick)) {
-        return true;
-      }
-    }
-
     payload.channel = socket.channel; // eslint-disable-line no-param-reassign
-  } else if (typeof payload.userid !== 'number') {
-    // @todo create multi-ban ui
-    if (typeof payload.userid !== 'object' && !Array.isArray(payload.userid)) {
-      if (typeof payload.nick !== 'string') {
-        return true;
-      }
-    }
+  }
+
+  // check user input
+  const hasValidNick = typeof payload.nick === 'string' || Array.isArray(payload.nick);
+  const hasValidUserid = typeof payload.userid === 'number' || Array.isArray(payload.userid);
+
+  if (!hasValidNick && !hasValidUserid) {
+    return true;
   }
 
   // find target user(s)
@@ -62,8 +58,8 @@ export async function run({
 
   // check if found targets are kickable, add them to the list if they are
   const kicked = [];
-  for (let i = 0, j = badClients.length; i < j; i += 1) {
-    if (badClients[i].level >= socket.level) {
+  badClients.forEach((client) => {
+    if (client.level >= socket.level) {
       server.reply({
         cmd: 'warn',
         text: 'Cannot kick other users with the same level, how rude',
@@ -71,61 +67,64 @@ export async function run({
         channel: socket.channel, // @todo Multichannel
       }, socket);
     } else {
-      kicked.push(badClients[i]);
+      kicked.push(client);
     }
-  }
+  });
 
   if (kicked.length === 0) {
     return true;
   }
 
-  let destChannel;
+  let destChannel = Math.random().toString(36).substr(2, 8);
+
   if (typeof payload.to === 'string' && !!payload.to.trim()) {
-    destChannel = payload.to;
-  } else {
-    destChannel = Math.random().toString(36).substr(2, 8);
+    if (isModerator(socket.level)) {
+      destChannel = payload.to.trim();
+    }
   }
 
-  // Announce the kicked clients arrival in destChannel and that they were kicked
-  // Before they arrive, so they don't see they got moved
-  for (let i = 0; i < kicked.length; i += 1) {
+  // announce the kicked clients arrival in destChannel and that they were kicked
+  // before they arrive, so they don't see they got moved
+  kicked.forEach((client) => {
     server.broadcast({
-      ...getUserDetails(kicked[i]),
+      ...getUserDetails(client),
       ...{
         cmd: 'onlineAdd',
         channel: destChannel, // @todo Multichannel
       },
     }, { channel: destChannel });
-  }
+  });
 
-  // Move all kicked clients to the new channel
-  for (let i = 0; i < kicked.length; i += 1) {
+  // move all kicked clients to the new channel
+  kicked.forEach((client) => {
     // @todo multi-channel update
-    kicked[i].channel = destChannel;
+    client.channel = destChannel;
 
     server.broadcast({
-      cmd: 'info', // @todo Add numeric info code as `id`
-      text: `${kicked[i].nick} was banished to ?${destChannel}`,
+      cmd: 'info',
+      text: `${client.nick} was banished to ?${destChannel}`,
+      id: Info.Mod.KICKED_DETAILED,
       channel: socket.channel, // @todo Multichannel
     }, { channel: socket.channel, level: isChannelModerator });
 
-    console.log(`${socket.nick} [${socket.trip}] kicked ${kicked[i].nick} in ${socket.channel} to ${destChannel} `);
-  }
+    console.log(`${socket.nick} [${socket.trip}] kicked ${client.nick} in ${socket.channel} to ${destChannel} `);
+  });
 
   // broadcast client leave event
-  for (let i = 0, j = kicked.length; i < j; i += 1) {
+  kicked.forEach((client) => {
     server.broadcast({
       cmd: 'onlineRemove',
-      userid: kicked[i].userid,
-      nick: kicked[i].nick,
+      userid: client.userid,
+      nick: client.nick,
       channel: socket.channel, // @todo Multichannel
     }, { channel: socket.channel });
-  }
+  });
 
   // publicly broadcast kick event
   server.broadcast({
-    cmd: 'info', // @todo Add numeric info code as `id`
+    cmd: 'info',
     text: `Kicked ${kicked.map((k) => k.nick).join(', ')}`,
+    id: Info.Mod.KICKED,
     channel: socket.channel, // @todo Multichannel
   }, { channel: socket.channel, level: (level) => isChannelModerator(level) });
 
@@ -163,13 +162,12 @@ export function runKickCheck({
   if (payload.text.startsWith('/kick ')) {
     const input = payload.text.split(' ');
 
-    // If there is no nick parameter
     const nick = input[1];
     if (!nick || !nick.replace(/[^a-zA-Z0-9_]/g, '')) {
       server.reply({
         cmd: 'warn',
         text: 'Failed to kick: Missing name. Refer to `/help kick` for instructions on how to use this command.',
-        id: Errors.Global.UNKNOWN_USER, // this is wrong #lazydev
+        id: Errors.Kick.MISSING_NICK,
         channel: socket.channel, // @todo Multichannel
       }, socket);
 
@@ -207,5 +205,6 @@ export const info = {
   description: 'Silently forces target client(s) into another channel. `nick` may be string or array of strings',
   usage: `
     API: { cmd: 'kick', nick: '<target nick>', to: '<optional target channel>' }
+    API: { cmd: 'kick', userid: <target id>, to: '<optional target channel>' }
     Text: /kick <target nick>`,
 };

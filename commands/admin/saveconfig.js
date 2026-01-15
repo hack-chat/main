@@ -1,7 +1,7 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Saves the config
-  * @version 1.0.0
+  * @version 1.1.0
   * @description Writes the current config to disk
   * @module saveconfig
   */
@@ -12,6 +12,7 @@ import {
 } from '../utility/_UAC.js';
 import {
   Errors,
+  Info,
 } from '../utility/_Constants.js';
 
 /**
@@ -40,8 +41,9 @@ export async function run({ core, server, socket }) {
 
   // return success message to moderators and admins
   server.broadcast({
-    cmd: 'info', // @todo Add numeric info code as `id`
+    cmd: 'info',
     text: 'Config saved!',
+    id: Info.Admin.CONFIG_SAVED,
     channel: false, // @todo Multichannel
   }, { level: isModerator });
 

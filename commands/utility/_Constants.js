@@ -10,7 +10,7 @@
   * Internal version, used mainly for debugging
   * @typedef {object} CodebaseVersion
   */
-export const CodebaseVersion = '2.2.25b';
+export const CodebaseVersion = '2.2.3b';
 
 /* Base error ranges */
 const GlobalErrors = 10;
@@ -34,6 +34,9 @@ const ForceColorErrors = WhisperErrors + 10;
 const ForceFlairErrors = ForceColorErrors + 10;
 const UsersErrors = ForceFlairErrors + 10;
 const HackRequest = UsersErrors + 10;
+const KickErrors = HackRequest + 10;
+const LockRoomErrors = KickErrors + 10;
+const WalletErrors = LockRoomErrors + 10;
 
 /**
   * Holds the numeric id values for each error type
@@ -47,6 +50,9 @@ export const Errors = {
     INTERNAL_ERROR: GlobalErrors + 4,
     MISSING_TRIPCODE: GlobalErrors + 5,
     UNKNOWN_CMD: GlobalErrors + 6,
+    INVALID_PAYLOAD: GlobalErrors + 7,
+    LOGIN_REQUIRED: GlobalErrors + 8,
+    INVALID_DATA: GlobalErrors + 9,
   },
 
   Captcha: {
@@ -149,6 +155,93 @@ export const Errors = {
     TOO_LONG: HackRequest + 3,
     BAD_URL: HackRequest + 4,
   },
+
+  Kick: {
+    MISSING_NICK: KickErrors + 1,
+  },
+
+  LockRoom: {
+    LEVEL_TOO_HIGH: LockRoomErrors + 1,
+    LEVEL_REQUIRED: LockRoomErrors + 2,
+  },
+
+  Wallet: {
+    INVALID_AMOUNT: WalletErrors + 1,
+    MISSING_AMOUNT: WalletErrors + 2,
+  },
+};
+
+/* Base Info Ranges */
+const InfoStart = 1000; // Start high to avoid collision
+const AdminInfo = InfoStart + 100;
+const ModInfo = AdminInfo + 100;
+const CoreInfo = ModInfo + 100;
+const CaptchaInfo = CoreInfo + 100;
+const WalletInfo = CaptchaInfo + 100;
+
+/**
+ * Holds the numeric id values for each info type
+ * @typedef {object} Info
+ */
+export const Info = {
+  Admin: {
+    YOU_ARE_MOD: AdminInfo + 1,
+    MOD_ADDED: AdminInfo + 2,
+    MOD_ADDED_BROADCAST: AdminInfo + 3,
+    BOMB_STATUS: AdminInfo + 4,
+    USER_LIST: AdminInfo + 5,
+    RELOAD_STATUS: AdminInfo + 6,
+    YOU_ARE_USER: AdminInfo + 7,
+    MOD_REMOVED: AdminInfo + 8,
+    MOD_REMOVED_BROADCAST: AdminInfo + 9,
+    CONFIG_SAVED: AdminInfo + 10,
+    SHOUT: AdminInfo + 11,
+  },
+
+  Mod: {
+    BANNED: ModInfo + 1,
+    BANNED_DETAILED: ModInfo + 2,
+    MUZZLED_DETAILED: ModInfo + 3,
+    KICKED_DETAILED: ModInfo + 4,
+    KICKED: ModInfo + 5,
+    LOCKED_DETAILED: ModInfo + 6,
+    LOCKED_GLOBAL_NOTIFY: ModInfo + 7,
+    UNMUZZLED_ALL: ModInfo + 8,
+    UNMUZZLED_DETAILED: ModInfo + 9,
+    UNBANNED: ModInfo + 10,
+    UNBANNED_DETAILED: ModInfo + 11,
+    UNBANNED_ALL: ModInfo + 12,
+    UNBANNED_ALL_DETAILED: ModInfo + 13,
+    UNLOCKED_DETAILED: ModInfo + 14,
+    UWUIFY_ENABLED: ModInfo + 15,
+    UWUIFY_DISABLED: ModInfo + 16,
+  },
+
+  Core: {
+    NICK_CHANGED: CoreInfo + 1,
+    MY_HASH: CoreInfo + 2,
+    HELP_TEXT: CoreInfo + 3,
+    MOTD: CoreInfo + 4,
+    STATS_FULL: CoreInfo + 5,
+    STATS_BASIC: CoreInfo + 6,
+    PURGATORY_QUOTE: CoreInfo + 7,
+    PURGATORY_NOTIFY: CoreInfo + 8,
+  },
+
+  Captcha: {
+    NOT_ENABLED: CaptchaInfo + 1,
+    DISABLED: CaptchaInfo + 2,
+    ALREADY_ENABLED: CaptchaInfo + 3,
+    ENABLED: CaptchaInfo + 4,
+  },
+
+  Wallet: {
+    DISCONNECTED: WalletInfo + 1,
+    ADDRESS_REQUESTED: WalletInfo + 2,
+    TX_RELAYED: WalletInfo + 3,
+    VIEWED: WalletInfo + 4,
+    CONNECTED: WalletInfo + 5,
+  },
 };
 
 /**
@@ -182,13 +275,14 @@ export const SystemMOTDs = [
   'Protip: Use /getchannels anytime to see a list of public channels',
   'Protip: You can do ==/help== or ==/help command==',
   'Protip: Privately message with: /whisper @name The message',
+  'Protip: A moderator can lock a channel with: /lockroom',
 ];
 
 /**
   * Maximum length of a channels MOTD string
   * @typedef {object} MaxMOTDLength
   */
-export const MaxMOTDLength = 250;
+export const MaxMOTDLength = 500;
 
 /**
   * Maximum number of specialized trip levels, per channel

@@ -1,7 +1,7 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Unban a user
-  * @version 1.0.0
+  * @version 1.1.0
   * @description Un-bans target user by ip or hash
   * @module unban
   */
@@ -11,6 +11,7 @@ import {
 } from '../utility/_UAC.js';
 import {
   Errors,
+  Info,
 } from '../utility/_Constants.js';
 
 /**
@@ -59,15 +60,17 @@ export async function run({
 
   // reply with success
   server.reply({
-    cmd: 'info', // @todo Add numeric info code as `id`
+    cmd: 'info',
     text: `Unbanned ${target}`,
+    id: Info.Mod.UNBANNED,
     channel: socket.channel, // @todo Multichannel
   }, socket);
 
   // notify mods
   server.broadcast({
-    cmd: 'info', // @todo Add numeric info code as `id`
+    cmd: 'info',
     text: `${socket.nick}#${socket.trip} unbanned: ${target}`,
+    id: Info.Mod.UNBANNED_DETAILED,
     channel: false, // @todo Multichannel, false for global
   }, { level: isModerator });
 

@@ -1,11 +1,17 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Create a new mod trip
-  * @version 1.0.0
+  * @version 1.1.0
   * @description Adds target trip to the config as a mod and upgrades the socket type
   * @module addmod
   */
 
+import {
+  Info,
+} from '../utility/_Constants.js';
+import {
+  legacyLevelToLabel,
+} from '../utility/_LegacyFunctions.js';
 import {
   isAdmin,
   isModerator,
@@ -41,22 +47,23 @@ export async function run({
       ...getUserDetails(newMod[0]),
       ...{
         cmd: 'updateUser',
-        uType: 'mod', // @todo use legacyLevelToLabel from _LegacyFunctions.js
+        uType: legacyLevelToLabel(levels.moderator),
         level: levels.moderator,
       },
     };
 
     for (let i = 0, l = newMod.length; i < l; i += 1) {
       // upgrade privileges
-      newMod[i].uType = 'mod'; // @todo use legacyLevelToLabel from _LegacyFunctions.js
+      newMod[i].uType = legacyLevelToLabel(levels.moderator);
       newMod[i].level = levels.moderator;
       newMod[i].color = color;
       newMod[i].flair = flair;
 
       // inform new mod
       server.send({
-        cmd: 'info', // @todo Add numeric info code as `id`
+        cmd: 'info',
         text: 'You are now a mod.',
+        id: Info.Admin.YOU_ARE_MOD,
         channel: newMod[i].channel, // @todo Multichannel
       }, newMod[i]);
 
@@ -72,15 +79,17 @@ export async function run({
 
   // return success message
   server.reply({
-    cmd: 'info', // @todo Add numeric info code as `id`
+    cmd: 'info',
     text: `Added mod trip: ${payload.trip}, remember to run 'saveconfig' to make it permanent`,
+    id: Info.Admin.MOD_ADDED,
     channel: socket.channel, // @todo Multichannel
   }, socket);
 
   // notify all mods
   server.broadcast({
-    cmd: 'info', // @todo Add numeric info code as `id`
+    cmd: 'info',
     text: `Added mod: ${payload.trip}`,
+    id: Info.Admin.MOD_ADDED_BROADCAST,
     channel: false, // @todo Multichannel, false for global info
   }, { level: isModerator });
 

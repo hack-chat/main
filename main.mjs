@@ -57,8 +57,6 @@ setInterval(() => {
   purgeInactiveChannels(server.appConfig.data);
 }, ChannelCheckInterval);
 
-// @todo create storage management job
-
 // start the server
 server.init();
 

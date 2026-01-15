@@ -18,7 +18,7 @@ import {
 } from '../utility/_LegacyFunctions.js';
 
 /**
-  * Returns the channel that should be invited to.
+  * Returns the channel that should be invited to
   * @param {any} channel
   * @private
   * @return {string}
