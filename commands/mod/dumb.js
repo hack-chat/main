@@ -5,12 +5,15 @@
   * @author OpSimple ( https://github.com/OpSimple )
   * @summary Muzzle a user
   * @version 1.1.0
-  * @description Globally shadow mute a connection. Optional allies array will see muted messages
+  * @description Globally shadow mute a connection.
+  * Optional allies array will see muted messages
   * @module dumb
   */
 
 import {
   isModerator,
+  getUserLevel,
+  getAppearance,
 } from '../utility/_UAC.js';
 import {
   findUser,
@@ -23,6 +26,9 @@ import {
   legacyInviteReply,
   legacyWhisperReply,
 } from '../utility/_LegacyFunctions.js';
+import {
+  parseText,
+} from '../utility/_Text.js';
 
 /**
   * Returns the channel that should be invited to
@@ -38,35 +44,13 @@ export function getChannel(channel = undefined) {
 }
 
 /**
-  * Check and trim string provided by remote client
-  * @param {string} text - Subject string
-  * @private
-  * @todo Move into utility module
-  * @return {string|boolean}
-  */
-const parseText = (text) => {
-  // verifies user input is text
-  if (typeof text !== 'string') {
-    return false;
-  }
-
-  let sanitizedText = text;
-
-  // strip newlines from beginning and end
-  sanitizedText = sanitizedText.replace(/^\s*\n|^\s+$|\n\s*$/g, '');
-  // replace 3+ newlines with just 2 newlines
-  sanitizedText = sanitizedText.replace(/\n{3,}/g, '\n\n');
-
-  return sanitizedText;
-};
-
-/**
   * Automatically executes once after server is ready
   * @param {Object} core - Reference to core environment object
   * @public
   * @return {void}
   */
 export function init(core) {
+  // initialize tracking object for muted users
   if (typeof core.muzzledHashes === 'undefined') {
     core.muzzledHashes = {};
   }
@@ -81,20 +65,22 @@ export function init(core) {
 export async function run({
   core, server, socket, payload,
 }) {
-  // increase rate limit chance and ignore if not admin or mod
-  if (!isModerator(socket.level)) {
+  // enforce moderation level
+  if (!isModerator(socket)) {
     return server.police.frisk(socket, 10);
   }
 
-  // check user input
-  if (socket.hcProtocol === 1) {
-    if (typeof payload.nick !== 'string') {
-      return true;
-    }
+  const targetChannel = payload.channel;
 
-    payload.channel = socket.channel;
-  } else if (typeof payload.userid !== 'number') {
+  // check user input
+  // accept either userid or nick, regardless of protocol
+  if (typeof payload.userid !== 'number' && typeof payload.nick !== 'string') {
     return true;
+  }
+
+  // ensure channel is set for nick lookups
+  if (!payload.channel) {
+    payload.channel = targetChannel;
   }
 
   // find target user
@@ -105,7 +91,7 @@ export async function run({
       cmd: 'warn',
       text: 'Could not find user in that channel',
       id: Errors.Global.UNKNOWN_USER,
-      channel: socket.channel, // @todo Multichannel
+      channel: targetChannel,
     }, socket);
   }
 
@@ -113,9 +99,9 @@ export async function run({
   if (targetUser.level >= socket.level) {
     return server.reply({
       cmd: 'warn',
-      text: 'This trick wont work on users of the same level',
+      text: 'You may not do that',
       id: Errors.Global.PERMISSION,
-      channel: socket.channel, // @todo Multichannel
+      channel: targetChannel,
     }, socket);
   }
 
@@ -132,16 +118,24 @@ export async function run({
   // notify mods
   server.broadcast({
     cmd: 'info',
-    text: `${socket.nick}#${socket.trip} muzzled ${targetUser.nick} in ${payload.channel}, userhash: ${targetUser.hash}`,
+    text: `${socket.nick}#${socket.trip} muzzled ${targetUser.nick} in ${targetChannel}, `
+      + `userhash: ${targetUser.hash}`,
     id: Info.Mod.MUZZLED_DETAILED,
-    channel: false, // @todo Multichannel, false for global
-  }, { level: isModerator });
+    args: {
+      nick: socket.nick,
+      trip: socket.trip,
+      targetUser: targetUser.nick,
+      targetChannel,
+      targetHash: targetUser.hash,
+    },
+    channel: targetChannel,
+  }, (client) => isModerator(client));
 
   return true;
 }
 
 /**
-  * Automatically executes once after server is ready to register this modules hooks
+  * Automatically executes once after server is ready to register this module's hooks
   * @param {Object} server - Reference to server environment object
   * @public
   * @return {void}
@@ -168,39 +162,62 @@ export function chatCheck({
     return false;
   }
 
+  // intercept messages from muzzled users
   if (core.muzzledHashes[socket.hash]) {
+    const currentChannel = payload.channel;
+    const effectiveLevel = getUserLevel(socket, currentChannel);
+    const appearance = getAppearance(effectiveLevel);
+
+    const effectiveTrip = (
+      socket.channelStates
+      && socket.channelStates[currentChannel]
+      && socket.channelStates[currentChannel].trip
+    ) || socket.trip;
+
+    let messageColor = socket.color;
+    if (
+      socket.channelStates
+      && socket.channelStates[currentChannel]
+      && socket.channelStates[currentChannel].color
+    ) {
+      messageColor = socket.channelStates[currentChannel].color;
+    }
+
     // build fake chat payload
     const outgoingPayload = {
       cmd: 'chat',
       nick: socket.nick, /* @legacy */
       uType: socket.uType, /* @legacy */
       userid: socket.userid,
-      channel: socket.channel,
+      channel: currentChannel,
       text: payload.text,
-      level: socket.level,
-      flair: socket.flair,
+      level: effectiveLevel,
+      flair: appearance.flair,
+      customId: '',
+      id: Math.floor(Math.random() * 999999) + 1,
     };
 
-    if (socket.trip) {
-      outgoingPayload.trip = socket.trip;
+    if (effectiveTrip) {
+      outgoingPayload.trip = effectiveTrip;
     }
 
-    if (socket.color) {
-      outgoingPayload.color = socket.color;
+    if (messageColor) {
+      outgoingPayload.color = messageColor;
     }
 
     // broadcast to any duplicate connections in channel
-    server.broadcast(outgoingPayload, { channel: socket.channel, hash: socket.hash });
+    server.broadcast(outgoingPayload, (client) => {
+      const inChannel = (client.channels && client.channels.includes(currentChannel));
+      return client.hash === socket.hash && inChannel;
+    });
 
     // broadcast to allies, if any
-    if (core.muzzledHashes[socket.hash].allies) {
-      server.broadcast(
-        outgoingPayload,
-        {
-          channel: socket.channel,
-          nick: core.muzzledHashes[socket.hash].allies,
-        },
-      );
+    const { allies } = core.muzzledHashes[socket.hash];
+    if (allies) {
+      server.broadcast(outgoingPayload, (client) => {
+        const inChannel = (client.channels && client.channels.includes(currentChannel));
+        return allies.includes(client.nick) && inChannel;
+      });
     }
 
     /**
@@ -228,30 +245,20 @@ export function chatCheck({
 export function inviteCheck({
   core, server, socket, payload,
 }) {
+  // intercept invites from muzzled users
   if (core.muzzledHashes[socket.hash]) {
+    const currentChannel = payload.channel;
+
     // check for spam
     if (server.police.frisk(socket, 2)) {
       return server.reply({
         cmd: 'warn',
-        text: 'You are sending invites too fast. Wait a moment before trying again.',
+        text: 'You are sending invites too quickly. Wait a moment before trying again',
         id: Errors.Invite.RATELIMIT,
-        channel: socket.channel, // @todo Multichannel
+        channel: currentChannel,
       }, socket);
     }
 
-    // verify user input
-    // if this is a legacy client add missing params to payload
-    if (socket.hcProtocol === 1) {
-      if (typeof socket.channel === 'undefined' || typeof payload.nick !== 'string') {
-        return false;
-      }
-
-      payload.channel = socket.channel; // eslint-disable-line no-param-reassign
-    } else if (typeof payload.userid !== 'number' || typeof payload.channel !== 'string') {
-      return false;
-    }
-
-    // @todo Verify this socket is part of payload.channel - multichannel patch
     // find target user
     const targetUser = findUser(server, payload);
     if (!targetUser) {
@@ -259,7 +266,7 @@ export function inviteCheck({
         cmd: 'warn',
         text: 'Could not find user in that channel',
         id: Errors.Global.UNKNOWN_USER,
-        channel: socket.channel, // @todo Multichannel
+        channel: currentChannel,
       }, socket);
     }
 
@@ -269,13 +276,13 @@ export function inviteCheck({
     // build invite
     const outgoingPayload = {
       cmd: 'invite',
-      channel: socket.channel, // @todo Multichannel
+      channel: currentChannel,
       from: socket.userid,
       to: targetUser.userid,
       inviteChannel: channel,
     };
 
-    // send invite notice to this client
+    // send invite notice only to the muzzled client
     if (socket.hcProtocol === 1) {
       server.reply(legacyInviteReply(outgoingPayload, targetUser.nick), socket);
     } else {
@@ -300,18 +307,16 @@ export function inviteCheck({
 export function whisperCheck({
   core, server, socket, payload,
 }) {
+  // intercept whispers from muzzled users
   if (core.muzzledHashes[socket.hash]) {
-    // if this is a legacy client add missing params to payload
-    if (socket.hcProtocol === 1) {
-      payload.channel = socket.channel; // eslint-disable-line no-param-reassign
-    }
+    const currentChannel = payload.channel;
 
     // verify user input
     const text = parseText(payload.text);
 
     if (!text) {
       // lets not send objects or empty text, yea?
-      return server.police.frisk(socket, 13);
+      return false;
     }
 
     // check for spam
@@ -319,9 +324,9 @@ export function whisperCheck({
     if (server.police.frisk(socket, score)) {
       return server.reply({
         cmd: 'warn',
-        text: 'You are sending too much text. Wait a moment and try again.\nPress the up arrow key to restore your last message.',
+        text: 'Issuing commands too quickly. Wait a moment before trying again',
         id: Errors.Global.RATELIMIT,
-        channel: socket.channel, // @todo Multichannel
+        channel: currentChannel,
       }, socket);
     }
 
@@ -331,19 +336,19 @@ export function whisperCheck({
         cmd: 'warn',
         text: 'Could not find user in that channel',
         id: Errors.Global.UNKNOWN_USER,
-        channel: socket.channel, // @todo Multichannel
+        channel: currentChannel,
       }, socket);
     }
 
     const outgoingPayload = {
       cmd: 'whisper',
-      channel: socket.channel, // @todo Multichannel
+      channel: currentChannel,
       from: socket.userid,
       to: targetUser.userid,
       text,
     };
 
-    // send invite notice to this client
+    // send whisper reply only to the muzzled client
     if (socket.hcProtocol === 1) {
       server.reply(legacyWhisperReply(outgoingPayload, targetUser.nick), socket);
     } else {

@@ -1,5 +1,5 @@
 /**
-  * @author Marzavec
+  * @author Marzavec ( https://github.com/marzavec )
   * @summary Sets channel to public
   * @version 1.1.0
   * @description Make channel publicly listed on the front page
@@ -10,6 +10,7 @@ import captcha from 'ascii-captcha';
 import {
   isChannelOwner,
   isModerator,
+  getUserLevel,
 } from '../utility/_UAC.js';
 import {
   Errors,
@@ -26,53 +27,63 @@ import {
   * @return {void}
   */
 export async function run({
-  server, socket,
+  server, socket, payload,
 }) {
-  // must be in a channel to run this command
-  if (typeof socket.channel === 'undefined') {
+  const targetChannel = payload.channel;
+
+  // validate presence in channel
+  if (!targetChannel || !socket.channels || !socket.channels.includes(targetChannel)) {
     return server.police.frisk(socket, 10);
   }
 
+  // require trip code for ownership verification
   if (!socket.trip) {
     return server.reply({
       cmd: 'warn',
-      text: 'Failed to run command: You must have a trip code to do this.',
+      text: 'Failed. You must have a trip code',
       id: Errors.Global.MISSING_TRIPCODE,
-      channel: socket.channel, // @todo Multichannel
+      channel: targetChannel,
     }, socket);
   }
 
-  if (isModerator(socket.level) || !isChannelOwner(socket.level)) {
+  const currentLevel = getUserLevel(socket, targetChannel);
+
+  // enforce channel owner permission
+  if (isModerator(socket) || !isChannelOwner(currentLevel)) {
     return server.reply({
       cmd: 'warn',
       text: 'Failed to make channel public: You may not do that',
       id: Errors.MakePublic.MISSING_PERMS,
-      channel: socket.channel, // @todo Multichannel
+      channel: targetChannel,
     }, socket);
   }
 
+  // stage captcha challenge
   socket.pubCaptcha = {
     solution: captcha.generateRandomText(7),
+    channel: targetChannel,
   };
 
+  // prompt user to solve captcha
   server.reply({
     cmd: 'warn',
-    text: 'Enter the following to make channel public (case-sensitive):',
+    text: 'Enter the following (case-sensitive)',
     id: Errors.Captcha.MUST_SOLVE,
-    channel: socket.channel, // @todo Multichannel
+    channel: targetChannel,
   }, socket);
 
+  // dispatch ascii challenge text
   server.reply({
     cmd: 'captcha',
     text: captcha.word2Transformedstr(socket.pubCaptcha.solution),
-    channel: socket.channel, // @todo Multichannel
+    channel: targetChannel,
   }, socket);
 
   return true;
 }
 
 /**
-  * Automatically executes once after server is ready to register this modules hooks
+  * Automatically executes once after server is ready to register this module's hooks
   * @param {Object} server - Reference to server environment object
   * @public
   * @return {void}
@@ -94,55 +105,72 @@ export function chatHook({
     return false;
   }
 
+  const currentChannel = payload.channel;
+
+  // intercept captcha responses
   if (typeof socket.pubCaptcha !== 'undefined') {
+    if (socket.pubCaptcha.channel !== currentChannel) {
+      return payload;
+    }
+
+    // process valid captcha solution
     if (payload.text === socket.pubCaptcha.solution) {
+      const targetChannel = socket.pubCaptcha.channel;
       socket.pubCaptcha = undefined;
 
-      const channelSettings = getChannelSettings(core.appConfig.data, socket.channel);
+      const channelSettings = getChannelSettings(core.appConfig.data, targetChannel);
 
+      // verify channel ownership status
       if (channelSettings.owned === false || socket.trip !== channelSettings.ownerTrip) {
         return server.reply({
           cmd: 'warn',
           text: 'Failed to make channel public: You may not do that',
           id: Errors.MakePublic.MISSING_PERMS,
-          channel: socket.channel, // @todo Multichannel
+          channel: targetChannel,
         }, socket);
       }
 
-      if (core.appConfig.data.publicChannels.indexOf(socket.channel) !== -1) {
+      // prevent duplicate public listings
+      if (core.appConfig.data.publicChannels.indexOf(targetChannel) !== -1) {
         return server.reply({
           cmd: 'warn',
           text: 'Failed to make channel public: This channel is already public',
           id: Errors.MakePublic.ALREADY_PUBLIC,
-          channel: socket.channel, // @todo Multichannel
+          channel: targetChannel,
         }, socket);
       }
 
-      core.appConfig.data.publicChannels.push(socket.channel);
+      // add channel to public directory
+      core.appConfig.data.publicChannels.push(targetChannel);
 
+      // notify global moderators
       server.broadcast({
         cmd: 'info',
-        text: `A new channel has been made public: ?${socket.channel}`,
-        id: Info.Admin.SHOUT,
-        channel: socket.channel, // @todo Multichannel
-      }, { level: (level) => isModerator(level) });
+        text: `A new channel has been made public: ?${targetChannel}`,
+        id: Info.Core.NEW_PUBLIC,
+        args: { targetChannel },
+        channel: false,
+      }, { level: (s) => isModerator(s) });
 
+      // confirm success to user
       server.reply({
         cmd: 'info',
-        text: 'This channel has been added to the list of public channels',
+        text: 'Config saved!',
         id: Info.Admin.CONFIG_SAVED,
-        channel: socket.channel, // @todo Multichannel
+        channel: targetChannel,
       }, socket);
 
       return false;
     }
 
+    // disconnect on failed captcha attempt
     server.police.frisk(socket, 7);
     socket.terminate();
 
     return false;
   }
 
+  // intercept /makepublic command
   if (payload.text.startsWith('/makepublic')) {
     this.run({
       core,
@@ -150,6 +178,7 @@ export function chatHook({
       socket,
       payload: {
         cmd: 'makepublic',
+        channel: currentChannel,
       },
     });
 

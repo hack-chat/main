@@ -1,8 +1,8 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
-  * @summary Released them from the void
+  * @summary Release them from the void
   * @version 1.1.0
-  * @description Clears all banned ip addresses
+  * @description Clears all banned IP addresses
   * @module unbanall
   */
 
@@ -15,38 +15,37 @@ import {
 
 /**
   * Executes when invoked by a remote client
-  * @param {Object} env - Environment object with references to core, server, socket & payload
+  * @param {Object} env - Environment object with references to core, server & socket
   * @public
   * @return {void}
   */
-export async function run({ core, server, socket }) {
+export async function run({
+  core, server, socket,
+}) {
   // increase rate limit chance and ignore if not admin or mod
-  if (!isModerator(socket.level)) {
+  if (!isModerator(socket)) {
     return server.police.frisk(socket, 10);
   }
 
   // remove arrest records
   server.police.clear();
 
+  // reset banned users stat
   core.stats.set('users-banned', 0);
 
   console.log(`${socket.nick} [${socket.trip}] unbanned all`);
 
-  // reply with success
-  server.reply({
-    cmd: 'info',
-    text: 'Unbanned all ip addresses',
-    id: Info.Mod.UNBANNED_ALL,
-    channel: socket.channel, // @todo Multichannel
-  }, socket);
-
-  // notify mods
+  // notify global moderators
   server.broadcast({
     cmd: 'info',
-    text: `${socket.nick}#${socket.trip} unbanned all ip addresses`,
+    text: `${socket.nick}#${socket.trip} unbanned all IP addresses`,
     id: Info.Mod.UNBANNED_ALL_DETAILED,
-    channel: false, // @todo Multichannel, false for global
-  }, { level: isModerator });
+    args: {
+      nick: socket.nick,
+      trip: socket.trip,
+    },
+    channel: false,
+  }, (client) => isModerator(client));
 
   return true;
 }
@@ -63,7 +62,7 @@ export async function run({ core, server, socket }) {
 export const info = {
   name: 'unbanall',
   category: 'moderators',
-  description: 'Clears all banned ip addresses',
+  description: 'Clears all banned IP addresses',
   usage: `
     API: { cmd: 'unbanall' }`,
 };

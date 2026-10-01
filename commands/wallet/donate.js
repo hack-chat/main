@@ -1,32 +1,42 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
-  * @summary Allow a Solana transfer
-  * @version 1.0.1
-  * @description Builds a transaction for a Solana transfer with a blockhash cache
-  * @module sendsol
+  * @summary Donate SOL to the server and unlock a global chat effect
+  * @version 1.2.1
+  * @description Builds a transaction to invoke the RecordDonation
+  * smart contract instruction with active cache polling
+  * @module donate
   */
 
 import {
   PublicKey,
   Transaction,
+  TransactionInstruction,
   SystemProgram,
   ComputeBudgetProgram,
   LAMPORTS_PER_SOL,
 } from '@solana/web3.js';
+import * as borsh from '@coral-xyz/borsh';
 import { createSolanaRpc } from '@solana/kit';
 
 import {
   Errors,
-  Info,
 } from '../utility/_Constants.js';
+
 import {
-  findUser,
-} from '../utility/_Channels.js';
+  getUserDetails,
+} from '../utility/_UAC.js';
 
 // rpc and core transaction settings
 const RPC_URL = 'https://api.mainnet-beta.solana.com';
 const SERVER_WALLET = 'HaCKy1tUTBDkfUkcYcUFkhC887ucAs3tEjcmqRa5cHat';
+const PROGRAM_ID = new PublicKey('AutHysEUfKrWDETzrDA7S7MwL1eSSc2BjySR2W8EuSEr');
 const CACHE_TTL = 30000;
+
+// define borsh schema for donation state
+const donationStateLayout = borsh.struct([
+  borsh.u8('discriminator'),
+  borsh.u8('effect'),
+]);
 
 /**
   * Automatically executes once after server is ready or after a hot-reload
@@ -79,7 +89,7 @@ async function getCachedBlockhash(core) {
       return latestBlockhash.blockhash;
     }
   } catch (e) {
-    console.log('Failed to fetch blockhash:', e);
+    console.error('Failed to fetch blockhash:', e);
   }
 
   return null;
@@ -121,7 +131,7 @@ export async function run({
     }, socket);
   }
 
-  // validate transfer amount
+  // validate donation amount
   if (typeof payload.amount !== 'number' || payload.amount <= 0) {
     return server.reply({
       cmd: 'warn',
@@ -131,85 +141,18 @@ export async function run({
     }, socket);
   }
 
-  let targetUser = null;
-
-  // find target user by id or nick
-  if (typeof payload.userid === 'number') {
-    targetUser = findUser(
-      server,
-      {
-        channel: targetChannel,
-        userid: payload.userid,
-      },
-    );
-  } else if (typeof payload.nick === 'string') {
-    targetUser = findUser(
-      server,
-      {
-        channel: targetChannel,
-        nick: payload.nick,
-      },
-    );
-  } else {
-    return server.reply({
-      cmd: 'warn',
-      text: 'Could not find user in that channel',
-      id: Errors.Global.UNKNOWN_USER,
-      channel: targetChannel,
-    }, socket);
+  // pick random effect if invalid
+  let effectId = payload.effect;
+  if (typeof effectId !== 'number' || effectId < 1 || effectId > 20) {
+    effectId = Math.floor(Math.random() * 20) + 1;
   }
 
-  if (!targetUser) {
-    return server.reply({
-      cmd: 'warn',
-      text: 'Could not find user in that channel',
-      id: Errors.Global.UNKNOWN_USER,
-      channel: targetChannel,
-    }, socket);
-  }
-
-  // prevent self-transfers
-  if (targetUser.userid === socket.userid) {
-    return server.reply({
-      cmd: 'warn',
-      text: 'You cannot relay transactions to yourself',
-      id: Errors.Wallet.NO_SELF,
-      channel: targetChannel,
-    }, socket);
-  }
-
-  // target user must have a confirmed wallet
-  if (typeof targetUser.wallet !== 'object' || typeof targetUser.wallet.address !== 'string') {
-    return server.send({
-      cmd: 'warn',
-      text: `@${targetUser.nick} has not connected a wallet`,
-      id: Errors.Wallet.USER_NOT_READY,
-      args: { nick: targetUser.nick },
-      channel: targetChannel,
-    }, socket);
-  }
-
-  // notify target user of wallet view
-  server.send({
-    cmd: 'info',
-    text: `${socket.nick} viewed your wallet`,
-    id: Info.Wallet.VIEWED,
-    args: { nick: socket.nick },
-    channel: targetChannel,
-  }, targetUser);
-
-  // setup public keys
   const senderPubkey = new PublicKey(socket.wallet.address);
-  const recipientPubkey = new PublicKey(targetUser.wallet.address);
-  const SERVER_ADDRESS = new PublicKey(SERVER_WALLET);
+  const serverPubkey = new PublicKey(SERVER_WALLET);
 
-  // calculate transfer amounts and fees
   const mainAmountLamports = Math.floor(payload.amount * LAMPORTS_PER_SOL);
 
-  const feePercentage = 0.01;
-  const feeAmountLamports = Math.floor(mainAmountLamports * feePercentage);
-
-  if (mainAmountLamports < 1 || feeAmountLamports < 1) {
+  if (mainAmountLamports < 1) {
     return server.reply({
       cmd: 'warn',
       text: 'Invalid amount',
@@ -217,6 +160,12 @@ export async function run({
       channel: targetChannel,
     }, socket);
   }
+
+  // derive donation pda
+  const [donationPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('donation'), senderPubkey.toBuffer()],
+    PROGRAM_ID,
+  );
 
   // build the solana transaction
   const transaction = new Transaction();
@@ -229,21 +178,24 @@ export async function run({
     ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 100000 }),
   );
 
-  transaction.add(
-    SystemProgram.transfer({
-      fromPubkey: senderPubkey,
-      toPubkey: recipientPubkey,
-      lamports: mainAmountLamports,
-    }),
-  );
+  // write instruction data
+  const dataBuffer = Buffer.alloc(10);
+  dataBuffer.writeUInt8(5, 0);
+  dataBuffer.writeUInt8(effectId, 1);
+  dataBuffer.writeBigUInt64LE(BigInt(mainAmountLamports), 2);
 
-  transaction.add(
-    SystemProgram.transfer({
-      fromPubkey: senderPubkey,
-      toPubkey: SERVER_ADDRESS,
-      lamports: feeAmountLamports,
-    }),
-  );
+  const recordDonationIx = new TransactionInstruction({
+    programId: PROGRAM_ID,
+    keys: [
+      { pubkey: senderPubkey, isSigner: true, isWritable: true },
+      { pubkey: serverPubkey, isSigner: false, isWritable: true },
+      { pubkey: donationPda, isSigner: false, isWritable: true },
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+    ],
+    data: dataBuffer,
+  });
+
+  transaction.add(recordDonationIx);
 
   const latestBlockhash = await getCachedBlockhash(core);
 
@@ -268,23 +220,81 @@ export async function run({
   const base64Tx = serializedTx.toString('base64');
 
   // dispatch signature request back to client
-  return server.reply({
+  server.reply({
     cmd: 'signTransaction',
     tx: base64Tx,
-    type: 'STANDARD_TRANSFER',
+    type: 'DONATION',
     from: false,
     channel: targetChannel,
   }, socket);
+
+  // schedule cache refresh
+  setTimeout(async () => {
+    try {
+      const fetchResponse = await core.solanaRPC.getAccountInfo(
+        donationPda.toBase58(),
+        { encoding: 'base64' },
+      ).send();
+
+      const accountInfo = fetchResponse?.value;
+
+      if (accountInfo && accountInfo.data) {
+        const rawBuffer = Array.isArray(accountInfo.data)
+          ? Buffer.from(accountInfo.data[0], 'base64')
+          : Buffer.from(accountInfo.data);
+
+        const accountData = donationStateLayout.decode(rawBuffer);
+
+        if (core.chainCache && core.chainCache.donations) {
+          core.chainCache.donations[senderPubkey.toBase58()] = {
+            effect: accountData.effect,
+            timestamp: Date.now(),
+          };
+
+          if (socket && socket.channels) {
+            socket.effect = accountData.effect;
+
+            for (let i = 0; i < socket.channels.length; i += 1) {
+              const currentChannel = socket.channels[i];
+
+              const outgoingPayload = {
+                ...getUserDetails(socket, currentChannel),
+                effect: socket.effect,
+                cmd: 'updateUser',
+                channel: currentChannel,
+              };
+
+              server.broadcast(outgoingPayload, (client) => {
+                if (client.channels && client.channels.includes(currentChannel)) {
+                  return true;
+                }
+                return false;
+              });
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error(`Refresh failed for donation PDA ${donationPda.toBase58()}:`, err);
+
+      // invalidate cache on failure
+      if (core.chainCache?.donations?.[senderPubkey.toBase58()]) {
+        core.chainCache.donations[senderPubkey.toBase58()].timestamp = 0;
+      }
+    }
+  }, 105000);
+
+  return true;
 }
 
 /**
-  * Automatically executes once after server is ready to register this modules hooks
+  * Automatically executes once after server is ready to register this module's hooks
   * @param {Object} server - Reference to server environment object
   * @public
   * @return {void}
   */
 export function initHooks(server) {
-  server.registerHook('in', 'chat', this.runSendSolCheck.bind(this), 29);
+  server.registerHook('in', 'chat', this.runDonateCheck.bind(this), 29);
 }
 
 /**
@@ -295,7 +305,7 @@ export function initHooks(server) {
   * false = suppress action,
   * string = error
   */
-export function runSendSolCheck({
+export function runDonateCheck({
   core, server, socket, payload,
 }) {
   if (typeof payload.text !== 'string') {
@@ -309,23 +319,11 @@ export function runSendSolCheck({
     return payload;
   }
 
-  // intercept /sendsol chat command
-  if (payload.text.startsWith('/sendsol ')) {
+  // intercept /donate chat command
+  if (payload.text.startsWith('/donate ')) {
     const input = payload.text.split(' ');
-    const nick = input[1];
 
-    if (!nick || !nick.replace(/[^a-zA-Z0-9_]/g, '')) {
-      server.reply({
-        cmd: 'warn',
-        text: 'Could not find user in that channel',
-        id: Errors.Global.UNKNOWN_USER,
-        channel: targetChannel,
-      }, socket);
-
-      return false;
-    }
-
-    const amount = Number(input[2]);
+    const amount = Number(input[1]);
     if (!amount || Number.isNaN(amount)) {
       server.reply({
         cmd: 'warn',
@@ -337,15 +335,17 @@ export function runSendSolCheck({
       return false;
     }
 
+    const effect = input[2] ? Number(input[2]) : null;
+
     // trigger standard run execution
     this.run({
       core,
       server,
       socket,
       payload: {
-        cmd: 'sendsol',
-        nick: nick.replace(/[^a-zA-Z0-9_]/g, ''),
+        cmd: 'donate',
         amount,
+        effect: !Number.isNaN(effect) ? effect : null,
         channel: targetChannel,
       },
     });
@@ -358,25 +358,27 @@ export function runSendSolCheck({
 
 /**
   * The following payload properties are required to invoke this module:
-  * "userid", "amount"
+  * "amount"
   * @public
-  * @typedef {Array} sendsol/requiredData
+  * @typedef {Array} donate/requiredData
   */
-export const requiredData = ['userid', 'amount'];
+export const requiredData = ['amount'];
 
 /**
   * Module meta information
   * @public
-  * @typedef {Object} sendsol/info
+  * @typedef {Object} donate/info
   * @property {string} name - Module command name
+  * @property {string} category - Module category name
   * @property {string} description - Information about module
   * @property {string} usage - Information about module usage
   */
 export const info = {
-  name: 'sendsol',
+  name: 'donate',
   category: 'wallet',
-  description: 'Constructs a Solana transaction to send funds to another user',
+  description: 'Constructs a Solana transaction to donate to the server and unlock a username effect',
   usage: `
-    API: { cmd: 'sendsol', userid: <target userid>, amount: <numeric amount in sol> }
-    Text: /sendsol @nick 23`,
+    API: { cmd: 'donate', amount: <numeric amount in sol>, effect: <optional 1-20> }
+    Text: /donate 0.5
+    Text: /donate 1.0 15`,
 };

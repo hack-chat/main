@@ -6,17 +6,20 @@
   * @module setmotd
   */
 
+/*
 import {
   isChannelModerator,
+  getUserLevel,
 } from '../utility/_UAC.js';
 import {
   getChannelSettings,
   updateChannelSettings,
 } from '../utility/_Channels.js';
+*/
 import {
   Errors,
-  Info,
-  MaxMOTDLength,
+  // Info,
+  // MaxMOTDLength,
 } from '../utility/_Constants.js';
 
 /**
@@ -26,62 +29,90 @@ import {
   * @return {void}
   */
 export async function run({
-  core, server, socket, payload,
+  /* core, */ server, socket, payload,
 }) {
-  // must be in a channel to run this command
-  if (typeof socket.channel === 'undefined') {
+  const targetChannel = payload.channel;
+
+  // validate presence in channel
+  if (!targetChannel || !socket.channels || !socket.channels.includes(targetChannel)) {
     return server.police.frisk(socket, 10);
   }
 
+  // enforce rate limits
   if (server.police.frisk(socket, 6)) {
     return server.reply({
       cmd: 'warn',
-      text: 'Issuing commands too quickly. Wait a moment before trying again.',
+      text: 'Issuing commands too quickly. Wait a moment before trying again',
       id: Errors.Global.RATELIMIT,
-      channel: socket.channel, // @todo Multichannel
+      channel: targetChannel,
     }, socket);
   }
 
-  // increase rate limit chance and ignore if not channel mod or better
-  if (!isChannelModerator(socket.level)) {
-    return server.police.frisk(socket, 10);
+  // module currently disabled by design
+  server.reply({
+    cmd: 'warn',
+    text: 'setMotd is disabled',
+    // id: @todo
+    channel: targetChannel,
+  }, socket);
+
+  /*
+
+  // verify moderator status
+  const requestLevel = getUserLevel(socket, targetChannel);
+
+  if (!isChannelModerator(requestLevel)) {
+    return false;
   }
 
+  // validate motd string and length
   if (typeof payload.motd !== 'string' || payload.motd.length >= MaxMOTDLength) {
     return server.reply({
       cmd: 'warn',
       text: `Failed to set motd: Invalid motd, max length: ${MaxMOTDLength}`,
-      MaxLength: MaxMOTDLength,
       id: Errors.SetMOTD.TOO_LONG,
-      channel: socket.channel, // @todo Multichannel
+      args: { maxLength: MaxMOTDLength },
+      channel: targetChannel,
     }, socket);
   }
 
-  const channelSettings = getChannelSettings(core.appConfig.data, socket.channel);
+  // update configuration
+  const channelSettings = getChannelSettings(core.appConfig.data, targetChannel);
 
   channelSettings.motd = payload.motd;
 
-  updateChannelSettings(core.appConfig.data, socket.channel, channelSettings);
+  updateChannelSettings(core.appConfig.data, targetChannel, channelSettings);
+
+  // notify channel mods
+  const modFilter = (client) => {
+    const inChannel = client.channels && client.channels.includes(targetChannel);
+    return inChannel && isChannelModerator(getUserLevel(client, targetChannel));
+  };
 
   server.broadcast({
     cmd: 'info',
     text: `MOTD changed by [${socket.trip}]${socket.nick}, new motd:`,
-    id: Info.Admin.SHOUT,
-    channel: socket.channel, // @todo Multichannel
-  }, { channel: socket.channel, level: isChannelModerator });
+    id: Info.ChannelInfo.MOTD_CHANGED,
+    args: {
+      trip: socket.trip,
+      nick: socket.nick,
+    },
+    channel: targetChannel,
+  }, modFilter);
 
   server.broadcast({
     cmd: 'info',
-    text: channelSettings.motd,
+    text: `${channelSettings.motd}`,
     id: Info.Core.MOTD,
-    channel: socket.channel, // @todo Multichannel
-  }, { channel: socket.channel, level: isChannelModerator });
+    channel: targetChannel,
+  }, modFilter);
 
+  */
   return true;
 }
 
 /**
-  * Automatically executes once after server is ready to register this modules hooks
+  * Automatically executes once after server is ready to register this module's hooks
   * @param {Object} server - Reference to server environment object
   * @public
   * @return {void}
@@ -101,10 +132,19 @@ export function initHooks(server) {
 export function chatCheck({
   core, server, socket, payload,
 }) {
-  if (typeof payload.text !== 'string') {
+  // verify user input
+  if (!payload || typeof payload.text !== 'string') {
     return false;
   }
 
+  const targetChannel = payload.channel;
+
+  // validate presence in channel
+  if (!targetChannel || !socket.channels || !socket.channels.includes(targetChannel)) {
+    return payload;
+  }
+
+  // intercept /setmotd command
   if (payload.text.startsWith('/setmotd')) {
     this.run({
       core,
@@ -113,6 +153,7 @@ export function chatCheck({
       payload: {
         cmd: 'setmotd',
         motd: payload.text.substring(8).trim(),
+        channel: targetChannel,
       },
     });
 

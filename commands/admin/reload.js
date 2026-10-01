@@ -24,13 +24,14 @@ export async function run({
   core, server, socket, payload,
 }) {
   // increase rate limit chance and ignore if not admin
-  if (!isAdmin(socket.level)) {
+  if (!isAdmin(socket)) {
     return server.police.frisk(socket, 20);
   }
 
   const origCmds = {};
   const origCmdCount = core.commands.commands.length;
 
+  // cache original command hashes for comparison
   for (let i = 0; i < origCmdCount; i += 1) {
     origCmds[core.commands.commands[i].info.name] = {
       srcHash: core.commands.commands[i].info.srcHash,
@@ -48,6 +49,7 @@ export async function run({
   const newCmdCount = core.commands.commands.length;
   let cmdName = '';
 
+  // identify modified modules by comparing source hashes
   for (let i = 0; i < newCmdCount; i += 1) {
     cmdName = core.commands.commands[i].info.name;
 
@@ -70,21 +72,29 @@ export async function run({
   if (loadResult === '') {
     loadReport += '0 errors.';
   } else {
-    loadReport += `error(s):
-${loadResult}\n\n`;
+    loadReport += `error(s):\n${loadResult}\n\n`;
   }
 
+  // append optional reason to the report
   if (typeof payload.reason !== 'undefined') {
     loadReport += ` Reason: ${payload.reason}`;
   }
 
-  // send results to moderators (which the user using this command is higher than)
+  // return success message to admin
+  server.reply({
+    cmd: 'info',
+    text: loadReport,
+    id: Info.Admin.RELOAD_STATUS,
+    channel: payload.channel,
+  }, socket);
+
+  // send results to global moderators
   server.broadcast({
     cmd: 'info',
     text: loadReport,
     id: Info.Admin.RELOAD_STATUS,
-    channel: false, // @todo Multichannel, false for global
-  }, { level: isModerator });
+    channel: false,
+  }, (client) => isModerator(client));
 
   return true;
 }

@@ -4,7 +4,7 @@
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Legacy support module
   * @version 1.0.0
-  * @description This module is only in place to supress error notices legacy clients may get
+  * @description This module is only in place to suppress error notices legacy clients may get
   * @module ping
   */
 
@@ -13,7 +13,9 @@
   * @public
   * @return {void}
   */
-export async function run() { }
+export async function run() {
+  // purposefully empty to absorb legacy ping commands
+}
 
 /**
   * Module meta information
@@ -27,6 +29,6 @@ export async function run() { }
 export const info = {
   name: 'ping',
   category: 'core',
-  description: 'This module is only in place to supress error notices legacy clients may get',
+  description: 'This module is only in place to suppress error notices legacy clients may get',
   usage: 'none',
 };

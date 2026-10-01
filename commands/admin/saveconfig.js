@@ -21,9 +21,11 @@ import {
   * @public
   * @return {void}
   */
-export async function run({ core, server, socket }) {
+export async function run({
+  core, server, socket, payload,
+}) {
   // increase rate limit chance and ignore if not admin
-  if (!isAdmin(socket.level)) {
+  if (!isAdmin(socket)) {
     return server.police.frisk(socket, 20);
   }
 
@@ -33,9 +35,9 @@ export async function run({ core, server, socket }) {
   } catch (err) {
     return server.reply({
       cmd: 'warn',
-      text: 'Failed to save config, check logs.',
+      text: 'Failed to save config, check logs',
       id: Errors.SaveConfig.GENERAL_FAILURE,
-      channel: socket.channel, // @todo Multichannel
+      channel: payload.channel,
     }, socket);
   }
 
@@ -44,8 +46,8 @@ export async function run({ core, server, socket }) {
     cmd: 'info',
     text: 'Config saved!',
     id: Info.Admin.CONFIG_SAVED,
-    channel: false, // @todo Multichannel
-  }, { level: isModerator });
+    channel: false,
+  }, (client) => isModerator(client));
 
   return true;
 }

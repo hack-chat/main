@@ -1,21 +1,22 @@
 /**
-  * @author Marzavec
+  * @author Marzavec ( https://github.com/marzavec )
   * @summary Finalize a siw
-  * @version 1.0.0
-  * @description Finalize a siw, check for NFT ownership, and sync permissions
+  * @version 1.0.2
+  * @description Finalize a siw, check for ownership, sync permissions,
+  * load effects, and manage RPC caching
   * @module signsiw
   */
 
 import nacl from 'tweetnacl';
 import bs58 from 'bs58';
 import { PublicKey } from '@solana/web3.js';
-import { BorshCoder } from '@coral-xyz/anchor';
+import * as borsh from '@coral-xyz/borsh';
 import { createSolanaRpc } from '@solana/kit';
 
 import {
   levels,
-  getAppearance,
   getUserDetails,
+  getUserLevel,
 } from '../utility/_UAC.js';
 
 import {
@@ -23,36 +24,27 @@ import {
 } from '../utility/_Channels.js';
 
 import {
+  Errors,
   Info,
 } from '../utility/_Constants.js';
 
-const RPC_URL = 'https://api.devnet.solana.com';
-const PROGRAM_ID = new PublicKey('HACkoKCBiLiWjuVf4S4gTbFqJohVC6VkacBEBTtUCHat'); // @todo
-const IDL = {
-  address: 'HACkoKCBiLiWjuVf4S4gTbFqJohVC6VkacBEBTtUCHat', // @todo
-  metadata: { name: 'hackchat_sc', version: '0.1.0', spec: '0.1.0' },
-  accounts: [
-    {
-      name: 'ChannelState',
-      discriminator: [74, 132, 141, 196, 64, 52, 83, 136],
-    },
-  ],
-  types: [
-    {
-      name: 'ChannelState',
-      type: {
-        kind: 'struct',
-        fields: [
-          { name: 'channel_name', type: 'string' },
-          { name: 'owner_nft_mint', type: 'pubkey' },
-          { name: 'owner_wallet', type: 'pubkey' },
-          { name: 'moderator_trips', type: { vec: { array: ['u8', 6] } } },
-          { name: 'bump', type: 'u8' },
-        ],
-      },
-    },
-  ],
-};
+// rpc connection settings
+const RPC_URL = 'https://api.mainnet-beta.solana.com';
+const PROGRAM_ID = new PublicKey('AutHysEUfKrWDETzrDA7S7MwL1eSSc2BjySR2W8EuSEr');
+const CACHE_TTL = 30000;
+
+// define borsh schema for channel state
+const channelStateLayout = borsh.struct([
+  borsh.u8('discriminator'),
+  borsh.str('channelName'),
+  borsh.publicKey('ownerNftMint'),
+  borsh.publicKey('ownerWallet'),
+  borsh.vec(borsh.array(borsh.u8(), 6), 'moderatorTrips'),
+  borsh.u8('bump'),
+]);
+
+// shortens a wallet address for display
+const shortenAddress = (address) => `${address.slice(0, 5)}...${address.slice(-5)}`;
 
 /**
   * Automatically executes once after server is ready or after a hot-reload
@@ -61,81 +53,169 @@ const IDL = {
   * @return {void}
   */
 export async function init(core) {
+  // initialize rpc client
   if (typeof core.solanaRPC === 'undefined') {
     core.solanaRPC = createSolanaRpc(RPC_URL);
   }
 
-  // core.hackchatCoder = new BorshCoder(IDL);
+  // initialize chain cache
+  if (typeof core.chainCache === 'undefined') {
+    core.chainCache = {
+      channels: {},
+      donations: {},
+      blockhash: {
+        hash: null,
+        timestamp: 0,
+      },
+    };
+  }
 }
 
 /**
-  * Checks Blockchain PDA for permissions
-  * @param {string} channelName - The name of the channel (e.g., "general")
+  * Fetches both the Channel PDA and Donation PDA using a CACHE_TTL memory cache
+  * @param {string} channelName - The name of the channel
   * @param {string} walletAddress - The user's verified wallet address
-  * @param {string} userTrip - The user's current trip code (if any)
-  * @param {Object} core - Core environment (for RPC and Coder)
-  * @returns {Promise<number|null>} - Returns the new level (number) or null if no perms found
+  * @param {string} userTrip - The user's current trip code
+  * @param {Object} core - Core environment
+  * @returns {Promise<Object>} - { newLevel: number|null, effect: number }
   */
-async function checkChainPermissions(channelName, walletAddress, userTrip, core) {
+async function checkChainState(channelName, walletAddress, userTrip, core) {
+  let newLevel = null;
+  let effect = 0;
+  const now = Date.now();
+
   try {
-    const [pda] = PublicKey.findProgramAddressSync(
-      [Buffer.from('channel'), Buffer.from(channelName)],
-      PROGRAM_ID,
-    );
+    const userPubkey = new PublicKey(walletAddress);
 
-    const accountInfo = await core.solanaRPC.getAccountInfo(pda);
+    let channelCache = core.chainCache.channels[channelName];
+    let donationCache = core.chainCache.donations[walletAddress];
 
-    if (!accountInfo) {
-      return null;
+    // check cache expiration
+    const needsChannel = !channelCache || (now - channelCache.timestamp > CACHE_TTL);
+    const needsDonation = !donationCache || (now - donationCache.timestamp > CACHE_TTL);
+
+    const accountsToFetch = [];
+
+    // derive channel pda
+    if (needsChannel) {
+      const [channelPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from('channel'), Buffer.from(channelName)],
+        PROGRAM_ID,
+      );
+      accountsToFetch.push(channelPda.toBase58());
     }
 
-    const accountData = core.hackchatCoder.accounts.decode(
-      'ChannelState',
-      accountInfo.data,
-    );
-
-    if (accountData.ownerWallet.toString() === walletAddress) {
-      return levels.channelOwner;
+    // derive donation pda
+    if (needsDonation) {
+      const [donationPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from('donation'), userPubkey.toBuffer()],
+        PROGRAM_ID,
+      );
+      accountsToFetch.push(donationPda.toBase58());
     }
 
-    if (userTrip && accountData.moderatorTrips) {
-      const tripBuffer = Buffer.from(userTrip);
+    // fetch accounts from rpc
+    if (accountsToFetch.length > 0) {
+      const rpcResponse = await core.solanaRPC.getMultipleAccounts(
+        accountsToFetch,
+        { encoding: 'base64' },
+      ).send();
 
-      const isMod = accountData.moderatorTrips.some((modTripBytes) => {
-        const modTripBuffer = Buffer.from(modTripBytes);
-        return modTripBuffer.equals(tripBuffer);
-      });
+      const accounts = rpcResponse?.value || [];
+      let accountIndex = 0;
 
-      if (isMod) {
-        return levels.channelModerator;
+      // parse channel data
+      if (needsChannel) {
+        const info = accounts[accountIndex];
+        accountIndex += 1;
+        let accountData = null;
+        if (info && info.data) {
+          const { data } = info;
+          const rawBuffer = Array.isArray(data)
+            ? Buffer.from(data[0], 'base64')
+            : Buffer.from(data);
+          accountData = channelStateLayout.decode(rawBuffer);
+        }
+        core.chainCache.channels[channelName] = { data: accountData, timestamp: now };
+        channelCache = core.chainCache.channels[channelName];
+      }
+
+      // parse donation data
+      if (needsDonation) {
+        const info = accounts[accountIndex];
+        accountIndex += 1;
+        let eff = 0;
+        if (info && info.data) {
+          const { data } = info;
+          const rawDonationData = Array.isArray(data)
+            ? Buffer.from(data[0], 'base64')
+            : Buffer.from(data);
+
+          if (rawDonationData.length >= 2) {
+            const [discriminator, donationEffect] = rawDonationData;
+            if (discriminator === 2) {
+              eff = donationEffect;
+            }
+          }
+        }
+        core.chainCache.donations[walletAddress] = { effect: eff, timestamp: now };
+        donationCache = core.chainCache.donations[walletAddress];
       }
     }
 
-    return null;
+    effect = donationCache.effect;
+    const accountData = channelCache.data;
+
+    // apply levels based on pda state
+    if (accountData) {
+      if (accountData.ownerWallet.toBase58() === walletAddress) {
+        newLevel = levels.channelOwner;
+      } else if (userTrip && accountData.moderatorTrips) {
+        const tripBuffer = Buffer.from(userTrip);
+        const isMod = accountData.moderatorTrips.some(
+          (modTripBytes) => Buffer.from(modTripBytes).equals(tripBuffer),
+        );
+
+        if (isMod) {
+          newLevel = levels.channelModerator;
+        }
+      }
+    }
+
+    return { newLevel, effect };
   } catch (err) {
-    console.error('Error checking chain permissions:', err);
-    return null;
+    console.error('Error fetching chain state:', err);
+    return { newLevel, effect };
   }
 }
 
 /**
   * Executes when invoked by a remote client
-  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @param {Object} env - Environment object with references to core, server, socket & payload
   * @public
   * @return {void}
   */
 export async function run({
   core, server, socket, payload,
 }) {
-  // must be in a channel to run this command
-  if (typeof socket.channel === 'undefined') {
-    return server.police.frisk(socket, 1);
+  const targetChannel = payload.channel || (socket.channels && socket.channels[0]);
+
+  // verify socket is in a channel
+  if (!targetChannel || !socket.channels || !socket.channels.includes(targetChannel)) {
+    return server.reply({
+      cmd: 'warn',
+      text: 'You may not do that',
+      id: Errors.Global.PERMISSION,
+      channel: false,
+    }, socket);
   }
 
+  // ensure siw process was started
   if (typeof socket.siwMsg === 'undefined' || typeof socket.siwAddress === 'undefined') {
     return false;
   }
 
+  // validate signature payload
   if (typeof payload.signature !== 'string' || typeof payload.signedMessage !== 'string') {
     return false;
   }
@@ -144,6 +224,7 @@ export async function run({
     return false;
   }
 
+  // check expiration
   const now = new Date();
   if (!socket.siwExpiry || socket.siwExpiry < now) {
     return false;
@@ -151,6 +232,7 @@ export async function run({
 
   const tempSiwAddress = socket.siwAddress;
 
+  // clean up siw session variables
   socket.siwMsg = undefined;
   socket.siwAddress = undefined;
   socket.siwExpiry = undefined;
@@ -161,63 +243,103 @@ export async function run({
 
   let isVerified = false;
   try {
+    // verify the cryptographic signature
     isVerified = nacl.sign.detached.verify(
       messageBytes,
       signatureBytes,
       publicKeyBytes,
     );
-  } catch (e) {
+  } catch {
     return false;
   }
 
   if (isVerified) {
+    // assign wallet to socket
     socket.wallet = {};
     socket.wallet.address = tempSiwAddress;
 
-    let replyText = `Now connected to: ${tempSiwAddress}`;
-
-    const channelSettings = getChannelSettings(core.appConfig.data, socket.channel);
-
+    const baseReplyText = `Now connected to: ${shortenAddress(tempSiwAddress)}`;
+    let targetChannelReplyText = baseReplyText;
     let newLevel = null;
+    const oldEffect = socket.effect || 0;
 
-    if (!channelSettings.owned) {
-      /* newLevel = await checkChainPermissions(
-        socket.channel,
-        tempSiwAddress,
-        socket.trip,
-        core,
-      ); */
+    // fetch current channel settings and chain state
+    const channelSettings = getChannelSettings(core.appConfig.data, targetChannel);
+    const chainState = await checkChainState(
+      targetChannel,
+      tempSiwAddress,
+      socket.trip,
+      core,
+    );
+
+    socket.effect = chainState.effect;
+
+    if (chainState.newLevel !== null) {
+      newLevel = chainState.newLevel;
+    } else if (!channelSettings.owned) {
+      newLevel = null;
     }
 
-    // only update if the new level is higher than what they currently have
-    if (newLevel !== null && newLevel > socket.level) {
-      socket.level = newLevel;
+    const currentLevel = getUserLevel(socket, targetChannel);
+    let levelChanged = false;
 
-      const { color, flair } = getAppearance(newLevel);
-      socket.color = color;
-      socket.flair = flair;
+    // determine level changes
+    if (newLevel !== null && newLevel > currentLevel) {
+      levelChanged = true;
+      if (!socket.channelStates) {
+        socket.channelStates = {};
+      }
 
-      server.broadcast({
-        ...getUserDetails(socket),
-        ...{
-          cmd: 'updateUser',
-          channel: socket.channel,
-        },
-      }, { channel: socket.channel });
+      if (!socket.channelStates[targetChannel]) {
+        socket.channelStates[targetChannel] = {
+          level: currentLevel,
+          trip: socket.trip,
+        };
+      }
+
+      socket.channelStates[targetChannel].level = newLevel;
 
       if (newLevel === levels.channelOwner) {
-        replyText += ' You are the verified owner of this channel';
+        targetChannelReplyText += ' You are the verified owner of this channel';
       } else if (newLevel === levels.channelModerator) {
-        replyText += ' You are a verified moderator of this channel';
+        targetChannelReplyText += ' You are a verified moderator of this channel';
       }
     }
 
-    return server.reply({
-      cmd: 'info',
-      text: replyText,
-      id: Info.Wallet.CONNECTED,
-      channel: socket.channel,
-    }, socket);
+    // broadcast updates if needed
+    if (socket.channels) {
+      for (let i = 0; i < socket.channels.length; i += 1) {
+        const currentChannel = socket.channels[i];
+        const channelLevelChanged = (currentChannel === targetChannel) ? levelChanged : false;
+
+        if (oldEffect !== socket.effect || channelLevelChanged) {
+          const outgoingPayload = {
+            ...getUserDetails(socket, currentChannel),
+            effect: socket.effect,
+            cmd: 'updateUser',
+            channel: currentChannel,
+          };
+
+          server.broadcast(outgoingPayload, (client) => {
+            if (client.channels && client.channels.includes(currentChannel)) {
+              return true;
+            }
+
+            return false;
+          });
+        }
+
+        server.reply({
+          cmd: 'info',
+          text: currentChannel === targetChannel ? targetChannelReplyText : baseReplyText,
+          id: Info.Wallet.CONNECTED,
+          args: { address: `${shortenAddress(tempSiwAddress)}` },
+          channel: currentChannel,
+        }, socket);
+      }
+    }
+
+    return true;
   }
 
   return false;
@@ -243,7 +365,7 @@ export const requiredData = ['signature', 'signedMessage'];
 export const info = {
   name: 'signsiw',
   category: 'wallet',
-  description: 'Verifies the wallet signature and syncs on-chain channel permissions',
+  description: 'Verifies the wallet signature, syncs on-chain channel permissions and applies effects',
   usage: `
     API: { cmd: 'signsiw', signature: '<base58 signature>', signedMessage: '<original text>' }`,
 };

@@ -11,7 +11,9 @@ import {
   Info,
 } from '../utility/_Constants.js';
 import {
-  isModerator,
+  isChannelModerator,
+  levels,
+  getUserLevel,
 } from '../utility/_UAC.js';
 
 /**
@@ -21,6 +23,7 @@ import {
   * @return {void}
   */
 export async function init(core) {
+  // initialize captcha tracking object
   if (typeof core.captchas === 'undefined') {
     core.captchas = {};
   }
@@ -35,42 +38,95 @@ export async function init(core) {
 export async function run({
   core, server, socket, payload,
 }) {
-  // increase rate limit chance and ignore if not admin or mod
-  if (!isModerator(socket.level)) {
+  const targetChannel = payload.channel;
+
+  // validate presence in channel
+  if (!targetChannel || !socket.channels || !socket.channels.includes(targetChannel)) {
+    return server.police.frisk(socket, 1);
+  }
+
+  const currentLevel = getUserLevel(socket, targetChannel);
+
+  // enforce moderator permission
+  if (currentLevel < levels.channelModerator) {
     return server.police.frisk(socket, 10);
   }
 
-  let targetChannel;
-
-  if (typeof payload.channel !== 'string') {
-    if (typeof socket.channel !== 'string') { // @todo Multichannel
-      return false; // silently fail
-    }
-
-    targetChannel = socket.channel;
-  } else {
-    targetChannel = payload.channel;
-  }
-
+  // check if captcha is already disabled
   if (!core.captchas[targetChannel]) {
     return server.reply({
       cmd: 'info',
-      text: 'Captcha is not enabled.',
+      text: 'Captcha is not enabled',
       id: Info.Captcha.NOT_ENABLED,
-      channel: socket.channel, // @todo Multichannel
+      channel: targetChannel,
     }, socket);
   }
 
+  // disable captcha
   core.captchas[targetChannel] = false;
 
+  // notify channel moderators
   server.broadcast({
     cmd: 'info',
-    text: `Captcha disabled on: ${targetChannel}`,
+    text: `Captcha disabled on: ?${targetChannel}`,
     id: Info.Captcha.DISABLED,
-    channel: false, // @todo Multichannel, false for global info
-  }, { channel: targetChannel, level: isModerator });
+    args: { targetChannel },
+    channel: targetChannel,
+  }, (client) => {
+    const inChannel = (client.channels && client.channels.includes(targetChannel));
+    return inChannel && isChannelModerator(client, targetChannel);
+  });
 
   return true;
+}
+
+/**
+  * Automatically executes once after server is ready to register this module's hooks
+  * @param {Object} server - Reference to server environment object
+  * @public
+  * @return {void}
+  */
+export function initHooks(server) {
+  server.registerHook('in', 'chat', this.chatCheck.bind(this), 4);
+}
+
+/**
+  * Executes every time an incoming chat command is invoked
+  * @param {Object} env - Environment object with references to core, server, socket & payload
+  * @public
+  * @return {(Object|boolean|string)} Object = same/altered payload,
+  * false = suppress action,
+  * string = error
+  */
+export function chatCheck({
+  core, server, socket, payload,
+}) {
+  // always verify user input
+  if (typeof payload.text !== 'string') return false;
+
+  const targetChannel = payload.channel;
+
+  // validate presence in channel
+  if (!targetChannel || !socket.channels || !socket.channels.includes(targetChannel)) {
+    return payload;
+  }
+
+  // intercept disablecaptcha command
+  if (payload.text === '/disablecaptcha') {
+    this.run({
+      core,
+      server,
+      socket,
+      payload: {
+        cmd: 'disablecaptcha',
+        channel: targetChannel,
+      },
+    });
+
+    return false;
+  }
+
+  return payload;
 }
 
 /**
@@ -85,7 +141,8 @@ export async function run({
 export const info = {
   name: 'disablecaptcha',
   category: 'moderators',
-  description: 'Disables the captcha on the channel specified in the channel property, default is current channel',
+  description: 'Disables the captcha on the channel',
   usage: `
-    API: { cmd: 'disablecaptcha', channel: '<optional channel, defaults to your current channel' }`,
+    API: { cmd: 'disablecaptcha', channel: '<optional channel>' }
+    Text: /disablecaptcha`,
 };

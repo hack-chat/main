@@ -81,7 +81,7 @@ export async function run({
   if (badClients.length === 0) {
     return server.reply({
       cmd: 'warn',
-      text: 'Could not find user(s) in that channel',
+      text: 'Could not find user in that channel',
       id: Errors.Global.UNKNOWN_USER,
       channel: socket.channel, // @todo Multichannel
     }, socket);

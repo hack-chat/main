@@ -8,9 +8,9 @@
 
 /**
   * Internal version, used mainly for debugging
-  * @typedef {object} CodebaseVersion
+  * @typedef {string} CodebaseVersion
   */
-export const CodebaseVersion = '2.2.3b';
+export const CodebaseVersion = '2.5.0';
 
 /* Base error ranges */
 const GlobalErrors = 10;
@@ -18,16 +18,13 @@ const CaptchaNotif = GlobalErrors + 10;
 const JoinErrors = CaptchaNotif + 10;
 const ChannelErrors = JoinErrors + 10;
 const InviteErrors = ChannelErrors + 10;
-const SessionErrors = InviteErrors + 10;
-const SaveConfigErrors = SessionErrors + 10;
+const SaveConfigErrors = InviteErrors + 10;
 const ClaimChannelErrors = SaveConfigErrors + 10;
 const MakePrivateErrors = ClaimChannelErrors + 10;
 const MakePublicErrors = MakePrivateErrors + 10;
-const RenewClaimErrors = MakePublicErrors + 10;
-const SetLevelErrors = RenewClaimErrors + 10;
+const SetLevelErrors = MakePublicErrors + 10;
 const SetMOTDErrors = SetLevelErrors + 10;
-const UnclaimChannelErrors = SetMOTDErrors + 10;
-const ChangeColorErrors = UnclaimChannelErrors + 10;
+const ChangeColorErrors = SetMOTDErrors + 10;
 const EmoteErrors = ChangeColorErrors + 10;
 const WhisperErrors = EmoteErrors + 10;
 const ForceColorErrors = WhisperErrors + 10;
@@ -37,6 +34,7 @@ const HackRequest = UsersErrors + 10;
 const KickErrors = HackRequest + 10;
 const LockRoomErrors = KickErrors + 10;
 const WalletErrors = LockRoomErrors + 10;
+const Password = WalletErrors + 10;
 
 /**
   * Holds the numeric id values for each error type
@@ -50,35 +48,31 @@ export const Errors = {
     INTERNAL_ERROR: GlobalErrors + 4,
     MISSING_TRIPCODE: GlobalErrors + 5,
     UNKNOWN_CMD: GlobalErrors + 6,
-    INVALID_PAYLOAD: GlobalErrors + 7,
-    LOGIN_REQUIRED: GlobalErrors + 8,
-    INVALID_DATA: GlobalErrors + 9,
   },
 
   Captcha: {
     MUST_SOLVE: CaptchaNotif + 1,
+    NO_REJOIN: CaptchaNotif + 2,
+    BAD_CAPTCHA: CaptchaNotif + 3,
   },
 
   Join: {
-    RATELIMIT: JoinErrors + 1,
-    INVALID_NICK: JoinErrors + 2,
-    ALREADY_JOINED: JoinErrors + 3,
-    NAME_TAKEN: JoinErrors + 4,
-    CHANNEL_LOCKED: JoinErrors + 5,
+    INVALID_NICK: JoinErrors + 1,
+    ALREADY_JOINED: JoinErrors + 2,
+    NAME_TAKEN: JoinErrors + 3,
+    CHANNEL_LOCKED: JoinErrors + 4,
+    LEGACY_RESTRICT: JoinErrors + 5,
   },
 
   Channel: {
     INVALID_NAME: ChannelErrors + 1,
     INVALID_LENGTH: ChannelErrors + 2,
     DEY_BANNED: ChannelErrors + 3,
+    CLOSE_WARNING: ChannelErrors + 4,
   },
 
   Invite: {
     RATELIMIT: InviteErrors + 1,
-  },
-
-  Session: {
-    BAD_SESSION: SessionErrors + 1,
   },
 
   SaveConfig: {
@@ -88,6 +82,8 @@ export const Errors = {
   ClaimChannel: {
     MODS_CANT: ClaimChannelErrors + 1,
     ALREADY_OWNED: ClaimChannelErrors + 2,
+    MUST_MINT: ClaimChannelErrors + 3,
+    ACCEPT_CLAIM: ClaimChannelErrors + 4,
   },
 
   MakePrivate: {
@@ -100,12 +96,6 @@ export const Errors = {
     ALREADY_PUBLIC: MakePublicErrors + 2,
   },
 
-  RenewClaim: {
-    MODS_CANT: RenewClaimErrors + 1,
-    NOT_OWNER: RenewClaimErrors + 2,
-    TOO_SOON: RenewClaimErrors + 3,
-  },
-
   SetLevel: {
     BAD_TRIP: SetLevelErrors + 1,
     BAD_LABEL: SetLevelErrors + 2,
@@ -116,11 +106,6 @@ export const Errors = {
 
   SetMOTD: {
     TOO_LONG: SetMOTDErrors + 1,
-  },
-
-  UnclaimChannel: {
-    NOT_OWNED: UnclaimChannelErrors + 1,
-    FAKE_OWNER: UnclaimChannelErrors + 2,
   },
 
   ChangeColor: {
@@ -163,11 +148,25 @@ export const Errors = {
   LockRoom: {
     LEVEL_TOO_HIGH: LockRoomErrors + 1,
     LEVEL_REQUIRED: LockRoomErrors + 2,
+    ALREADY_LOCKED: LockRoomErrors + 3,
+    NO_REJOIN: LockRoomErrors + 4,
+    INVALID_PASSWORD: LockRoomErrors + 5,
+    NOT_LOCKED: LockRoomErrors + 6,
+    UNLOCK_REQ: LockRoomErrors + 7,
   },
 
   Wallet: {
     INVALID_AMOUNT: WalletErrors + 1,
-    MISSING_AMOUNT: WalletErrors + 2,
+    USER_NOT_READY: WalletErrors + 2,
+    RPC_ERROR: WalletErrors + 3,
+    CMD_HELP: WalletErrors + 4,
+    NO_SELF: WalletErrors + 5,
+    BAD_TX: WalletErrors + 6,
+    YOUR_NOT_READY: WalletErrors + 7,
+  },
+
+  Password: {
+    NO_AUTO_JOIN: Password + 1,
   },
 };
 
@@ -178,24 +177,21 @@ const ModInfo = AdminInfo + 100;
 const CoreInfo = ModInfo + 100;
 const CaptchaInfo = CoreInfo + 100;
 const WalletInfo = CaptchaInfo + 100;
+const ChannelInfo = WalletInfo + 100;
 
 /**
- * Holds the numeric id values for each info type
- * @typedef {object} Info
- */
+  * Holds the numeric id values for each info type
+  * @typedef {object} Info
+  */
 export const Info = {
   Admin: {
     YOU_ARE_MOD: AdminInfo + 1,
     MOD_ADDED: AdminInfo + 2,
-    MOD_ADDED_BROADCAST: AdminInfo + 3,
-    BOMB_STATUS: AdminInfo + 4,
-    USER_LIST: AdminInfo + 5,
-    RELOAD_STATUS: AdminInfo + 6,
-    YOU_ARE_USER: AdminInfo + 7,
-    MOD_REMOVED: AdminInfo + 8,
-    MOD_REMOVED_BROADCAST: AdminInfo + 9,
-    CONFIG_SAVED: AdminInfo + 10,
-    SHOUT: AdminInfo + 11,
+    USER_LIST: AdminInfo + 3,
+    RELOAD_STATUS: AdminInfo + 4,
+    YOU_ARE_USER: AdminInfo + 5,
+    MOD_REMOVED: AdminInfo + 6,
+    CONFIG_SAVED: AdminInfo + 7,
   },
 
   Mod: {
@@ -205,16 +201,15 @@ export const Info = {
     KICKED_DETAILED: ModInfo + 4,
     KICKED: ModInfo + 5,
     LOCKED_DETAILED: ModInfo + 6,
-    LOCKED_GLOBAL_NOTIFY: ModInfo + 7,
-    UNMUZZLED_ALL: ModInfo + 8,
-    UNMUZZLED_DETAILED: ModInfo + 9,
-    UNBANNED: ModInfo + 10,
-    UNBANNED_DETAILED: ModInfo + 11,
-    UNBANNED_ALL: ModInfo + 12,
-    UNBANNED_ALL_DETAILED: ModInfo + 13,
-    UNLOCKED_DETAILED: ModInfo + 14,
-    UWUIFY_ENABLED: ModInfo + 15,
-    UWUIFY_DISABLED: ModInfo + 16,
+    UNMUZZLED_ALL: ModInfo + 7,
+    UNMUZZLED_DETAILED: ModInfo + 8,
+    UNBANNED_DETAILED: ModInfo + 9,
+    UNBANNED_ALL_DETAILED: ModInfo + 10,
+    UNLOCKED_DETAILED: ModInfo + 11,
+    UWUIFY_ENABLED: ModInfo + 12,
+    UWUIFY_DISABLED: ModInfo + 13,
+    PASS_ENABLED: ModInfo + 14,
+    PASS_DISABLED: ModInfo + 15,
   },
 
   Core: {
@@ -226,6 +221,8 @@ export const Info = {
     STATS_BASIC: CoreInfo + 6,
     PURGATORY_QUOTE: CoreInfo + 7,
     PURGATORY_NOTIFY: CoreInfo + 8,
+    CHANNEL_LIST: CoreInfo + 9,
+    NEW_PUBLIC: CoreInfo + 10,
   },
 
   Captcha: {
@@ -241,6 +238,16 @@ export const Info = {
     TX_RELAYED: WalletInfo + 3,
     VIEWED: WalletInfo + 4,
     CONNECTED: WalletInfo + 5,
+  },
+
+  ChannelInfo: {
+    NOW_OWNED: ChannelInfo + 1,
+    PERMS_CHANGED: ChannelInfo + 2,
+    MOTD_CHANGED: ChannelInfo + 3,
+    OWNER_RESET: ChannelInfo + 4,
+    NO_PASS: ChannelInfo + 5,
+    REQUESTING_OWNERSHIP: ChannelInfo + 6,
+    ACCEPT_CHANGES: ChannelInfo + 7,
   },
 };
 
@@ -267,8 +274,7 @@ export const SystemMOTDs = [
   'Protip: You can easily change your name with a command: /nick bob',
   'Enjoying hack.chat? Support us: https://patreon.com/marzavec',
   'We have a Twitter for some reason: https://x.com/HackDotChat',
-  'Protip: Use a password or add a "#" followed by a secret phrase to get a trip code',
-  'Protip: You can claim an unclaimed channel by using /claimchannel',
+  'Protip: You can claim an unclaimed channel by using /mintchannel',
   'Protip: You can send emotes like: /me does a thing',
   'Protip: The owner of a channel can create moderators: /setlevel <trip> channelModerator',
   'Protip: A moderator can kick people from the room: /kick <name>',
@@ -276,6 +282,8 @@ export const SystemMOTDs = [
   'Protip: You can do ==/help== or ==/help command==',
   'Protip: Privately message with: /whisper @name The message',
   'Protip: A moderator can lock a channel with: /lockroom',
+  'Miss the old hack.chat? Try legacy.hack.chat',
+  'Want a neat effect on your name? Checkout /donate',
 ];
 
 /**

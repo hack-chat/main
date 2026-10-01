@@ -16,6 +16,9 @@ import {
   Errors,
   Info,
 } from '../utility/_Constants.js';
+import {
+  getSession,
+} from './session.js';
 
 /**
   * Executes when invoked by a remote client
@@ -24,21 +27,22 @@ import {
   * @return {void}
   */
 export async function run({
-  server, socket, payload,
+  core, server, socket, payload,
 }) {
-  // must be in a channel to run this command
-  if (typeof socket.channel === 'undefined') {
+  const targetChannel = payload.channel;
+
+  // validate presence in channel
+  if (!targetChannel || !socket.channels || !socket.channels.includes(targetChannel)) {
     return server.police.frisk(socket, 1);
   }
 
-  const { channel } = socket;
-
+  // enforce rate limits
   if (server.police.frisk(socket, 6)) {
     return server.reply({
       cmd: 'warn',
-      text: 'You are changing nicknames too fast. Wait a moment before trying again.',
+      text: 'Issuing commands too quickly. Wait a moment before trying again',
       id: Errors.Global.RATELIMIT,
-      channel, // @todo Multichannel
+      channel: targetChannel,
     }, socket);
   }
 
@@ -48,103 +52,143 @@ export async function run({
   }
 
   const previousNick = socket.nick;
+  const newNick = payload.nick.trim();
 
   // make sure requested nickname meets standards
-  const newNick = payload.nick.trim();
   if (!verifyNickname(newNick)) {
     return server.reply({
       cmd: 'warn',
-      text: 'Nickname must consist of up to 24 letters, numbers, and underscores',
+      text: 'Username must consist of up to 24 letters, numbers, and underscores',
       id: Errors.Join.INVALID_NICK,
-      channel, // @todo Multichannel
+      channel: targetChannel,
     }, socket);
   }
 
+  // abort if no actual change
   if (newNick == previousNick) {
     return server.reply({
       cmd: 'warn',
-      text: 'Nickname taken',
+      text: `Nickname taken in channel: ?${targetChannel}`,
       id: Errors.Join.NAME_TAKEN,
-      channel, // @todo Multichannel
+      args: { channel: targetChannel },
+      channel: targetChannel,
     }, socket);
   }
 
-  // find any sockets that have the same nickname
-  const userExists = server.findSockets({
-    channel,
-    nick: (targetNick) => targetNick.toLowerCase() === newNick.toLowerCase()
-      // allow them to rename themselves to a different case
-      && targetNick != previousNick,
-  });
+  let collisionFound = false;
+  let collisionChannel = '';
 
-  // return error if found
-  if (userExists.length > 0) {
-    // that nickname is already in that channel
-    return server.reply({
-      cmd: 'warn',
-      text: 'Nickname taken',
-      id: Errors.Join.NAME_TAKEN,
-      channel, // @todo Multichannel
-    }, socket);
-  }
+  // verify new nick is available across all joined channels
+  for (let i = 0; i < socket.channels.length; i += 1) {
+    const checkChannel = socket.channels[i];
 
-  // build update notice with new nickname
-  const updateNotice = {
-    ...getUserDetails(socket),
-    ...{
-      cmd: 'updateUser',
-      nick: newNick,
-      channel, // @todo Multichannel
-    },
-  };
+    const userExists = server.findSockets((remoteSocket) => {
+      const inChannel = (remoteSocket.channels && remoteSocket.channels.includes(checkChannel));
 
-  // build join and leave notices for legacy clients
-  const leaveNotice = {
-    cmd: 'onlineRemove',
-    userid: socket.userid,
-    nick: socket.nick,
-    channel, // @todo Multichannel
-  };
+      return remoteSocket !== socket
+        && inChannel
+        && typeof remoteSocket.nick === 'string'
+        && remoteSocket.nick.toLowerCase() === newNick.toLowerCase();
+    });
 
-  const joinNotice = {
-    ...getUserDetails(socket),
-    ...{
-      cmd: 'onlineAdd',
-      nick: newNick,
-      channel, // @todo Multichannel
-    },
-  };
-
-  // gather channel peers
-  const peerList = server.findSockets({ channel });
-  for (let i = 0, l = peerList.length; i < l; i += 1) {
-    if (peerList[i].hcProtocol === 1) {
-      // send join/leave to legacy clients
-      server.send(leaveNotice, peerList[i]);
-      server.send(joinNotice, peerList[i]);
-    } else {
-      // send update info
-      // @todo this should be sent to every channel the client is in (multichannel)
-      server.send(updateNotice, peerList[i]);
+    if (userExists.length > 0) {
+      collisionFound = true;
+      collisionChannel = checkChannel;
+      break;
     }
   }
 
-  // notify channel that the user has changed their name
-  server.broadcast({
-    cmd: 'info',
-    text: `${socket.nick} is now ${newNick}`,
-    id: Info.Core.NICK_CHANGED,
-    channel, // @todo Multichannel
-  }, { channel });
+  // abort on cross-channel collision
+  if (collisionFound) {
+    return server.reply({
+      cmd: 'warn',
+      text: `Nickname taken in channel: ?${collisionChannel}`,
+      id: Errors.Join.NAME_TAKEN,
+      args: { channel: collisionChannel },
+      channel: targetChannel,
+    }, socket);
+  }
 
   // commit change to nickname
   socket.nick = newNick; // eslint-disable-line no-param-reassign
+
+  // update all channels
+  socket.channels.forEach((chan) => {
+    const userDetails = getUserDetails(socket, chan);
+
+    // build update notice with new nickname
+    const updateNotice = {
+      ...userDetails,
+      ...{
+        cmd: 'updateUser',
+        nick: newNick,
+        channel: chan,
+      },
+    };
+
+    // build join and leave notices for legacy clients
+    const leaveNotice = {
+      cmd: 'onlineRemove',
+      userid: socket.userid,
+      nick: previousNick,
+      channel: chan,
+    };
+
+    const joinNotice = {
+      ...userDetails,
+      ...{
+        cmd: 'onlineAdd',
+        nick: newNick,
+        channel: chan,
+      },
+    };
+
+    // gather channel peers using the new multi-channel compatible lookup
+    const peerList = server.findSockets((client) => client.channels
+      && client.channels.includes(chan));
+
+    // dispatch peer updates
+    for (let i = 0, l = peerList.length; i < l; i += 1) {
+      if (peerList[i].hcProtocol === 1) {
+        server.send(leaveNotice, peerList[i]);
+        server.send(joinNotice, peerList[i]);
+      } else {
+        server.send(updateNotice, peerList[i]);
+      }
+    }
+
+    // notify channel text chat that the user has changed their name
+    server.broadcast({
+      cmd: 'info',
+      text: `${previousNick} is now ${newNick}`,
+      id: Info.Core.NICK_CHANGED,
+      args: {
+        previousNick,
+        newNick,
+      },
+      channel: chan,
+    }, (client) => {
+      if (client.channels && client.channels.includes(chan)) {
+        return true;
+      }
+
+      return false;
+    });
+  });
+
+  // issue new token with updated state
+  server.reply({
+    cmd: 'session',
+    restored: false,
+    token: getSession(socket, core),
+    channels: socket.channels,
+  }, socket);
 
   return true;
 }
 
 /**
-  * Automatically executes once after server is ready to register this modules hooks
+  * Automatically executes once after server is ready to register this module's hooks
   * @param {Object} server - Reference to server environment object
   * @public
   * @return {void}
@@ -168,21 +212,30 @@ export function nickCheck({
     return false;
   }
 
+  const targetChannel = payload.channel;
+
+  // validate presence in channel
+  if (!targetChannel || !socket.channels || !socket.channels.includes(targetChannel)) {
+    return payload;
+  }
+
+  // intercept /nick command
   if (payload.text.startsWith('/nick')) {
     const input = payload.text.split(' ');
 
-    // if there is no nickname target parameter
+    // require nickname parameter
     if (!input[1]) {
       return server.reply({
         cmd: 'warn',
-        text: 'Nickname must consist of up to 24 letters, numbers, and underscores',
+        text: 'Username must consist of up to 24 letters, numbers, and underscores',
         id: Errors.Join.INVALID_NICK,
-        channel: socket.channel, // @todo Multichannel
+        channel: targetChannel,
       }, socket);
     }
 
     const newNick = input[1].replace(/@/g, '');
 
+    // trigger standard run execution
     this.run({
       core,
       server,
@@ -190,6 +243,7 @@ export function nickCheck({
       payload: {
         cmd: 'changenick',
         nick: newNick,
+        channel: targetChannel,
       },
     });
 

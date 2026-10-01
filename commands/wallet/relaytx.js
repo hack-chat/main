@@ -1,5 +1,5 @@
 /**
-  * @author Marzavec
+  * @author Marzavec ( https://github.com/marzavec )
   * @summary Relay a transaction to another user for signing
   * @version 1.0.0
   * @description Accepts a base64 transaction and forwards it to a target user to sign
@@ -16,45 +16,58 @@ import {
 
 /**
   * Executes when invoked by a remote client
-  * @param {Object} env - Enviroment object with references to core, server, socket & payload
+  * @param {Object} env - Environment object with references to core, server, socket & payload
   * @public
   * @return {void}
   */
 export async function run({
   server, socket, payload,
 }) {
-  // must be in a channel to run this command
-  if (typeof socket.channel === 'undefined') {
+  const targetChannel = payload.channel;
+
+  // validate presence in channel
+  if (!targetChannel || !socket.channels || !socket.channels.includes(targetChannel)) {
     return server.police.frisk(socket, 1);
   }
 
-  server.police.frisk(socket, 2);
+  // enforce rate limits
+  if (server.police.frisk(socket, 2)) {
+    return server.reply({
+      cmd: 'warn',
+      text: 'Issuing commands too quickly. Wait a moment before trying again',
+      id: Errors.Global.RATELIMIT,
+      channel: targetChannel,
+    }, socket);
+  }
 
+  // socket must have a confirmed wallet
   if (typeof socket.wallet !== 'object' || typeof socket.wallet.address !== 'string') {
     return server.reply({
       cmd: 'warn',
       text: 'You must connect a wallet first',
-      id: Errors.Global.LOGIN_REQUIRED,
-      channel: socket.channel,
+      id: Errors.Wallet.YOUR_NOT_READY,
+      channel: targetChannel,
     }, socket);
   }
 
+  // validate transaction payload
   if (typeof payload.tx !== 'string' || payload.tx.length === 0) {
     return server.reply({
       cmd: 'warn',
       text: 'Missing or invalid transaction data',
-      id: Errors.Global.INVALID_DATA,
-      channel: socket.channel,
+      id: Errors.Wallet.BAD_TX,
+      channel: targetChannel,
     }, socket);
   }
 
   let targetUser = null;
 
+  // find target user by id or nick
   if (typeof payload.userid === 'number') {
     targetUser = findUser(
       server,
       {
-        channel: socket.channel,
+        channel: targetChannel,
         userid: payload.userid,
       },
     );
@@ -62,16 +75,16 @@ export async function run({
     targetUser = findUser(
       server,
       {
-        channel: socket.channel,
+        channel: targetChannel,
         nick: payload.nick,
       },
     );
   } else {
     return server.reply({
       cmd: 'warn',
-      text: 'You must specify a target user by nick or userid',
-      id: Errors.Global.INVALID_DATA,
-      channel: socket.channel,
+      text: 'Could not find user in that channel',
+      id: Errors.Global.UNKNOWN_USER,
+      channel: targetChannel,
     }, socket);
   }
 
@@ -80,41 +93,47 @@ export async function run({
       cmd: 'warn',
       text: 'Could not find user in that channel',
       id: Errors.Global.UNKNOWN_USER,
-      channel: socket.channel,
+      channel: targetChannel,
     }, socket);
   }
 
+  // prevent self-transfers
   if (targetUser.userid === socket.userid) {
     return server.reply({
       cmd: 'warn',
       text: 'You cannot relay transactions to yourself',
-      id: Errors.Global.INVALID_DATA,
-      channel: socket.channel,
+      id: Errors.Wallet.NO_SELF,
+      channel: targetChannel,
     }, socket);
   }
 
+  // target user must have a confirmed wallet
   if (typeof targetUser.wallet !== 'object' || typeof targetUser.wallet.address !== 'string') {
     return server.reply({
       cmd: 'warn',
-      text: `@${targetUser.nick} does not have a connected wallet`,
-      id: Errors.Global.UNKNOWN_USER,
-      channel: socket.channel,
+      text: `@${targetUser.nick} has not connected a wallet`,
+      id: Errors.Wallet.USER_NOT_READY,
+      args: { nick: targetUser.nick },
+      channel: targetChannel,
     }, socket);
   }
 
+  // forward transaction to target user
   server.reply({
     cmd: 'signTransaction',
     tx: payload.tx,
     type: '3RD_PARTY_TRANSFER',
     from: socket.nick,
-    channel: socket.channel,
+    channel: targetChannel,
   }, targetUser);
 
+  // notify sender of success
   return server.reply({
     cmd: 'info',
     text: `TX sent to @${targetUser.nick}`,
     id: Info.Wallet.TX_RELAYED,
-    channel: socket.channel,
+    args: { nick: targetUser.nick },
+    channel: targetChannel,
   }, socket);
 }
 

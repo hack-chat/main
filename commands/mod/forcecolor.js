@@ -7,8 +7,9 @@
   */
 
 import {
-  isModerator,
   getUserDetails,
+  getUserLevel,
+  levels,
 } from '../utility/_UAC.js';
 import {
   Errors,
@@ -16,6 +17,9 @@ import {
 import {
   findUser,
 } from '../utility/_Channels.js';
+import {
+  getSession,
+} from '../core/session.js';
 import {
   verifyColor,
 } from '../utility/_Text.js';
@@ -27,79 +31,113 @@ import {
   * @return {void}
   */
 export async function run({
-  server, socket, payload,
+  core, server, socket, payload,
 }) {
-  // increase rate limit chance and ignore if not admin or mod
-  if (!isModerator(socket.level)) {
+  const targetChannel = payload.channel;
+
+  // validate presence in channel
+  if (!targetChannel || !socket.channels || !socket.channels.includes(targetChannel)) {
     return server.police.frisk(socket, 10);
   }
 
-  const { channel } = socket;
-  if (typeof payload.channel === 'undefined') {
-    payload.channel = channel;
+  const currentLevel = getUserLevel(socket, targetChannel);
+
+  // enforce moderator permission
+  if (currentLevel < levels.channelModerator) {
+    server.police.frisk(socket, 10);
+
+    return server.reply({
+      cmd: 'warn',
+      text: 'You may not do that',
+      id: Errors.Global.PERMISSION,
+      channel: targetChannel,
+    }, socket);
   }
 
-  // check user input
-  if (typeof payload.nick !== 'string') {
+  // check payload structure
+  if (typeof payload.nick !== 'string' || typeof payload.color !== 'string') {
     return true;
   }
 
-  if (typeof payload.color !== 'string') {
-    return true;
-  }
-
-  // make sure requested nickname meets standards
+  // sanitize color input
   const newColor = payload.color.trim().toUpperCase().replace(/#/g, '');
   if (newColor !== 'RESET' && !verifyColor(newColor)) {
     return server.reply({
       cmd: 'warn',
       text: 'Invalid color! Color must be in hex value',
       id: Errors.ChangeColor.INVALID_COLOR,
-      channel, // @todo Multichannel
+      channel: targetChannel,
     }, socket);
   }
 
   // find target user
-  const targetUser = findUser(server, payload);
+  const targetUser = findUser(server, { ...payload, channel: targetChannel });
   if (!targetUser) {
     return server.reply({
       cmd: 'warn',
       text: 'Could not find user in that channel',
       id: Errors.Global.UNKNOWN_USER,
-      channel: socket.channel, // @todo Multichannel
+      channel: targetChannel,
     }, socket);
   }
 
-  // TODO: Change this uType to use level / uac
-  // i guess coloring mods or admins isn't the best idea?
-  if (targetUser.uType !== 'user') {
-    return true;
+  // prevent modifying users of equal or higher rank
+  if (targetUser.globalLevel >= socket.globalLevel) {
+    return server.reply({
+      cmd: 'warn',
+      text: 'You may not do that',
+      id: Errors.Global.PERMISSION,
+      channel: targetChannel,
+    }, socket);
   }
 
+  // ensure channel states are initialized
+  if (!targetUser.channelStates) {
+    targetUser.channelStates = {};
+  }
+
+  if (!targetUser.channelStates[targetChannel]) {
+    targetUser.channelStates[targetChannel] = {
+      level: getUserLevel(targetUser, targetChannel),
+      trip: targetUser.trip,
+    };
+  }
+
+  // apply new color or reset
   if (newColor === 'RESET') {
-    targetUser.color = false;
+    delete targetUser.channelStates[targetChannel].color;
   } else {
-    targetUser.color = newColor;
+    targetUser.channelStates[targetChannel].color = newColor;
   }
 
-  // build update notice with new color
-  const updateNotice = {
-    ...getUserDetails(targetUser),
-    ...{
-      cmd: 'updateUser',
-      channel: socket.channel, // @todo Multichannel
-    },
-  };
+  const details = getUserDetails(targetUser, targetChannel);
 
-  // notify channel that the user has changed their color
-  // @todo this should be sent to every channel the user is in (multichannel)
-  server.broadcast(updateNotice, { channel: socket.channel });
+  // broadcast updated user details to the channel
+  server.broadcast({
+    ...details,
+    cmd: 'updateUser',
+    channel: targetChannel,
+  }, (client) => {
+    if (client.channels && client.channels.includes(targetChannel)) {
+      return true;
+    }
+
+    return false;
+  });
+
+  // sync session on target client
+  server.reply({
+    cmd: 'session',
+    restored: false,
+    token: getSession(targetUser, core),
+    channels: targetUser.channels,
+  }, targetUser);
 
   return true;
 }
 
 /**
-  * Automatically executes once after server is ready to register this modules hooks
+  * Automatically executes once after server is ready to register this module's hooks
   * @param {Object} server - Reference to server environment object
   * @public
   * @return {void}
@@ -124,27 +162,30 @@ export function colorCheck({
     return false;
   }
 
+  // intercept /forcecolor command
   if (payload.text.startsWith('/forcecolor ')) {
     const input = payload.text.split(' ');
+    const targetChannel = payload.channel;
 
-    // If there is no nickname target parameter
+    // missing target parameter
     if (input[1] === undefined) {
       server.reply({
         cmd: 'warn',
-        text: 'Refer to `/help forcecolor` for instructions on how to use this command.',
+        text: 'Refer to `/help forcecolor` for instructions on how to use this command',
         id: Errors.ForceColor.MISSING_NICK,
-        channel: socket.channel, // @todo Multichannel
+        channel: targetChannel,
       }, socket);
 
       return false;
     }
 
+    // missing color parameter
     if (input[2] === undefined) {
       server.reply({
         cmd: 'warn',
         text: 'Invalid color! Color must be in hex value',
         id: Errors.ChangeColor.INVALID_COLOR,
-        channel: socket.channel, // @todo Multichannel
+        channel: targetChannel,
       }, socket);
 
       return false;
@@ -152,6 +193,7 @@ export function colorCheck({
 
     const target = input[1].replace(/@/g, '');
 
+    // trigger standard run execution
     this.run({
       core,
       server,
@@ -160,6 +202,7 @@ export function colorCheck({
         cmd: 'forcecolor',
         nick: target,
         color: input[2],
+        channel: targetChannel,
       },
     });
 

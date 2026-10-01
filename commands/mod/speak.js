@@ -4,12 +4,13 @@
   * @author OpSimple ( https://github.com/OpSimple )
   * @summary Unmuzzle a user
   * @version 1.1.0
-  * @description Pardon a dumb user to be able to speak again
+  * @description Pardon a muted user so they can speak again
   * @module speak
   */
 
 import {
   isModerator,
+  isChannelModerator,
 } from '../utility/_UAC.js';
 import {
   Errors,
@@ -23,6 +24,7 @@ import {
   * @return {void}
   */
 export function init(core) {
+  // initialize muzzle list if missing
   if (typeof core.muzzledHashes === 'undefined') {
     core.muzzledHashes = {};
   }
@@ -37,8 +39,15 @@ export function init(core) {
 export async function run({
   core, server, socket, payload,
 }) {
-  // increase rate limit chance and ignore if not admin or mod
-  if (!isModerator(socket.level)) {
+  // enforce moderation level
+  if (!isModerator(socket)) {
+    return server.police.frisk(socket, 10);
+  }
+
+  const targetChannel = payload.channel;
+
+  // validate presence in channel
+  if (!targetChannel || !socket.channels || !socket.channels.includes(targetChannel)) {
     return server.police.frisk(socket, 10);
   }
 
@@ -48,10 +57,11 @@ export async function run({
       cmd: 'warn',
       text: "hash:'targethash' or ip:'1.2.3.4' is required",
       id: Errors.Users.BAD_HASH_OR_IP,
-      channel: socket.channel, // @todo Multichannel
+      channel: targetChannel,
     }, socket);
   }
 
+  // handle global unmuzzle wildcard
   if (typeof payload.ip === 'string') {
     if (payload.ip === '*') {
       core.muzzledHashes = {};
@@ -60,8 +70,9 @@ export async function run({
         cmd: 'info',
         text: `${socket.nick} unmuzzled all users`,
         id: Info.Mod.UNMUZZLED_ALL,
-        channel: false, // @todo Multichannel, false for global
-      }, { level: isModerator });
+        args: { nick: socket.nick },
+        channel: targetChannel,
+      }, (client) => isModerator(client));
     }
   } else if (payload.hash === '*') {
     core.muzzledHashes = {};
@@ -70,11 +81,12 @@ export async function run({
       cmd: 'info',
       text: `${socket.nick} unmuzzled all users`,
       id: Info.Mod.UNMUZZLED_ALL,
-      channel: false, // @todo Multichannel, false for global
-    }, { level: isModerator });
+      args: { nick: socket.nick },
+      channel: targetChannel,
+    }, (client) => isModerator(client));
   }
 
-  // find target & remove mute status
+  // find target and remove mute status
   let target;
   if (typeof payload.ip === 'string') {
     target = server.getSocketHash(payload.ip);
@@ -84,13 +96,21 @@ export async function run({
 
   delete core.muzzledHashes[target];
 
-  // notify mods
+  // notify moderators in the channel
   server.broadcast({
     cmd: 'info',
-    text: `${socket.nick}#${socket.trip} unmuzzled : ${target}`,
+    text: `${socket.nick}#${socket.trip} unmuzzled: ${target}`,
     id: Info.Mod.UNMUZZLED_DETAILED,
-    channel: false, // @todo Multichannel, false for global
-  }, { level: isModerator });
+    args: {
+      nick: socket.nick,
+      trip: socket.trip,
+      target,
+    },
+    channel: targetChannel,
+  }, (client) => {
+    const inChannel = (client.channels && client.channels.includes(targetChannel));
+    return inChannel && isChannelModerator(client, targetChannel);
+  });
 
   return true;
 }
@@ -108,8 +128,8 @@ export async function run({
 export const info = {
   name: 'speak',
   category: 'moderators',
-  description: 'Pardon a dumb user to be able to speak again',
+  description: 'Pardon a muted user so they can speak again',
   aliases: ['unmuzzle', 'unmute'],
   usage: `
-    API: { cmd: 'speak', ip/hash: '<target ip or hash>' }`,
+    API: { cmd: 'speak', ip/hash: '<target IP or hash>' }`,
 };

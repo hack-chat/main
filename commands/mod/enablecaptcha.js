@@ -13,12 +13,15 @@ import captcha from 'ascii-captcha';
 
 import {
   isTrustedUser,
-  isModerator,
+  isChannelModerator,
   verifyNickname,
   getUserPerms,
+  levels,
+  getUserLevel,
 } from '../utility/_UAC.js';
 import {
   canJoinChannel,
+  getChannelSettings,
 } from '../utility/_Channels.js';
 import {
   upgradeLegacyJoin,
@@ -36,6 +39,7 @@ import {
   * @return {void}
   */
 export async function init(core) {
+  // initialize captcha tracking object
   if (typeof core.captchas === 'undefined') {
     core.captchas = {};
   }
@@ -50,46 +54,50 @@ export async function init(core) {
 export async function run({
   core, server, socket, payload,
 }) {
-  // increase rate limit chance and ignore if not admin or mod
-  if (!isModerator(socket.level)) {
+  const targetChannel = payload.channel;
+
+  // validate presence in channel
+  if (!targetChannel || !socket.channels || !socket.channels.includes(targetChannel)) {
     return server.police.frisk(socket, 10);
   }
 
-  let targetChannel;
+  const currentLevel = getUserLevel(socket, targetChannel);
 
-  if (typeof payload.channel !== 'string') {
-    if (typeof socket.channel !== 'string') { // @todo Multichannel
-      return false; // silently fail
-    }
-
-    targetChannel = socket.channel;
-  } else {
-    targetChannel = payload.channel;
+  // enforce moderator permission
+  if (currentLevel < levels.channelModerator) {
+    return server.police.frisk(socket, 10);
   }
 
+  // check if already enabled
   if (core.captchas[targetChannel]) {
     return server.reply({
       cmd: 'info',
-      text: 'Captcha is already enabled.',
+      text: 'Captcha is already enabled',
       id: Info.Captcha.ALREADY_ENABLED,
-      channel: socket.channel, // @todo Multichannel
+      channel: targetChannel,
     }, socket);
   }
 
+  // enable captcha for target channel
   core.captchas[targetChannel] = true;
 
+  // notify moderators
   server.broadcast({
     cmd: 'info',
-    text: `Captcha enabled on: ${targetChannel}`,
+    text: `Captcha enabled on: ?${targetChannel}`,
     id: Info.Captcha.ENABLED,
-    channel: socket.channel, // @todo Multichannel, false for global info
-  }, { channel: socket.channel, level: isModerator });
+    args: { targetChannel },
+    channel: targetChannel,
+  }, (client) => {
+    const inChannel = (client.channels && client.channels.includes(targetChannel));
+    return inChannel && isChannelModerator(client, targetChannel);
+  });
 
   return true;
 }
 
 /**
-  * Automatically executes once after server is ready to register this modules hooks
+  * Automatically executes once after server is ready to register this module's hooks
   * @param {Object} server - Reference to server environment object
   * @public
   * @return {void}
@@ -111,11 +119,12 @@ export function initHooks(server) {
 export function chatCheck({
   core, server, socket, payload,
 }) {
-  // always verifiy user input
-  if (typeof payload.text !== 'string') {
+  // always verify user input
+  if (payload && typeof payload.text !== 'string') {
     return false;
   }
 
+  // intercept chat if user is being challenged
   if (typeof socket.captcha !== 'undefined') {
     if (socket.captcha.awaiting === true) {
       if (payload.text === socket.captcha.solution) {
@@ -123,9 +132,11 @@ export function chatCheck({
           socket.captcha.whitelist = [];
         }
 
+        // add channel to whitelist and clear challenge
         socket.captcha.whitelist.push(socket.captcha.origChannel);
         socket.captcha.awaiting = false;
 
+        // reconstruct join payload
         if (socket.hcProtocol === 1) {
           core.commands.handleCommand(server, socket, {
             cmd: 'join',
@@ -144,11 +155,34 @@ export function chatCheck({
         return false;
       }
 
+      // fail on bad captcha solution
+      server.reply({
+        cmd: 'warn',
+        text: 'Incorrect captcha',
+        id: Errors.Captcha.BAD_CAPTCHA,
+        channel: false,
+      }, socket);
+
       server.police.frisk(socket, 7);
-      socket.terminate();
+      socket.captcha.awaiting = false;
 
       return false;
     }
+  }
+
+  // intercept command to enable captcha
+  if (payload.text === '/enablecaptcha') {
+    this.run({
+      core,
+      server,
+      socket,
+      payload: {
+        cmd: 'enablecaptcha',
+        channel: payload.channel,
+      },
+    });
+
+    return false;
   }
 
   return payload;
@@ -170,8 +204,17 @@ export function joinCheck({
     return false;
   }
 
-  // check if channel has captcha enabled
+  // bypass if channel does not have captcha enabled
   if (core.captchas[payload.channel] !== true) {
+    return payload;
+  }
+
+  // bypass if user is already whitelisted
+  if (
+    socket.captcha
+    && socket.captcha.whitelist
+    && socket.captcha.whitelist.includes(payload.channel)
+  ) {
     return payload;
   }
 
@@ -189,36 +232,41 @@ export function joinCheck({
   if (mayJoin !== true) {
     return server.reply({
       cmd: 'warn',
-      text: 'You may not join that channel.',
+      text: 'You may not join that channel',
       id: mayJoin,
-      channel: false, // @todo Multichannel, false for global event
+      channel: false,
     }, socket);
   }
-
-  // calling socket already in a channel
-  // @todo multichannel update, will remove
-  if (typeof socket.channel !== 'undefined') {
-    return server.reply({
-      cmd: 'warn',
-      text: 'Joining more than one channel is not currently supported',
-      id: Errors.Join.ALREADY_JOINED,
-      channel: false, // @todo Multichannel, false for global event
-    }, socket);
-  }
-  // end todo
 
   // validates the user input for `nick`
   if (verifyNickname(nick, socket) !== true) {
     return server.reply({
       cmd: 'warn',
-      text: 'Nickname must consist of up to 24 letters, numbers, and underscores',
+      text: 'Username must consist of up to 24 letters, numbers, and underscores',
       id: Errors.Join.INVALID_NICK,
-      channel: false, // @todo Multichannel, false for global event
+      channel: false,
     }, socket);
   }
 
   // get trip and level
-  const { trip, level } = getUserPerms(pass, core.saltKey, core.appConfig.data, channel);
+  const { trip, level: baseLevel } = getUserPerms(pass, core.saltKey, core.appConfig.data, channel);
+  let level = baseLevel;
+
+  const channelSettings = getChannelSettings(core.appConfig.data, channel);
+
+  // resolve local level
+  if (channelSettings.owned) {
+    if (channelSettings.ownerTrip === trip) {
+      level = levels.channelOwner;
+    } else if (channelSettings.tripLevels && channelSettings.tripLevels[trip]) {
+      level = channelSettings.tripLevels[trip];
+    }
+  }
+
+  // check if channel is locked higher than the user
+  if (level < channelSettings.lockLevel) {
+    return origPayload;
+  }
 
   // store the user values
   const userInfo = {
@@ -233,34 +281,33 @@ export function joinCheck({
     channel,
   };
 
+  // present challenge to unauthorized users
   if (userInfo.uType === 'user') {
     if (userInfo.trip == null || isTrustedUser(level) === false) {
-      if (typeof socket.captcha === 'undefined') {
-        socket.captcha = {
-          awaiting: true,
-          origChannel: payload.channel,
-          origNick: payload.nick,
-          origPass: pass,
-          solution: captcha.generateRandomText(6),
-        };
+      // stage the challenge state
+      socket.captcha = {
+        awaiting: true,
+        origChannel: payload.channel,
+        origNick: payload.nick,
+        origPass: pass,
+        solution: captcha.generateRandomText(6),
+        whitelist: socket.captcha && socket.captcha.whitelist ? socket.captcha.whitelist : [],
+      };
 
-        server.reply({
-          cmd: 'warn',
-          text: 'Enter the following to join (case-sensitive):',
-          id: Errors.Captcha.MUST_SOLVE,
-          channel: payload.channel, // @todo Multichannel
-        }, socket);
+      // notify user to solve
+      /* server.reply({
+        cmd: 'warn',
+        text: 'Enter the following (case-sensitive)',
+        id: Errors.Captcha.MUST_SOLVE,
+        channel: false,
+      }, socket); */
 
-        server.reply({
-          cmd: 'captcha',
-          text: captcha.word2Transformedstr(socket.captcha.solution),
-          channel: payload.channel, // @todo Multichannel
-        }, socket);
-
-        return false;
-      }
-
-      socket.terminate();
+      // dispatch ascii challenge text
+      server.reply({
+        cmd: 'captcha',
+        text: captcha.word2Transformedstr(socket.captcha.solution),
+        channel: payload.channel,
+      }, socket);
 
       return false;
     }
@@ -283,5 +330,6 @@ export const info = {
   category: 'moderators',
   description: 'Enables a captcha in the current channel you are in',
   usage: `
-    API: { cmd: 'enablecaptcha', channel: '<optional channel, defaults to your current channel>' }`,
+    API: { cmd: 'enablecaptcha', channel: '<optional channel>' }
+    Text: /enablecaptcha`,
 };

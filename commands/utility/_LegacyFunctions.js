@@ -9,8 +9,7 @@
   */
 
 import {
-  isAdmin,
-  isModerator,
+  levels,
 } from './_UAC.js';
 
 /**
@@ -24,32 +23,34 @@ import {
 export function upgradeLegacyJoin(server, socket, payload) {
   const newPayload = payload;
 
-  // this is why we can't have nice things
+  // fallback for missing nickname
   if (typeof payload.nick === 'undefined' || !payload.nick) {
     payload.nick = `scarmiglione_${Math.floor(Math.random() * 99999)}`;
   }
 
-  // `join` is the legacy entry point, so apply protocol version
-  socket.hcProtocol = 1;
+  // set legacy protocol flag
+  if (typeof socket.hcProtocol === 'undefined') {
+    socket.hcProtocol = 1;
+  }
 
-  // these would have been applied in the `session` module, apply them now
-  socket.hash = server.getSocketHash(socket);
-  socket.isBot = false;
-  socket.color = false;
+  // apply properties normally set by session module
+  if (typeof socket.hash === 'undefined') socket.hash = server.getSocketHash(socket);
+  if (typeof socket.isBot === 'undefined') socket.isBot = false;
+  if (typeof socket.color === 'undefined') socket.color = false;
 
-  // pull the password from the nick
+  // extract password from nick
   const nickArray = payload.nick.split('#', 2);
   newPayload.nick = nickArray[0].trim();
   if (nickArray[1] && typeof payload.pass === 'undefined') {
     newPayload.pass = nickArray[1]; // eslint-disable-line prefer-destructuring
   }
 
-  // dunno how this happened on the legacy version
+  // map legacy password field
   if (typeof payload.password !== 'undefined') {
     newPayload.pass = payload.password;
   }
 
-  // apply the missing `userid` prop
+  // assign missing userid
   if (typeof socket.userid === 'undefined') {
     socket.userid = Math.floor(Math.random() * 9999999999999);
   }
@@ -62,8 +63,9 @@ export function upgradeLegacyJoin(server, socket, payload) {
   * @param {number} level Numeric level to find the label for
   */
 export function legacyLevelToLabel(level) {
-  if (isAdmin(level)) return 'admin';
-  if (isModerator(level)) return 'mod';
+  // map numeric level to legacy label
+  if (level >= levels.admin) return 'admin';
+  if (level >= levels.moderator) return 'mod';
 
   return 'user';
 }
@@ -75,6 +77,7 @@ export function legacyLevelToLabel(level) {
   * @return {object}
   */
 export function legacyInviteOut(payload, nick) {
+  // wrap invite out in info payload
   return {
     ...payload,
     ...{
@@ -82,7 +85,7 @@ export function legacyInviteOut(payload, nick) {
       type: 'invite',
       from: nick,
       text: `${nick} invited you to ?${payload.inviteChannel}`,
-      channel: payload.channel, // @todo Multichannel
+      channel: payload.channel,
     },
   };
 }
@@ -94,6 +97,7 @@ export function legacyInviteOut(payload, nick) {
   * @return {object}
   */
 export function legacyInviteReply(payload, nick) {
+  // wrap invite reply in info payload
   return {
     ...payload,
     ...{
@@ -101,7 +105,7 @@ export function legacyInviteReply(payload, nick) {
       type: 'invite',
       from: '',
       text: `You invited ${nick} to ?${payload.inviteChannel}`,
-      channel: payload.channel, // @todo Multichannel
+      channel: payload.channel,
     },
   };
 }
@@ -109,10 +113,11 @@ export function legacyInviteReply(payload, nick) {
 /**
   * Alter the outgoing payload to a `whisper` cmd and add/change missing props
   * @param {object} payload Original payload
-  * @param {string} nick Sender nick
+  * @param {string} from Sender socket object
   * @return {object}
   */
 export function legacyWhisperOut(payload, from) {
+  // format outbound whisper for legacy clients
   return {
     ...payload,
     ...{
@@ -121,6 +126,7 @@ export function legacyWhisperOut(payload, from) {
       from: from.nick,
       trip: from.trip || 'null',
       text: `${from.nick} whispered: ${payload.text}`,
+      channel: payload.channel,
     },
   };
 }
@@ -132,12 +138,14 @@ export function legacyWhisperOut(payload, from) {
   * @return {object}
   */
 export function legacyWhisperReply(payload, nick) {
+  // format whisper reply for legacy clients
   return {
     ...payload,
     ...{
       cmd: 'info',
       type: 'whisper',
       text: `You whispered to @${nick}: ${payload.text}`,
+      channel: payload.channel,
     },
   };
 }

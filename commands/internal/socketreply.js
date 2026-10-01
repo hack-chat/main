@@ -2,8 +2,8 @@
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Bridge warning events to a user
   * @version 1.0.0
-  * @description If a warning occurs within the server, this module will relay the warning to the
-  *   client
+  * @description If a warning occurs within the server, this module will relay the
+  * warning to the client
   * @module socketreply
   */
 
@@ -18,17 +18,36 @@ import {
   * @return {void}
   */
 export async function run({ server, socket, payload }) {
+  // verify internal command key
   if (payload.cmdKey !== server.cmdKey) {
-    // internal command attempt by client, increase rate limit chance and ignore
+    // block unauthorized internal command execution
     return server.police.frisk(socket, 20);
   }
 
-  // send warning to target socket
+  // validate payload text
+  if (typeof payload.text !== 'string') {
+    return false;
+  }
+
+  // fallback to false if channel is missing
+  const targetChannel = payload.channel || false;
+
+  // handle specific rate-limit warning
+  if (payload.text === 'You are being rate-limited or blocked.') {
+    return server.reply({
+      cmd: 'warn',
+      text: payload.text,
+      id: 987654323,
+      channel: targetChannel,
+    }, socket);
+  }
+
+  // send general warning to target socket
   return server.reply({
     cmd: 'warn',
     text: payload.text,
     id: Errors.Global.INTERNAL_ERROR,
-    channel: false,
+    channel: targetChannel,
   }, socket);
 }
 

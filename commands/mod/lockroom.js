@@ -13,6 +13,7 @@ import {
   isChannelModerator,
   verifyNickname,
   getUserPerms,
+  getUserLevel,
   levels,
 } from '../utility/_UAC.js';
 import {
@@ -27,6 +28,7 @@ import {
   canJoinChannel,
 } from '../utility/_Channels.js';
 
+// selection of quotes for users trapped in purgatory
 const danteQuotes = [
   'Do not be afraid; our fate cannot be taken from us; it is a gift.',
   'In the middle of the journey of our life I found myself within a dark woods where the straight way was lost.',
@@ -57,6 +59,7 @@ const danteQuotes = [
   * @return {void}
   */
 export async function init(core) {
+  // initialize lock tracking object
   if (typeof core.locked === 'undefined') {
     core.locked = {};
   }
@@ -71,27 +74,33 @@ export async function init(core) {
 export async function run({
   core, server, socket, payload,
 }) {
-  if (typeof socket.channel !== 'string') { // @todo Multichannel
-    return false; // silently fail
-  }
+  const targetChannel = payload.channel;
 
-  // increase rate limit chance and ignore if not admin or mod
-  if (!isChannelModerator(socket.level)) {
+  // validate presence in channel
+  if (!targetChannel || !socket.channels || !socket.channels.includes(targetChannel)) {
     return server.police.frisk(socket, 10);
   }
 
-  const targetChannel = socket.channel;
+  const currentLevel = getUserLevel(socket, targetChannel);
 
+  // enforce moderator permission
+  if (currentLevel < levels.channelModerator) {
+    return server.police.frisk(socket, 10);
+  }
+
+  // check if already locked
   if (typeof core.locked[targetChannel] !== 'undefined' && core.locked[targetChannel] !== false) {
     return server.reply({
       cmd: 'warn',
-      text: 'Channel is already locked.',
-      id: Errors.Global.INVALID_DATA,
-      channel: targetChannel, // @todo Multichannel
+      text: 'Channel is already locked',
+      id: Errors.LockRoom.ALREADY_LOCKED,
+      channel: targetChannel,
     }, socket);
   }
 
-  let lockLevel = socket.level;
+  let lockLevel = currentLevel;
+
+  // parse optional target lock level
   if (typeof payload.level !== 'undefined') {
     if (typeof payload.level === 'string') {
       if (typeof levels[payload.level] === 'number') {
@@ -102,24 +111,33 @@ export async function run({
         lockLevel = payload.level;
       }
     } else {
+      const validLabels = Object.keys(levels).join(', ');
+
       return server.reply({
         cmd: 'warn',
-        text: `Expected "level" to be a number or string label: ${Object.keys(levels).join(', ')}`,
+        text: `Expected "level" to be a number or string label: ${validLabels}`,
         id: Errors.LockRoom.LEVEL_REQUIRED,
-        channel: targetChannel, // @todo Multichannel
+        args: { validLabels },
+        channel: targetChannel,
       }, socket);
     }
   }
 
-  if (lockLevel > socket.level) {
+  // prevent locking out equal or higher ranks
+  if (lockLevel > currentLevel) {
     return server.reply({
       cmd: 'warn',
-      text: `Target level too high (${lockLevel}). You may only lock up to ${socket.level}`,
+      text: `Target level too high (${lockLevel}). You may only lock up to ${currentLevel}`,
       id: Errors.LockRoom.LEVEL_TOO_HIGH,
-      channel: targetChannel, // @todo Multichannel
+      args: {
+        lockLevel,
+        currentLevel,
+      },
+      channel: targetChannel,
     }, socket);
   }
 
+  // apply lock to channel
   core.locked[targetChannel] = lockLevel;
 
   // inform mods
@@ -127,15 +145,17 @@ export async function run({
     cmd: 'info',
     text: `Channel: ?${targetChannel} locked to ${lockLevel} by [${socket.trip}]${socket.nick}`,
     id: Info.Mod.LOCKED_DETAILED,
-    channel: targetChannel, // @todo Multichannel
-  }, { channel: targetChannel, level: isChannelModerator });
-
-  server.broadcast({
-    cmd: 'info',
-    text: `Channel: ?${targetChannel} locked to ${lockLevel} by [${socket.trip}]${socket.nick}`,
-    id: Info.Mod.LOCKED_GLOBAL_NOTIFY,
-    channel: false, // @todo Multichannel, false for global info
-  }, { level: isModerator });
+    args: {
+      targetChannel,
+      lockLevel,
+      trip: socket.trip,
+      nick: socket.nick,
+    },
+    channel: targetChannel,
+  }, (client) => {
+    const inChannel = (client.channels && client.channels.includes(targetChannel));
+    return inChannel && isChannelModerator(client, targetChannel);
+  });
 
   console.log(`Channel: ?${targetChannel} locked to ${lockLevel} by [${socket.trip}]${socket.nick}`);
 
@@ -143,7 +163,7 @@ export async function run({
 }
 
 /**
-  * Automatically executes once after server is ready to register this modules hooks
+  * Automatically executes once after server is ready to register this module's hooks
   * @param {Object} server - Reference to server environment object
   * @public
   * @return {void}
@@ -159,16 +179,18 @@ export function initHooks(server) {
 /**
   * Executes every time an incoming changenick command is invoked;
   * hook incoming changenick commands, reject them if the channel is 'purgatory'
-  * @param {Object} env - Environment object with references to core, server, socket & payload
+  * @param {Object} env - Environment object with references to payload
   * @public
   * @return {(Object|boolean|string)} Object = same/altered payload,
   * false = suppress action,
   * string = error
   */
 export function changeNickCheck({
-  socket, payload,
+  payload,
 }) {
-  if (socket.channel === 'purgatory') { // @todo Multichannel update
+  const { channel } = payload;
+
+  if (channel === 'purgatory') {
     return false;
   }
 
@@ -178,16 +200,18 @@ export function changeNickCheck({
 /**
   * Executes every time an incoming whisper command is invoked;
   * hook incoming whisper commands, reject them if the channel is 'purgatory'
-  * @param {Object} env - Environment object with references to core, server, socket & payload
+  * @param {Object} env - Environment object with references to payload
   * @public
   * @return {(Object|boolean|string)} Object = same/altered payload,
   * false = suppress action,
   * string = error
   */
 export function whisperCheck({
-  socket, payload,
+  payload,
 }) {
-  if (socket.channel === 'purgatory') { // @todo Multichannel update
+  const { channel } = payload;
+
+  if (channel === 'purgatory') {
     return false;
   }
 
@@ -206,8 +230,11 @@ export function whisperCheck({
 export function chatCheck({
   core, server, socket, payload,
 }) {
-  if (socket.channel === 'purgatory') {
-    if (isModerator(socket.level)) {
+  const targetChannel = payload.channel;
+
+  // permit moderators to speak in purgatory
+  if (targetChannel === 'purgatory') {
+    if (isModerator(socket)) {
       return payload;
     }
 
@@ -218,19 +245,23 @@ export function chatCheck({
     return false;
   }
 
+  // intercept lockroom command
   if (payload.text.startsWith('/lockroom')) {
     const [, levelArg] = payload.text.split(' ');
 
     const newPayload = {
       cmd: 'lockroom',
+      channel: targetChannel,
     };
 
+    // pass along optional level argument
     if (levelArg) {
       const parsedLevel = Number(levelArg);
       newPayload.level = !Number.isNaN(parsedLevel) ? parsedLevel : levelArg;
     }
 
-    run({
+    // trigger standard run execution
+    this.run({
       core,
       server,
       socket,
@@ -246,16 +277,18 @@ export function chatCheck({
 /**
   * Executes every time an incoming invite command is invoked;
   * hook incoming invite commands, reject them if the channel is 'purgatory'
-  * @param {Object} env - Environment object with references to core, server, socket & payload
+  * @param {Object} env - Environment object with references to payload
   * @public
   * @return {(Object|boolean|string)} Object = same/altered payload,
   * false = suppress action,
   * string = error
   */
 export function inviteCheck({
-  socket, payload,
+  payload,
 }) {
-  if (socket.channel === 'purgatory') {
+  const { channel } = payload;
+
+  if (channel === 'purgatory') {
     return false;
   }
 
@@ -274,7 +307,7 @@ export function inviteCheck({
 export function joinCheck({
   core, server, socket, payload,
 }) {
-  // check if target channel is locked
+  // bypass if target channel is not locked
   if (typeof core.locked[payload.channel] === 'undefined' || core.locked[payload.channel] === false) {
     if (payload.channel !== 'purgatory') {
       return payload;
@@ -294,31 +327,19 @@ export function joinCheck({
   if (mayJoin !== true) {
     return server.reply({
       cmd: 'warn',
-      text: 'You may not join that channel.',
+      text: 'You may not join that channel',
       id: mayJoin,
-      channel: false, // @todo Multichannel, false for global event
+      channel: false,
     }, socket);
   }
-
-  // calling socket already in a channel
-  // @todo multichannel update, will remove
-  if (typeof socket.channel !== 'undefined') {
-    return server.reply({
-      cmd: 'warn',
-      text: 'Joining more than one channel is not currently supported',
-      id: Errors.Join.ALREADY_JOINED,
-      channel: false, // @todo Multichannel, false for global event
-    }, socket);
-  }
-  // end todo
 
   // validates the user input for `nick`
   if (verifyNickname(nick, socket) !== true) {
     return server.reply({
       cmd: 'warn',
-      text: 'Nickname must consist of up to 24 letters, numbers, and underscores',
+      text: 'Username must consist of up to 24 letters, numbers, and underscores',
       id: Errors.Join.INVALID_NICK,
-      channel: false, // @todo Multichannel, false for global event
+      channel: false,
     }, socket);
   }
 
@@ -338,39 +359,42 @@ export function joinCheck({
     channel,
   };
 
-  // check if trip is allowed
-  if (!isModerator(userInfo.level)) {
-    if (core.locked[channel] > userInfo.level) {
-      const origNick = userInfo.nick;
-      const origChannel = payload.channel;
+  // shunt unauthorized users to purgatory
+  if (core.locked[channel] > userInfo.level) {
+    const origNick = userInfo.nick;
+    const origChannel = payload.channel;
 
-      // not allowed, shunt to purgatory
-      payload.channel = 'purgatory';
+    // redirect payload
+    payload.channel = 'purgatory';
 
-      // lost souls have no names
-      if (origChannel === 'purgatory') {
-        // someone is pulling a Dante
-        payload.nick = `Dante_${Math.random().toString(36).substr(2, 8)}`;
-      } else {
-        payload.nick = `${Math.random().toString(36).substr(2, 8)}${Math.random().toString(36).substr(2, 8)}`;
-      }
-
-      setTimeout(() => {
-        server.reply({
-          cmd: 'info',
-          text: danteQuotes[Math.floor(Math.random() * danteQuotes.length)],
-          id: Info.Core.PURGATORY_QUOTE,
-          channel: 'purgatory', // @todo Multichannel
-        }, socket);
-      }, 100);
-
-      server.broadcast({
-        cmd: 'info',
-        text: `${payload.nick} is: ${origNick}\ntrip: ${userInfo.trip || 'none'}\ntried to join: ?${origChannel}\nhash: ${userInfo.hash}`,
-        id: Info.Core.PURGATORY_NOTIFY,
-        channel: 'purgatory', // @todo Multichannel, false for global info
-      }, { channel: 'purgatory', level: isModerator });
+    // lost souls have no names
+    if (origChannel === 'purgatory') {
+      // someone is pulling a Dante
+      payload.nick = `Dante_${Math.random().toString(36).slice(2, 8)}`;
+    } else {
+      payload.nick = `${Math.random().toString(36).slice(2, 8)}${Math.random().toString(36).slice(2, 8)}`;
     }
+
+    // drop quote
+    setTimeout(() => {
+      server.reply({
+        cmd: 'info',
+        text: danteQuotes[Math.floor(Math.random() * danteQuotes.length)],
+        id: Info.Core.PURGATORY_QUOTE,
+        channel: 'purgatory',
+      }, socket);
+    }, 100);
+
+    // notify global moderators
+    server.broadcast({
+      cmd: 'info',
+      text: `${payload.nick} is: ${origNick}\ntrip: ${userInfo.trip || 'none'}\ntried to join: ?${origChannel}\nhash: ${userInfo.hash}`,
+      id: Info.Core.PURGATORY_NOTIFY,
+      channel: 'purgatory',
+    }, (client) => {
+      const inPurgatory = (client.channels && client.channels.includes('purgatory'));
+      return inPurgatory && isModerator(client);
+    });
   }
 
   return payload;

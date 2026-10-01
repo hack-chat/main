@@ -11,6 +11,7 @@ import {
 } from './session.js';
 import {
   getUserDetails,
+  getUserLevel,
 } from '../utility/_UAC.js';
 import {
   verifyColor,
@@ -28,59 +29,85 @@ import {
 export async function run({
   core, server, socket, payload,
 }) {
-  // must be in a channel to run this command
-  if (typeof socket.channel === 'undefined') {
-    return server.police.frisk(socket, 1);
+  let targetChannels = [];
+
+  // resolve target channels
+  if (payload.channel) {
+    if (!socket.channels || !socket.channels.includes(payload.channel)) {
+      return server.police.frisk(socket, 1);
+    }
+    targetChannels.push(payload.channel);
+  } else {
+    targetChannels = socket.channels || [];
   }
 
-  const { channel } = socket;
-
+  // enforce rate limits
   if (server.police.frisk(socket, 1)) {
     return server.reply({
       cmd: 'warn',
-      text: 'You are changing colors too fast. Wait a moment before trying again.',
+      text: 'Issuing commands too quickly. Wait a moment before trying again',
       id: Errors.Global.RATELIMIT,
-      channel, // @todo Multichannel
+      channel: payload.channel || false,
     }, socket);
   }
 
-  // verify user data is string
+  // verify payload property
   if (typeof payload.color !== 'string') {
     return false;
   }
 
-  // make sure requested nickname meets standards
+  // sanitize and validate color
   const newColor = payload.color.trim().toUpperCase().replace(/#/g, '');
   if (newColor !== 'RESET' && !verifyColor(newColor)) {
     return server.reply({
       cmd: 'warn',
       text: 'Invalid color! Color must be in hex value',
       id: Errors.ChangeColor.INVALID_COLOR,
-      channel, // @todo Multichannel
+      channel: payload.channel || false,
     }, socket);
   }
 
-  if (newColor === 'RESET') {
-    socket.color = false; // eslint-disable-line no-param-reassign
-  } else {
-    if (socket.color === newColor) return true;
+  if (!socket.channelStates) socket.channelStates = {};
 
-    socket.color = newColor; // eslint-disable-line no-param-reassign
+  // update global socket color
+  if (newColor === 'RESET') {
+    socket.color = false;
+  } else {
+    socket.color = newColor;
   }
 
-  // build update notice with new color
-  const updateNotice = {
-    ...getUserDetails(socket),
-    ...{
+  // apply color and broadcast to target channels
+  for (let i = 0, j = targetChannels.length; i < j; i += 1) {
+    const targetChannel = targetChannels[i];
+    const currentLevel = getUserLevel(socket, targetChannel);
+
+    if (!socket.channelStates[targetChannel]) {
+      socket.channelStates[targetChannel] = {
+        level: currentLevel,
+        trip: socket.trip,
+      };
+    }
+
+    if (newColor === 'RESET') {
+      delete socket.channelStates[targetChannel].color;
+    } else {
+      socket.channelStates[targetChannel].color = newColor;
+    }
+
+    const details = getUserDetails(socket, targetChannel);
+
+    if (newColor !== 'RESET') {
+      details.color = newColor;
+    }
+
+    server.broadcast({
       cmd: 'updateUser',
-      channel: socket.channel, // @todo Multichannel
-    },
-  };
+      ...details,
+      channel: targetChannel,
+    }, (client) => client.channels && client.channels.includes(targetChannel));
+  }
 
-  // notify channel that the user has changed their name
-  // @todo this should be sent to every channel the user is in (multichannel)
-  server.broadcast(updateNotice, { channel: socket.channel });
-
+  // issue new token with updated state
   server.reply({
     cmd: 'session',
     restored: false,
@@ -92,7 +119,7 @@ export async function run({
 }
 
 /**
-  * Automatically executes once after server is ready to register this modules hooks
+  * Automatically executes once after server is ready to register this module's hooks
   * @param {Object} server - Reference to server environment object
   * @public
   * @return {void}
@@ -116,21 +143,30 @@ export function colorCheck({
     return false;
   }
 
+  const targetChannel = payload.channel;
+
+  // validate presence in channel
+  if (!targetChannel || !socket.channels || !socket.channels.includes(targetChannel)) {
+    return payload;
+  }
+
+  // intercept /color command
   if (payload.text.startsWith('/color ')) {
     const input = payload.text.split(' ');
 
-    // if there is no color target parameter
+    // require color parameter
     if (input[1] === undefined) {
       server.reply({
         cmd: 'warn',
         text: 'Invalid color! Color must be in hex value',
         id: Errors.ChangeColor.INVALID_COLOR,
-        channel: socket.channel, // @todo Multichannel
+        channel: targetChannel,
       }, socket);
 
       return false;
     }
 
+    // trigger standard run execution
     this.run({
       core,
       server,
@@ -138,6 +174,7 @@ export function colorCheck({
       payload: {
         cmd: 'changecolor',
         color: input[1],
+        channel: targetChannel,
       },
     });
 

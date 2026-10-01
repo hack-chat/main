@@ -1,27 +1,40 @@
 /**
-  * @author Marzavec
-  * @summary Take channel ownership
-  * @version 1.1.0
-  * @description Claim an unowned channel, enabling user management options
+  * @author Marzavec ( https://github.com/marzavec )
+  * @summary Renew/Re-initialize a claimed channel
+  * @version 1.0.0
+  * @description Invokes the smart contract to renew or claim ownership of a channel
   * @module claimchannel
   */
 
-import captcha from 'ascii-captcha';
 import {
-  isModerator,
-  getUserDetails,
-  levels,
-  getAppearance,
-} from '../utility/_UAC.js';
-import {
-  Errors,
-  Info,
-  ClaimExpirationDays,
-} from '../utility/_Constants.js';
-import {
-  getChannelSettings,
-  updateChannelSettings,
-} from '../utility/_Channels.js';
+  PublicKey,
+  Transaction,
+  TransactionInstruction,
+} from '@solana/web3.js';
+import * as borsh from '@coral-xyz/borsh';
+
+import { Errors } from '../utility/_Constants.js';
+
+const PROGRAM_ID = new PublicKey('AutHysEUfKrWDETzrDA7S7MwL1eSSc2BjySR2W8EuSEr');
+const TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+const SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID = new PublicKey(
+  'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
+);
+
+// borsh layout for hackchatinstruction::reclaimchannel (index 1, no data payload)
+const reclaimChannelLayout = borsh.struct([
+  borsh.u8('instruction'),
+]);
+
+// borsh layout for reading the active pda state
+const channelStateLayout = borsh.struct([
+  borsh.u8('discriminator'),
+  borsh.str('channelName'),
+  borsh.publicKey('ownerNftMint'),
+  borsh.publicKey('ownerWallet'),
+  borsh.vec(borsh.array(borsh.u8(), 6), 'moderatorTrips'),
+  borsh.u8('bump'),
+]);
 
 /**
   * Executes when invoked by a remote client
@@ -30,172 +43,224 @@ import {
   * @return {void}
   */
 export async function run({
-  server, socket,
+  core, server, socket, payload,
 }) {
-  // must be in a channel to run this command
-  if (typeof socket.channel === 'undefined') {
-    return server.police.frisk(socket, 10);
-  }
+  const currentChannel = payload.channel;
+  const targetChannel = payload.targetChannel || currentChannel;
 
-  if (!socket.trip) {
-    return server.reply({
-      cmd: 'warn',
-      text: 'Failed to run command: You must have a trip code to do this.',
-      id: Errors.Global.MISSING_TRIPCODE,
-      channel: socket.channel, // @todo Multichannel
-    }, socket);
-  }
-
-  if (isModerator(socket.level)) {
-    return server.reply({
-      cmd: 'warn',
-      text: "Failed to take ownership: You're already a global moderator; it's free real estate. . .",
-      id: Errors.ClaimChannel.MODS_CANT,
-      channel: socket.channel, // @todo Multichannel
-    }, socket);
-  }
-
-  /* const channelSettings = getChannelSettings(core.appConfig.data, socket.channel);
-
-  if (channelSettings.owned) {
-    return server.reply({
-      cmd: 'warn',
-      text: `Failed to take ownership:
-        This channel is already owned by the trip "${channelSettings.ownerTrip}",
-        until ${channelSettings.claimExpires}`,
-      ownerTrip: channelSettings.ownerTrip,
-      claimExpires: channelSettings.claimExpires,
-      id: Errors.ClaimChannel.ALREADY_OWNED,
-      channel: socket.channel, // @todo Multichannel
-    }, socket);
-  } */
-
-  if (typeof socket.wallet !== 'object' || typeof socket.wallet.address !== 'string') {
+  // validate wallet connection
+  if (!socket.wallet || !socket.wallet.address) {
     return server.reply({
       cmd: 'warn',
       text: 'You must connect a wallet first',
-      id: Errors.Global.LOGIN_REQUIRED,
-      channel: socket.channel,
+      id: Errors.Wallet.YOUR_NOT_READY,
+      channel: targetChannel,
     }, socket);
   }
 
-  return server.reply({
-    cmd: 'warn',
-    text: 'This command is disabled, pending reviews and updates',
-    id: Errors.Global.PERMISSION,
-    channel: socket.channel, // @todo Multichannel
-  }, socket);
+  // validate channel length
+  const channelByteLength = Buffer.byteLength(targetChannel, 'utf8');
 
-  socket.claimCaptcha = {
-    solution: captcha.generateRandomText(7),
-  };
+  if (channelByteLength > 32 || channelByteLength === 0) {
+    return server.reply({
+      cmd: 'warn',
+      text: 'Invalid channel length (1-32 bytes allowed)',
+      id: Errors.Channel.INVALID_NAME,
+      channel: currentChannel,
+    }, socket);
+  }
 
-  server.reply({
-    cmd: 'warn',
-    text: 'Enter the following to take ownership (case-sensitive):',
-    id: Errors.Captcha.MUST_SOLVE,
-    channel: socket.channel, // @todo Multichannel
-  }, socket);
+  // derive channel pda
+  const walletPubkey = new PublicKey(socket.wallet.address);
+  const [channelPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('channel'), Buffer.from(targetChannel)],
+    PROGRAM_ID,
+  );
 
-  server.reply({
-    cmd: 'captcha',
-    text: captcha.word2Transformedstr(socket.claimCaptcha.solution),
-    channel: socket.channel, // @todo Multichannel
-  }, socket);
+  let ownerNftMint = null;
+
+  // fetch or parse channel owner mint
+  try {
+    const cachedData = core.chainCache?.channels?.[targetChannel]?.data;
+    if (cachedData && cachedData.ownerNftMint) {
+      ownerNftMint = cachedData.ownerNftMint;
+    } else {
+      const rpcResponse = await core.solanaRPC.getAccountInfo(
+        channelPda.toBase58(),
+        { encoding: 'base64' },
+      ).send();
+
+      const accountInfo = rpcResponse?.value;
+      if (accountInfo && accountInfo.data) {
+        const rawBuffer = Array.isArray(accountInfo.data)
+          ? Buffer.from(accountInfo.data[0], 'base64')
+          : Buffer.from(accountInfo.data);
+
+        const accountData = channelStateLayout.decode(rawBuffer);
+        ownerNftMint = accountData.ownerNftMint;
+
+        if (core.chainCache && core.chainCache.channels) {
+          core.chainCache.channels[targetChannel] = {
+            data: accountData,
+            timestamp: Date.now(),
+          };
+        }
+      }
+    }
+  } catch (err) {
+    console.error(`[ClaimChannel] Failed to fetch PDA for ?${targetChannel}:`, err);
+  }
+
+  // enforce mint requirement
+  if (!ownerNftMint) {
+    return server.reply({
+      cmd: 'warn',
+      text: `?${targetChannel} must be minted first, use: /mintchannel`,
+      id: Errors.ClaimChannel.MUST_MINT,
+      args: { channel: targetChannel },
+      channel: currentChannel,
+    }, socket);
+  }
+
+  // derive associated token account
+  const [userTokenAccount] = PublicKey.findProgramAddressSync(
+    [walletPubkey.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), ownerNftMint.toBuffer()],
+    SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+  );
+
+  try {
+    const rpcResponse = await core.solanaRPC.getLatestBlockhash().send();
+    const { blockhash } = rpcResponse.value;
+    const dataBuffer = Buffer.alloc(1);
+    const dataLen = reclaimChannelLayout.encode(
+      { instruction: 1 },
+      dataBuffer,
+    );
+
+    const txInstruction = new TransactionInstruction({
+      programId: PROGRAM_ID,
+      keys: [
+        { pubkey: channelPda, isSigner: false, isWritable: true },
+        { pubkey: userTokenAccount, isSigner: false, isWritable: false },
+        { pubkey: walletPubkey, isSigner: true, isWritable: true },
+        { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+      ],
+      data: dataBuffer.slice(0, dataLen),
+    });
+
+    const transaction = new Transaction();
+    transaction.add(txInstruction);
+    transaction.recentBlockhash = blockhash;
+    transaction.feePayer = walletPubkey;
+
+    const serializedTx = transaction.serialize({
+      requireAllSignatures: false,
+      verifySignatures: false,
+    }).toString('base64');
+
+    server.reply({
+      cmd: 'info',
+      text: 'Accept the following to claim ownership:',
+      id: Errors.ClaimChannel.ACCEPT_CLAIM,
+      channel: currentChannel,
+    }, socket);
+
+    // request user signature
+    server.reply({
+      cmd: 'signTransaction',
+      tx: serializedTx,
+      channel: currentChannel,
+    }, socket);
+
+    // schedule pda state refresh
+    setTimeout(async () => {
+      try {
+        const fetchResponse = await core.solanaRPC.getAccountInfo(
+          channelPda.toBase58(),
+          { encoding: 'base64' },
+        ).send();
+
+        const accountInfo = fetchResponse?.value;
+        if (accountInfo && accountInfo.data) {
+          const rawBuffer = Array.isArray(accountInfo.data)
+            ? Buffer.from(accountInfo.data[0], 'base64')
+            : Buffer.from(accountInfo.data);
+
+          const accountData = channelStateLayout.decode(rawBuffer);
+          if (core.chainCache && core.chainCache.channels) {
+            core.chainCache.channels[targetChannel] = {
+              data: accountData,
+              timestamp: Date.now(),
+            };
+
+            console.log(`Refreshed data for ?${targetChannel} after claim`);
+          }
+        }
+      } catch (err) {
+        if (core.chainCache?.channels?.[targetChannel]) {
+          core.chainCache.channels[targetChannel].timestamp = 0;
+        }
+      }
+    }, 105000);
+  } catch (err) {
+    console.error('Error generating claim tx:', err);
+    return server.reply({
+      cmd: 'warn',
+      text: 'RPC error, try again later',
+      id: Errors.Wallet.RPC_ERROR,
+      channel: targetChannel,
+    }, socket);
+  }
 
   return true;
 }
 
 /**
-  * Automatically executes once after server is ready to register this modules hooks
+  * Automatically executes once after server is ready to register this module's hooks
   * @param {Object} server - Reference to server environment object
   * @public
   * @return {void}
   */
 export function initHooks(server) {
-  server.registerHook('in', 'chat', this.chatHook.bind(this), 26);
+  server.registerHook('in', 'chat', this.claimchannelCheck.bind(this), 29);
 }
 
 /**
   * Executes every time an incoming chat command is invoked
   * @param {Object} env - Environment object with references to core, server, socket & payload
   * @public
-  * @return {{Object|boolean|string}} Object = same/new payload, false = suppress, string = error
+  * @return {(Object|boolean|string)} Object = same/altered payload,
+  * false = suppress action,
+  * string = error
   */
-export function chatHook({
+export function claimchannelCheck({
   core, server, socket, payload,
 }) {
-  if (typeof payload === 'undefined') return false;
-
-  if (typeof payload.text !== 'string') {
+  if (!payload || typeof payload.text !== 'string') {
     return false;
   }
 
-  if (typeof socket.claimCaptcha !== 'undefined') {
-    if (payload.text === socket.claimCaptcha.solution) {
-      socket.claimCaptcha = undefined;
+  const currentChannel = payload.channel;
 
-      const channelSettings = getChannelSettings(core.appConfig.data, socket.channel);
-
-      if (channelSettings.owned) {
-        return server.reply({
-          cmd: 'warn',
-          text: `Failed to take ownership: This channel is already owned by the trip "${channelSettings.ownerTrip}", until ${channelSettings.claimExpires}`,
-          ownerTrip: channelSettings.ownerTrip,
-          claimExpires: channelSettings.claimExpires,
-          id: Errors.ClaimChannel.ALREADY_OWNED,
-          channel: socket.channel, // @todo Multichannel
-        }, socket);
-      }
-
-      const expirationDate = new Date();
-      expirationDate.setDate(expirationDate.getDate() + ClaimExpirationDays);
-      channelSettings.claimExpires = expirationDate;
-      channelSettings.owned = true;
-      channelSettings.ownerTrip = socket.trip;
-
-      updateChannelSettings(core.appConfig.data, socket.channel, channelSettings);
-
-      console.log(`[${socket.trip}]${socket.nick} claimed ?${socket.channel}`);
-
-      server.broadcast({
-        cmd: 'info',
-        text: `Channel now owned by "${socket.trip}", until ${channelSettings.claimExpires}`,
-        id: Info.Admin.SHOUT,
-        channel: socket.channel,
-      }, { channel: socket.channel });
-
-      const { color, flair } = getAppearance(levels.channelOwner);
-      socket.color = color;
-      socket.flair = flair;
-      socket.level = levels.channelOwner;
-
-      const updateNotice = {
-        ...getUserDetails(socket),
-        ...{
-          cmd: 'updateUser',
-          channel: socket.channel,
-        },
-      };
-
-      server.broadcast(updateNotice, { channel: socket.channel });
-
-      return false;
-    }
-
-    server.police.frisk(socket, 7);
-    socket.terminate();
-
-    return false;
+  // validate presence in channel
+  if (!currentChannel || !socket.channels || !socket.channels.includes(currentChannel)) {
+    return payload;
   }
 
+  // intercept /claimchannel command
   if (payload.text.startsWith('/claimchannel')) {
+    const input = payload.text.split(' ');
+    const targetChannel = input[1] ? input[1].replace('?', '') : currentChannel;
+
+    // trigger standard run execution
     this.run({
       core,
       server,
       socket,
       payload: {
         cmd: 'claimchannel',
+        targetChannel,
+        channel: currentChannel,
       },
     });
 
@@ -204,6 +269,14 @@ export function chatHook({
 
   return payload;
 }
+
+/**
+  * The following payload properties are required to invoke this module:
+  * "targetChannel", "channel"
+  * @public
+  * @typedef {Array} claimchannel/requiredData
+  */
+export const requiredData = ['targetChannel', 'channel'];
 
 /**
   * Module meta information
@@ -217,8 +290,8 @@ export function chatHook({
 export const info = {
   name: 'claimchannel',
   category: 'channels',
-  description: 'Claim an unowned channel, enabling user management options. You must have a trip code to run this command.',
+  description: 'Invoke the smart contract to claim or renew a channel',
   usage: `
-    API: { cmd: 'claimchannel' }
-    Text: /claimchannel`,
+    API: { cmd: 'claimchannel', targetChannel: '[optional channel name]', channel: '[current channel]' }
+    Text: /claimchannel [optional channel name]`,
 };

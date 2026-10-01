@@ -17,27 +17,37 @@ import {
   * @return {void}
   */
 export async function run({ server, socket, payload }) {
+  // verify internal command key
   if (payload.cmdKey !== server.cmdKey) {
-    // internal command attempt by client, increase rate limit chance and ignore
+    // block unauthorized internal command execution
     return server.police.frisk(socket, 20);
   }
 
-  // send leave notice to client peers
-  // @todo Multichannel update
-  if (socket.channel) {
-    const isDuplicate = socketInChannel(server, socket.channel, socket);
+  // gather unique channels to notify
+  const channelsToNotify = new Set(socket.channels || []);
+
+  // notify each channel of the departure
+  channelsToNotify.forEach((channel) => {
+    // skip broadcast if user has another connection in the same channel
+    const isDuplicate = socketInChannel(server, channel, socket);
 
     if (isDuplicate === false) {
       server.broadcast({
         cmd: 'onlineRemove',
         nick: socket.nick,
         userid: socket.userid,
-        channel: socket.channel,
-      }, { channel: socket.channel });
-    }
-  }
+        channel,
+      }, (client) => {
+        if (client.channels && client.channels.includes(channel)) {
+          return true;
+        }
 
-  // commit close just in case
+        return false;
+      });
+    }
+  });
+
+  // ensure the socket is fully terminated
   socket.terminate();
 
   return true;

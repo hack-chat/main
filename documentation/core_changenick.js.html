@@ -72,7 +72,7 @@ export async function run({
   if (!verifyNickname(newNick)) {
     return server.reply({
       cmd: 'warn', // @todo Add numeric error code as `id`
-      text: 'Nickname must consist of up to 24 letters, numbers, and underscores',
+      text: 'Username must consist of up to 24 letters, numbers, and underscores',
       channel, // @todo Multichannel
     }, socket);
   }

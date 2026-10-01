@@ -1,5 +1,5 @@
 /**
-  * @author Marzavec
+  * @author Marzavec ( https://github.com/marzavec )
   * @summary Sets channel to private
   * @version 1.1.0
   * @description Remove channel from being listed on the front page
@@ -8,6 +8,7 @@
 
 import {
   isChannelOwner,
+  getUserLevel,
 } from '../utility/_UAC.js';
 import {
   Errors,
@@ -21,56 +22,65 @@ import {
   * @return {void}
   */
 export async function run({
-  core, server, socket,
+  core, server, socket, payload,
 }) {
-  // must be in a channel to run this command
-  if (typeof socket.channel === 'undefined') {
+  const targetChannel = payload.channel;
+
+  // validate presence in channel
+  if (!targetChannel || !socket.channels || !socket.channels.includes(targetChannel)) {
     return server.police.frisk(socket, 10);
   }
 
+  // require trip code for ownership verification
   if (!socket.trip) {
     return server.reply({
       cmd: 'warn',
-      text: 'Failed to run command: You must have a trip code to do this.',
+      text: 'Failed. You must have a trip code',
       id: Errors.Global.MISSING_TRIPCODE,
-      channel: socket.channel, // @todo Multichannel
+      channel: targetChannel,
     }, socket);
   }
 
-  if (!isChannelOwner(socket.level)) {
+  const requestLevel = getUserLevel(socket, targetChannel);
+
+  // enforce channel owner permission
+  if (!isChannelOwner(requestLevel)) {
     return server.reply({
       cmd: 'warn',
       text: 'Failed to make channel private: You may not do that',
       id: Errors.MakePrivate.MISSING_PERMS,
-      channel: socket.channel, // @todo Multichannel
+      channel: targetChannel,
     }, socket);
   }
 
-  const listingIndex = core.appConfig.data.publicChannels.indexOf(socket.channel);
+  // check if channel is currently public
+  const listingIndex = core.appConfig.data.publicChannels.indexOf(targetChannel);
 
   if (listingIndex === -1) {
     return server.reply({
       cmd: 'warn',
       text: 'Failed to make channel private: This channel is already private',
       id: Errors.MakePrivate.ALREADY_PRIVATE,
-      channel: socket.channel, // @todo Multichannel
+      channel: targetChannel,
     }, socket);
   }
 
+  // remove from public directory
   core.appConfig.data.publicChannels.splice(listingIndex, 1);
 
+  // confirm success to user
   server.reply({
     cmd: 'info',
-    text: 'This channel has been removed from the list of public channels',
+    text: 'Config saved!',
     id: Info.Admin.CONFIG_SAVED,
-    channel: socket.channel, // @todo Multichannel
+    channel: targetChannel,
   }, socket);
 
   return true;
 }
 
 /**
-  * Automatically executes once after server is ready to register this modules hooks
+  * Automatically executes once after server is ready to register this module's hooks
   * @param {Object} server - Reference to server environment object
   * @public
   * @return {void}
@@ -92,13 +102,23 @@ export function chatHook({
     return false;
   }
 
+  const targetChannel = payload.channel;
+
+  // validate presence in channel
+  if (!targetChannel || !socket.channels || !socket.channels.includes(targetChannel)) {
+    return payload;
+  }
+
+  // intercept /makeprivate command
   if (payload.text.startsWith('/makeprivate')) {
+    // trigger standard run execution
     this.run({
       core,
       server,
       socket,
       payload: {
         cmd: 'makeprivate',
+        channel: targetChannel,
       },
     });
 

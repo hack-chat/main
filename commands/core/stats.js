@@ -16,35 +16,42 @@ import {
   * @public
   * @return {void}
   */
-export async function run({ core, server, socket }) {
-  // must be in a channel to run this command
-  if (typeof socket.channel === 'undefined') {
-    return server.police.frisk(socket, 1);
-  }
-
-  // gather connection and channel count
+export async function run({
+  core, server, socket, payload,
+}) {
+  // initialize tracking objects
   let ips = {};
   let channels = {};
 
+  // gather connection and channel count
   server.clients.forEach((client) => {
-    if (client.channel) {
-      channels[client.channel] = true;
-      ips[client.address] = true;
+    ips[client.address] = true;
+
+    if (client.channels && Array.isArray(client.channels)) {
+      client.channels.forEach((channelName) => {
+        channels[channelName] = true;
+      });
     }
   });
 
+  // calculate totals
   const uniqueClientCount = Object.keys(ips).length;
   const uniqueChannels = Object.keys(channels).length;
 
+  // free memory
   ips = null;
   channels = null;
 
-  // dispatch info
+  // dispatch info to client
   server.reply({
     cmd: 'info',
     text: `${uniqueClientCount} unique IPs in ${uniqueChannels} channels`,
     id: Info.Core.STATS_BASIC,
-    channel: socket.channel, // @todo Multichannel
+    args: {
+      uniqueClientCount,
+      uniqueChannels,
+    },
+    channel: payload.channel,
   }, socket);
 
   // stats are fun

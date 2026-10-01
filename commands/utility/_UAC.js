@@ -16,10 +16,7 @@ import {
   getChannelSettings,
 } from './_Channels.js';
 
-/**
-  * Returns random rgb code
-  * @return {string}
-  */
+// generate a random rgb hex color
 const randomRGB = () => {
   const saturation = 0.80;
   const lightness = 0.65;
@@ -47,6 +44,7 @@ const randomRGB = () => {
   * @property {number} trustedUser Public channel trusted
   * @property {number} default Default user level
   */
+// permission level constants
 export const levels = {
   admin: 9999999,
   moderator: 999999,
@@ -61,10 +59,11 @@ export const levels = {
 };
 
 /**
-  * Object defining labels for default permission ranges
+  * Object defining visual appearance (color/flair) for permission ranges
   * @typedef {Object} levelAppearance
   * @property {number} admin Global administrator range
   */
+// visual flair and colors for specific levels
 export const levelAppearance = {
   [levels.admin]: {
     color: 'd73737',
@@ -89,82 +88,163 @@ export const levelAppearance = {
 };
 
 /**
-  * Returns true if target level is equal or greater than the global admin level
+  * The Logic Cascade: Resolves the effective level for a user in a specific channel.
+  * 1. Global Precedence: If user is a Global Admin/Mod, they override everything.
+  * 2. Channel Specific: If user has a state in this channel, use that level.
+  * 3. Fallback: Default level.
   * @public
-  * @param {number} level Level to verify
+  * @param {WebSocket} socket - The user's socket
+  * @param {string} [channel] - The channel name to check permissions for
+  * @return {number} The effective permission level
+  */
+export function getUserLevel(socket, channel) {
+  // global ranks override channel ranks
+  if (socket.globalLevel && socket.globalLevel >= levels.moderator) {
+    return socket.globalLevel;
+  }
+
+  // use channel specific level if available
+  if (channel && socket.channelStates && socket.channelStates[channel]) {
+    return socket.channelStates[channel].level;
+  }
+
+  return levels.default;
+}
+
+/**
+  * Returns true if target is a Global Admin
+  * @public
+  * @param {number|Object} input - Level number OR Socket object
   * @return {boolean}
   */
-export function isAdmin(level) {
+export function isAdmin(input) {
+  const level = (typeof input === 'object') ? (input.globalLevel || 0) : input;
   return level >= levels.admin;
 }
 
 /**
-  * Returns true if target level is equal or greater than the global moderator level
+  * Returns true if target is a Global Moderator
   * @public
-  * @param {number} level Level to verify
+  * @param {number|Object} input - Level number OR Socket object
   * @return {boolean}
   */
-export function isModerator(level) {
+export function isModerator(input) {
+  const level = (typeof input === 'object') ? (input.globalLevel || 0) : input;
   return level >= levels.moderator;
 }
 
 /**
   * Returns true if target level is equal or greater than the channel owner level
   * @public
-  * @param {number} level Level to verify
+  * @param {number|Object} input - Level number OR Socket object
+  * @param {string} [channel] - Context channel if input is a socket
   * @return {boolean}
   */
-export function isChannelOwner(level) {
+export function isChannelOwner(input, channel) {
+  const level = (typeof input === 'object') ? getUserLevel(input, channel) : input;
   return level >= levels.channelOwner;
 }
 
 /**
   * Returns true if target level is equal or greater than the channel moderator level
   * @public
-  * @param {number} level Level to verify
+  * @param {number|Object} input - Level number OR Socket object
+  * @param {string} [channel] - Context channel if input is a socket
   * @return {boolean}
   */
-export function isChannelModerator(level) {
+export function isChannelModerator(input, channel) {
+  const level = (typeof input === 'object') ? getUserLevel(input, channel) : input;
   return level >= levels.channelModerator;
 }
 
 /**
   * Returns true if target level is equal or greater than the channel trust level
   * @public
-  * @param {number} level Level to verify
+  * @param {number|Object} input - Level number OR Socket object
+  * @param {string} [channel] - Context channel if input is a socket
   * @return {boolean}
   */
-export function isChannelTrusted(level) {
+export function isChannelTrusted(input, channel) {
+  const level = (typeof input === 'object') ? getUserLevel(input, channel) : input;
   return level >= levels.channelTrusted;
 }
 
 /**
-  * Returns true if target level is equal or greater than a trusted user
+  * Returns true if target level is equal or greater than the trust level
   * @public
-  * @param {number} level Level to verify
+  * @param {number|Object} input - Level number OR Socket object
+  * @param {string} [channel] - Context channel if input is a socket
   * @return {boolean}
   */
-export function isTrustedUser(level) {
+export function isTrustedUser(input, channel) {
+  const level = (typeof input === 'object') ? getUserLevel(input, channel) : input;
   return level >= levels.trustedUser;
 }
 
 /**
+  * Returns an object with 'color' and 'flair' properties associated by level
+  * @public
+  * @param {number} level Provided level
+  * @return {object}
+  */
+export function getAppearance(level) {
+  const output = {
+    color: randomRGB(),
+    flair: false,
+  };
+
+  if (levelAppearance[level]) {
+    output.flair = levelAppearance[level].flair;
+  }
+
+  return output;
+}
+
+/**
   * Return an object containing public information about the socket
+  * tailored for a specific channel context.
   * @public
   * @param {WebSocket} socket Target client
+  * @param {string} [channel] Context channel (optional)
   * @return {Object}
   */
-export function getUserDetails(socket) {
+export function getUserDetails(socket, channel) {
+  const level = getUserLevel(socket, channel);
+  const appearance = getAppearance(level);
+
+  let finalColor = appearance.color;
+  let finalFlair = appearance.flair;
+  let finalEffect = socket.effect || 0;
+
+  // apply global custom overrides
+  if (socket.color) finalColor = socket.color;
+  if (socket.flair) finalFlair = socket.flair;
+  if (typeof socket.effect !== 'undefined') finalEffect = socket.effect;
+
+  let trip = socket.trip || '';
+
+  // apply channel specific overrides
+  if (channel && socket.channelStates && socket.channelStates[channel]) {
+    const state = socket.channelStates[channel];
+
+    if (state.trip) trip = state.trip;
+    if (state.color) finalColor = state.color;
+    if (state.flair) finalFlair = state.flair;
+    if (typeof state.effect !== 'undefined') finalEffect = state.effect;
+  }
+
+  // return assembled payload
   return {
     nick: socket.nick,
-    trip: socket.trip || '',
+    trip,
     uType: socket.uType,
     hash: socket.hash,
-    level: socket.level,
+    level,
     userid: socket.userid,
-    isBot: socket.isBot,
-    color: socket.color,
-    flair: socket.flair,
+    isBot: socket.isBot || false,
+    color: finalColor,
+    flair: finalFlair,
+    effect: finalEffect,
     online: true,
   };
 }
@@ -177,37 +257,18 @@ export function getUserDetails(socket) {
   */
 export function verifyNickname(nick) {
   if (typeof nick === 'undefined') return false;
-
   return /^[a-zA-Z0-9_]{1,24}$/.test(nick);
 }
 
 /**
-  * Returns an object with 'color' and 'flair' properties
-  * associated by level
-  * @public
-  * @param {number} level Provided level
-  * @return {object}
-  */
-export function getAppearance(level) {
-  if (typeof levelAppearance[level] !== 'undefined') {
-    return levelAppearance[level];
-  }
-
-  return {
-    color: randomRGB(),
-    flair: false,
-  };
-}
-
-/**
-  * Hashes a user's password, returning a trip code
-  * or a blank string
+  * Hashes a user's password, returning a trip code and level.
+  * Used by Join/Auth logic to populate socket.channelStates.
   * @public
   * @param {string} pass User's password
   * @param {buffer} salt Server salt data
   * @param {string} config Server config object
   * @param {string} channel Channel-level permissions check
-  * @return {string}
+  * @return {Object} { trip, level }
   */
 export function getUserPerms(pass, salt, config, channel) {
   if (!pass) {
@@ -217,9 +278,10 @@ export function getUserPerms(pass, salt, config, channel) {
     };
   }
 
-  const trip = createHash('sha256').update(pass + salt, 'utf8').digest('base64').substr(0, 6);
+  // generate hash using sha256
+  const trip = createHash('sha256').update(pass + salt, 'utf8').digest('base64').slice(0, 6);
 
-  // check if user is global admin
+  // global admin check
   if (trip === config.adminTrip) {
     return {
       trip: 'Admin',
@@ -229,19 +291,24 @@ export function getUserPerms(pass, salt, config, channel) {
 
   let level = levels.default;
 
-  // check if user is global mod
-  config.globalMods.forEach((mod) => { // eslint-disable-line consistent-return
-    if (trip === mod.trip) {
-      level = levels.moderator;
-    }
-  });
+  // global mod check
+  if (config.globalMods) {
+    config.globalMods.forEach((mod) => {
+      if (trip === mod.trip) {
+        level = levels.moderator;
+      }
+    });
+  }
 
-  const channelSettings = getChannelSettings(config, channel);
-  if (channelSettings.owned) {
-    if (channelSettings.ownerTrip === trip) {
-      level = levels.channelOwner;
-    } else if (typeof channelSettings.tripLevels[trip] !== 'undefined') {
-      level = channelSettings.tripLevels[trip];
+  // channel owner / channel mod check
+  if (level < levels.moderator) {
+    const channelSettings = getChannelSettings(config, channel);
+    if (channelSettings.owned) {
+      if (channelSettings.ownerTrip === trip) {
+        level = levels.channelOwner;
+      } else if (typeof channelSettings.tripLevels[trip] !== 'undefined') {
+        level = channelSettings.tripLevels[trip];
+      }
     }
   }
 

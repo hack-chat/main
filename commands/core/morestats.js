@@ -37,12 +37,9 @@ const formatTime = (time) => {
   * @public
   * @return {void}
   */
-export async function run({ core, server, socket }) {
-  // must be in a channel to run this command
-  if (typeof socket.channel === 'undefined') {
-    return server.police.frisk(socket, 1);
-  }
-
+export async function run({
+  core, server, socket, payload,
+}) {
   // gather connection and channel count
   const ips = {};
   const channels = {};
@@ -54,17 +51,22 @@ export async function run({ core, server, socket }) {
     });
   }
 
+  // iterate over clients to populate stats
   server.clients.forEach((client) => {
-    if (client.channel) {
-      channels[client.channel] = true;
-      ips[client.address] = true;
+    ips[client.address] = true;
 
-      if (Object.prototype.hasOwnProperty.call(publicChanCounts, client.channel)) {
-        publicChanCounts[client.channel] += 1;
-      }
+    if (client.channels && Array.isArray(client.channels)) {
+      client.channels.forEach((channelName) => {
+        channels[channelName] = true;
+
+        if (Object.prototype.hasOwnProperty.call(publicChanCounts, channelName)) {
+          publicChanCounts[channelName] += 1;
+        }
+      });
     }
   });
 
+  // collect formatted output data
   const uniqueClientCount = Object.keys(ips).length;
   const uniqueChannels = Object.keys(channels).length;
   const joins = core.stats.get('users-joined') || 0;
@@ -75,23 +77,26 @@ export async function run({ core, server, socket }) {
   const stats = core.stats.get('stats-requested') || 0;
   const uptime = formatTime(process.hrtime(core.stats.get('start-time')));
 
+  // construct markdown table
   let replyText = '# Server Statistics\n';
   replyText += '| Metric | Value |\n';
   replyText += '| :--- | --- |\n';
-  replyText += `| **Current Connections** | ${uniqueClientCount} |\n`;
-  replyText += `| **Current Channels** | ${uniqueChannels} |\n`;
-  replyText += `| **Users Joined** | ${joins} |\n`;
-  replyText += `| **Invites Sent** | ${invites} |\n`;
-  replyText += `| **Messages Sent** | ${messages} |\n`;
-  replyText += `| **Users Banned** | ${banned} |\n`;
-  replyText += `| **Users Kicked** | ${kicked} |\n`;
-  replyText += `| **Stats Requested** | ${stats} |\n`;
-  replyText += `| **Server Uptime** | ${uptime} |\n\n`;
+  replyText += `|     **Current Connections** | ${uniqueClientCount} |\n`;
+  replyText += `|     **Current Channels** | ${uniqueChannels} |\n`;
+  replyText += `|     **Users Joined** | ${joins} |\n`;
+  replyText += `|     **Invites Sent** | ${invites} |\n`;
+  replyText += `|     **Messages Sent** | ${messages} |\n`;
+  replyText += `|     **Users Banned** | ${banned} |\n`;
+  replyText += `|     **Users Kicked** | ${kicked} |\n`;
+  replyText += `|     **Stats Requested** | ${stats} |\n`;
+  replyText += `|     **Server Uptime** | ${uptime} |\n\n`;
 
+  // process public channel data
   const sortedPublicChannels = Object.keys(publicChanCounts)
     .map((channel) => ({ name: channel, count: publicChanCounts[channel] }))
     .sort((a, b) => b.count - a.count);
 
+  // append public channels table
   replyText += '## Public Channels\n';
   replyText += '| Channel | Users |\n';
   replyText += '| :--- | --- |\n';
@@ -100,7 +105,7 @@ export async function run({ core, server, socket }) {
     replyText += `| ?${channelObj.name} | ${channelObj.count} |\n`;
   });
 
-  // dispatch info
+  // dispatch info to client
   server.reply({
     cmd: 'info',
     users: uniqueClientCount,
@@ -115,7 +120,7 @@ export async function run({ core, server, socket }) {
     public: publicChanCounts,
     text: replyText,
     id: Info.Core.STATS_FULL,
-    channel: socket.channel, // @todo Multichannel
+    channel: payload.channel,
   }, socket);
 
   // stats are fun
@@ -125,7 +130,7 @@ export async function run({ core, server, socket }) {
 }
 
 /**
-  * Automatically executes once after server is ready to register this modules hooks
+  * Automatically executes once after server is ready to register this module's hooks
   * @param {Object} server - Reference to server environment object
   * @public
   * @return {void}
@@ -150,13 +155,18 @@ export function statsCheck({
     return false;
   }
 
+  // intercept /stats command
   if (payload.text.startsWith('/stats')) {
+    const currentChannel = payload.channel;
+
+    // trigger standard run execution
     this.run({
       core,
       server,
       socket,
       payload: {
         cmd: 'morestats',
+        channel: currentChannel,
       },
     });
 

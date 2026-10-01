@@ -6,83 +6,16 @@
   * @module chat
   */
 
-import {
-  parseText,
-} from '../utility/_Text.js';
+import { parseText } from '../utility/_Text.js';
 import {
   isAdmin,
   isModerator,
+  getUserLevel,
+  getAppearance,
 } from '../utility/_UAC.js';
-import {
-  Errors,
-  Info,
-} from '../utility/_Constants.js';
+import { Errors, Info } from '../utility/_Constants.js';
 
-/**
-  * Maximum length of the customId property
-  * @type {number}
-  */
 export const MAX_MESSAGE_ID_LENGTH = 6;
-
-/**
-  * The time in milliseconds before a message is considered stale
-  * @type {number}
-  */
-const ACTIVE_TIMEOUT = 5 * 60 * 1000;
-
-/**
-  * The time in milliseconds that a check for stale messages should be performed
-  * @type {number}
-  */
-const TIMEOUT_CHECK_INTERVAL = 30 * 1000;
-
-/**
-  * Stores active messages that can be edited
-  * @type {Array}
-  */
-export const ACTIVE_MESSAGES = [];
-
-/**
-  * Interval reference for cleanup
-  */
-let cleanupInterval = null;
-
-/**
-  * Cleans up stale messages
-  * @public
-  * @return {void}
-  */
-export function cleanActiveMessages() {
-  const now = Date.now();
-  for (let i = ACTIVE_MESSAGES.length - 1; i >= 0; i -= 1) {
-    const message = ACTIVE_MESSAGES[i];
-    if (now - message.sent > ACTIVE_TIMEOUT || message.toDelete) {
-      ACTIVE_MESSAGES.splice(i, 1);
-    }
-  }
-}
-
-if (!cleanupInterval) {
-  cleanupInterval = setInterval(cleanActiveMessages, TIMEOUT_CHECK_INTERVAL);
-}
-
-/**
-  * Adds a message to the active messages map
-  * @public
-  * @param {string} customId
-  * @param {number} userid
-  * @return {void}
-  */
-export function addActiveMessage(customId, userid) {
-  if (!customId) return;
-
-  ACTIVE_MESSAGES.push({
-    customId,
-    userid,
-    sent: Date.now(),
-    toDelete: false,
-  });
-}
 
 /**
   * Executes when invoked by a remote client
@@ -93,8 +26,10 @@ export function addActiveMessage(customId, userid) {
 export async function run({
   core, server, socket, payload,
 }) {
-  // must be in a channel to run this command
-  if (typeof socket.channel === 'undefined') {
+  const targetChannel = payload.channel;
+
+  // validate presence in channel
+  if (!targetChannel || !socket.channels || !socket.channels.includes(targetChannel)) {
     return server.police.frisk(socket, 1);
   }
 
@@ -102,7 +37,7 @@ export async function run({
   const text = parseText(payload.text);
 
   if (!text) {
-    // lets not send objects or empty text, yea?
+    // let's not send objects or empty text, yea?
     return server.police.frisk(socket, 13);
   }
 
@@ -111,9 +46,9 @@ export async function run({
   if (server.police.frisk(socket, score)) {
     return server.reply({
       cmd: 'warn',
-      text: 'You are sending too much text. Wait a moment and try again.\nPress the up arrow key to restore your last message.',
+      text: 'Issuing commands too quickly. Wait a moment before trying again',
       id: Errors.Global.RATELIMIT,
-      channel: socket.channel, // @todo Multichannel
+      channel: targetChannel,
     }, socket);
   }
 
@@ -124,55 +59,77 @@ export async function run({
   }
 
   const messageId = Math.floor(Math.random() * 999999) + 1;
+  const effectiveLevel = getUserLevel(socket, targetChannel);
+  const appearance = getAppearance(effectiveLevel);
+
+  // resolve local or global trip
+  const effectiveTrip = (
+    socket.channelStates
+    && socket.channelStates[targetChannel]
+    && socket.channelStates[targetChannel].trip
+  ) || socket.trip;
+
+  let messageColor = socket.color;
+
+  // resolve local or global color
+  if (
+    socket.channelStates
+    && socket.channelStates[targetChannel]
+    && socket.channelStates[targetChannel].color
+  ) {
+    messageColor = socket.channelStates[targetChannel].color;
+  }
 
   // build chat payload
   const outgoingPayload = {
     cmd: 'chat',
-    nick: socket.nick, /* @legacy */
-    uType: socket.uType, /* @legacy */
+    nick: socket.nick,
+    uType: socket.uType,
     userid: socket.userid,
-    channel: socket.channel,
+    channel: targetChannel,
     text,
-    level: socket.level,
-    flair: socket.flair,
+    level: effectiveLevel,
+    flair: appearance.flair,
     customId,
     id: messageId,
   };
 
-  if (isAdmin(socket.level)) {
+  if (isAdmin(socket)) {
     outgoingPayload.admin = true;
-  } else if (isModerator(socket.level)) {
+  } else if (isModerator(socket)) {
     outgoingPayload.mod = true;
   }
 
-  if (socket.trip) {
-    outgoingPayload.trip = socket.trip; /* @legacy */
+  if (effectiveTrip) {
+    outgoingPayload.trip = effectiveTrip;
   }
 
-  if (socket.color) {
-    outgoingPayload.color = socket.color;
-  }
-
-  if (outgoingPayload.customId) {
-    addActiveMessage(outgoingPayload.customId, socket.userid);
+  if (messageColor) {
+    outgoingPayload.color = messageColor;
   }
 
   // broadcast to channel peers
-  server.broadcast(outgoingPayload, { channel: socket.channel });
+  server.broadcast(outgoingPayload, (client) => {
+    if (client.channels && client.channels.includes(targetChannel)) {
+      return true;
+    }
 
-  // stats are fun
+    return false;
+  });
+
   core.stats.increment('messages-sent');
 
   return true;
 }
 
 /**
-  * Automatically executes once after server is ready to register this modules hooks
+  * Automatically executes once after server is ready to register this module's hooks
   * @param {Object} server - Reference to server environment object
   * @public
   * @return {void}
   */
 export function initHooks(server) {
+  // register early and late chat hooks
   server.registerHook('in', 'chat', this.commandCheckIn.bind(this), 20);
   server.registerHook('in', 'chat', this.finalCmdCheck.bind(this), 254);
 }
@@ -191,16 +148,21 @@ export function commandCheckIn({ server, socket, payload }) {
     return false;
   }
 
+  // intercept /shrug command
   if (payload.text.startsWith('/shrug')) {
-    payload.text = payload.text.replace('/shrug', String.fromCharCode(175, 92, 92, 92, 95, 40, 12484, 41, 92, 95, 47, 175));
+    payload.text = payload.text.replace(
+      '/shrug',
+      String.fromCharCode(175, 92, 92, 92, 95, 40, 12484, 41, 92, 95, 47, 175),
+    );
   }
 
+  // intercept /myhash command
   if (payload.text.startsWith('/myhash')) {
     server.reply({
       cmd: 'info',
-      text: `Your hash: ${socket.hash}`,
+      text: `${socket.hash}`,
       id: Info.Core.MY_HASH,
-      channel: socket.channel, // @todo Multichannel
+      channel: payload.channel,
     }, socket);
 
     return false;
@@ -227,17 +189,19 @@ export function finalCmdCheck({ server, socket, payload }) {
     return payload;
   }
 
+  // allow escaping commands with double slash
   if (payload.text.startsWith('//')) {
-    payload.text = payload.text.substr(1); // eslint-disable-line no-param-reassign
-
+    payload.text = payload.text.substring(1);
     return payload;
   }
 
+  // intercept unresolved commands
   server.reply({
     cmd: 'warn',
     text: `Unknown command: ${payload.text}`,
     id: Errors.Global.UNKNOWN_CMD,
-    channel: socket.channel, // @todo Multichannel
+    args: { text: payload.text },
+    channel: payload.channel,
   }, socket);
 
   return false;

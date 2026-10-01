@@ -1,14 +1,17 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Force a certain flair on a connection
-  * @version 1.0.0
-  * @description Force a certain flair on a connection
+  * @version 1.1.0
+  * @description Force a certain flair on a connection,
+  * preventing unauthorized use of reserved flairs
   * @module forceflair
   */
 
 import {
-  isModerator,
   getUserDetails,
+  getUserLevel,
+  levels,
+  levelAppearance,
 } from '../utility/_UAC.js';
 import {
   Errors,
@@ -16,6 +19,9 @@ import {
 import {
   findUser,
 } from '../utility/_Channels.js';
+import {
+  getSession,
+} from '../core/session.js';
 
 /**
   * Executes when invoked by a remote client
@@ -24,74 +30,130 @@ import {
   * @return {void}
   */
 export async function run({
-  server, socket, payload,
+  core, server, socket, payload,
 }) {
-  // increase rate limit chance and ignore if not admin or mod
-  if (!isModerator(socket.level)) {
+  const targetChannel = payload.channel;
+
+  // validate presence in channel
+  if (!targetChannel || !socket.channels || !socket.channels.includes(targetChannel)) {
     return server.police.frisk(socket, 10);
   }
 
-  // check user input
-  if (typeof payload.nick !== 'string') {
+  const currentLevel = getUserLevel(socket, targetChannel);
+
+  // enforce moderator permission
+  if (currentLevel < levels.channelModerator) {
+    server.police.frisk(socket, 10);
+
+    return server.reply({
+      cmd: 'warn',
+      text: 'You may not do that',
+      id: Errors.Global.PERMISSION,
+      channel: targetChannel,
+    }, socket);
+  }
+
+  // check payload structure
+  if (typeof payload.nick !== 'string' || typeof payload.flair !== 'string') {
     return true;
   }
 
-  if (typeof payload.flair !== 'string') {
-    return true;
-  }
-
-  const { channel } = socket;
-  if (typeof payload.channel === 'undefined') {
-    payload.channel = channel;
-  }
-
-  // make sure requested flair meets standards
   const newFlair = payload.flair;
+
+  // validate flair length
   if (!newFlair || newFlair.length > 2) {
     return server.reply({
       cmd: 'warn',
       text: 'Invalid flair',
       id: Errors.ForceFlairErrors.INVALID_FLAIR,
-      channel, // @todo Multichannel
+      channel: targetChannel,
     }, socket);
   }
 
-  // find target user
-  const targetUser = findUser(server, payload);
+  const targetUser = findUser(server, { ...payload, channel: targetChannel });
+
+  // verify target user
   if (!targetUser) {
     return server.reply({
       cmd: 'warn',
       text: 'Could not find user in that channel',
       id: Errors.Global.UNKNOWN_USER,
-      channel, // @todo Multichannel
+      channel: targetChannel,
     }, socket);
   }
 
-  // @todo change this uType to use level / uac
-  if (socket.nick !== targetUser.nick && targetUser.uType !== 'user') {
-    return true;
+  // prevent modifying users of equal or higher rank
+  if (targetUser.globalLevel >= socket.globalLevel && socket.nick !== targetUser.nick) {
+    return server.reply({
+      cmd: 'warn',
+      text: 'You may not do that',
+      id: Errors.Global.PERMISSION,
+      channel: targetChannel,
+    }, socket);
   }
 
-  targetUser.flair = newFlair;
+  const targetLevel = getUserLevel(targetUser, targetChannel);
+  const reservedFlairs = ['🌟', '⭐', '👑', '💫'];
 
-  // build update notice with new flair
-  const updateNotice = {
-    ...getUserDetails(targetUser),
-    ...{
-      cmd: 'updateUser',
-      channel, // @todo Multichannel
-    },
-  };
+  // restrict assignment of reserved administrative flairs
+  if (reservedFlairs.includes(newFlair)) {
+    const appropriateFlair = levelAppearance[targetLevel]
+      ? levelAppearance[targetLevel].flair
+      : null;
 
-  // notify channel that the user has changed their flair
-  // @todo this should be sent to every channel the user is in (multichannel)
-  server.broadcast(updateNotice, { channel });
+    if (newFlair !== appropriateFlair) {
+      return server.reply({
+        cmd: 'warn',
+        text: 'You may not do that',
+        id: Errors.Global.PERMISSION,
+        channel: targetChannel,
+      }, socket);
+    }
+  }
+
+  // ensure channel states are initialized
+  if (!targetUser.channelStates) {
+    targetUser.channelStates = {};
+  }
+
+  if (!targetUser.channelStates[targetChannel]) {
+    targetUser.channelStates[targetChannel] = {
+      level: getUserLevel(targetUser, targetChannel),
+      trip: targetUser.trip,
+    };
+  }
+
+  // apply new flair to target
+  targetUser.channelStates[targetChannel].flair = newFlair;
+
+  const details = getUserDetails(targetUser, targetChannel);
+
+  // broadcast updated user details to the channel
+  server.broadcast({
+    ...details,
+    cmd: 'updateUser',
+    channel: targetChannel,
+  }, (client) => {
+    if (client.channels && client.channels.includes(targetChannel)) {
+      return true;
+    }
+
+    return false;
+  });
+
+  // sync session on target client
+  server.reply({
+    cmd: 'session',
+    restored: false,
+    token: getSession(targetUser, core),
+    channels: targetUser.channels,
+  }, targetUser);
 
   return true;
 }
 
 /**
-  * Automatically executes once after server is ready to register this modules hooks
+  * Automatically executes once after server is ready to register this module's hooks
   * @param {Object} server - Reference to server environment object
   * @public
   * @return {void}
@@ -116,27 +178,30 @@ export function flairCheck({
     return false;
   }
 
+  // intercept /forceflair command
   if (payload.text.startsWith('/forceflair ')) {
     const input = payload.text.split(' ');
+    const targetChannel = payload.channel;
 
-    // If there is no nickname target parameter
+    // missing target parameter
     if (input[1] === undefined) {
       server.reply({
         cmd: 'warn',
-        text: 'Refer to `/help forceflair` for instructions on how to use this command.',
+        text: 'Refer to `/help forceflair` for instructions on how to use this command',
         id: Errors.ForceFlairErrors.MISSING_NICK,
-        channel: socket.channel, // @todo Multichannel
+        channel: targetChannel,
       }, socket);
 
       return false;
     }
 
+    // missing flair parameter
     if (input[2] === undefined) {
       server.reply({
         cmd: 'warn',
         text: 'Invalid flair',
         id: Errors.ForceFlairErrors.INVALID_FLAIR,
-        channel: socket.channel, // @todo Multichannel
+        channel: targetChannel,
       }, socket);
 
       return false;
@@ -144,6 +209,7 @@ export function flairCheck({
 
     const target = input[1].replace(/@/g, '');
 
+    // trigger standard run execution
     this.run({
       core,
       server,
@@ -152,6 +218,7 @@ export function flairCheck({
         cmd: 'forceflair',
         nick: target,
         flair: input[2],
+        channel: targetChannel,
       },
     });
 

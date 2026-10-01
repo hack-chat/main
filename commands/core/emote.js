@@ -9,29 +9,15 @@
 import {
   Errors,
 } from '../utility/_Constants.js';
-
-/**
-  * Check and trim string provided by remote client
-  * @param {string} text - Subject string
-  * @private
-  * @todo Move into utility module
-  * @return {string|boolean}
-  */
-const parseText = (text) => {
-  // verifies user input is text
-  if (typeof text !== 'string') {
-    return false;
-  }
-
-  let sanitizedText = text;
-
-  // strip newlines from beginning and end
-  sanitizedText = sanitizedText.replace(/^\s*\n|^\s+$|\n\s*$/g, '');
-  // replace 3+ newlines with just 2 newlines
-  sanitizedText = sanitizedText.replace(/\n{3,}/g, '\n\n');
-
-  return sanitizedText;
-};
+import {
+  parseText,
+} from '../utility/_Text.js';
+import {
+  getUserLevel,
+  getAppearance,
+  isAdmin,
+  isModerator,
+} from '../utility/_UAC.js';
 
 /**
   * Executes when invoked by a remote client
@@ -40,8 +26,10 @@ const parseText = (text) => {
   * @return {void}
   */
 export async function run({ server, socket, payload }) {
-  // must be in a channel to run this command
-  if (typeof socket.channel === 'undefined') {
+  const targetChannel = payload.channel;
+
+  // validate presence in channel
+  if (!targetChannel || !socket.channels || !socket.channels.includes(targetChannel)) {
     return server.police.frisk(socket, 1);
   }
 
@@ -49,7 +37,7 @@ export async function run({ server, socket, payload }) {
   let text = parseText(payload.text);
 
   if (!text) {
-    // lets not send objects or empty text, yea?
+    // let's not send objects or empty text, yea?
     return server.police.frisk(socket, 8);
   }
 
@@ -58,36 +46,78 @@ export async function run({ server, socket, payload }) {
   if (server.police.frisk(socket, score)) {
     return server.reply({
       cmd: 'warn',
-      text: 'You are sending too much text. Wait a moment and try again.\nPress the up arrow key to restore your last message.',
+      text: 'Issuing commands too quickly. Wait a moment before trying again',
       id: Errors.Global.RATELIMIT,
-      channel: socket.channel, // @todo Multichannel
+      channel: targetChannel,
     }, socket);
   }
 
+  // format action text
   if (!text.startsWith("'")) {
     text = ` ${text}`;
   }
 
+  const effectiveLevel = getUserLevel(socket, targetChannel);
+  const appearance = getAppearance(effectiveLevel);
+
+  // resolve local or global trip
+  const effectiveTrip = (
+    socket.channelStates
+    && socket.channelStates[targetChannel]
+    && socket.channelStates[targetChannel].trip
+  ) || socket.trip;
+
+  let messageColor = socket.color;
+
+  // resolve local or global color
+  if (
+    socket.channelStates
+    && socket.channelStates[targetChannel]
+    && socket.channelStates[targetChannel].color
+  ) {
+    messageColor = socket.channelStates[targetChannel].color;
+  }
+
+  // construct payload
   const newPayload = {
     cmd: 'emote',
     nick: socket.nick,
     userid: socket.userid,
     text: `@${socket.nick}${text}`,
-    channel: socket.channel, // @todo Multichannel
+    channel: targetChannel,
+    level: effectiveLevel,
+    flair: appearance.flair,
   };
 
-  if (socket.trip) {
-    newPayload.trip = socket.trip;
+  if (effectiveTrip) {
+    newPayload.trip = effectiveTrip;
+  }
+
+  if (messageColor) {
+    newPayload.color = messageColor;
+  }
+
+  /* legacy */
+  if (isAdmin(socket)) {
+    newPayload.admin = true;
+  } else if (isModerator(socket)) {
+    newPayload.mod = true;
   }
 
   // broadcast to channel peers
-  server.broadcast(newPayload, { channel: socket.channel });
+  server.broadcast(newPayload, (client) => {
+    if (client.channels && client.channels.includes(targetChannel)) {
+      return true;
+    }
+
+    return false;
+  });
 
   return true;
 }
 
 /**
-  * Automatically executes once after server is ready to register this modules hooks
+  * Automatically executes once after server is ready to register this module's hooks
   * @param {Object} server - Reference to server environment object
   * @public
   * @return {void}
@@ -112,16 +142,24 @@ export function emoteCheck({
     return false;
   }
 
+  const targetChannel = payload.channel;
+
+  // validate presence in channel
+  if (!targetChannel || !socket.channels || !socket.channels.includes(targetChannel)) {
+    return payload;
+  }
+
+  // intercept /me command
   if (payload.text.startsWith('/me ')) {
     const input = payload.text.split(' ');
 
-    // If there is no emote target parameter
+    // missing emote parameter
     if (input[1] === undefined) {
       server.reply({
         cmd: 'warn',
-        text: 'Refer to `/help emote` for instructions on how to use this command.',
+        text: 'Refer to `/help emote` for instructions on how to use this command',
         id: Errors.Emote.MISSING_TEXT,
-        channel: socket.channel, // @todo Multichannel
+        channel: targetChannel,
       }, socket);
 
       return false;
@@ -130,6 +168,7 @@ export function emoteCheck({
     input.splice(0, 1);
     const actionText = input.join(' ');
 
+    // trigger standard run execution
     this.run({
       core,
       server,
@@ -137,6 +176,7 @@ export function emoteCheck({
       payload: {
         cmd: 'emote',
         text: actionText,
+        channel: targetChannel,
       },
     });
 

@@ -21,7 +21,7 @@ import {
   */
 export async function run({ server, socket, payload }) {
   // increase rate limit chance and ignore if not admin
-  if (!isAdmin(socket.level)) {
+  if (!isAdmin(socket)) {
     return server.police.frisk(socket, 20);
   }
 
@@ -30,7 +30,7 @@ export async function run({ server, socket, payload }) {
     cmd: 'info',
     text: `Server Notice: ${payload.text}`,
     id: Info.Admin.SHOUT,
-    channel: false, // @todo Multichannel, false for global
+    channel: false,
   }, {});
 
   return true;

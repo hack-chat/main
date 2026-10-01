@@ -90,7 +90,7 @@ export async function run({
   if (mayJoin !== true) {
     return server.reply({
       cmd: 'warn',
-      text: 'You may not join that channel.',
+      text: 'You may not join that channel',
       id: mayJoin,
       channel: false, // @todo Multichannel, false for global event
     }, socket);
@@ -112,7 +112,7 @@ export async function run({
   if (verifyNickname(nick, socket) !== true) {
     return server.reply({
       cmd: 'warn',
-      text: 'Nickname must consist of up to 24 letters, numbers, and underscores',
+      text: 'Username must consist of up to 24 letters, numbers, and underscores',
       id: Errors.Join.INVALID_NICK,
       channel: false, // @todo Multichannel, false for global event
     }, socket);
@@ -218,7 +218,7 @@ export function restoreJoin({
   if (mayJoin !== true) {
     return server.reply({
       cmd: 'warn',
-      text: 'You may not join that channel.',
+      text: 'You may not join that channel',
       id: mayJoin,
       channel: false, // @todo Multichannel, false for global event
     }, socket);

@@ -27,6 +27,7 @@ export function getChannel(channel = undefined) {
   if (typeof channel === 'string') {
     return channel;
   }
+
   return Math.random().toString(36).substr(2, 8);
 }
 
@@ -39,8 +40,10 @@ export function getChannel(channel = undefined) {
 export async function run({
   core, server, socket, payload,
 }) {
-  // must be in a channel to run this command
-  if (typeof socket.channel === 'undefined') {
+  const targetChannel = payload.channel;
+
+  // validate presence in channel
+  if (!targetChannel || !socket.channels || !socket.channels.includes(targetChannel)) {
     return server.police.frisk(socket, 1);
   }
 
@@ -48,25 +51,30 @@ export async function run({
   if (server.police.frisk(socket, 2)) {
     return server.reply({
       cmd: 'warn',
-      text: 'You are sending invites too fast. Wait a moment before trying again.',
+      text: 'You are sending invites too quickly. Wait a moment before trying again',
       id: Errors.Invite.RATELIMIT,
-      channel: socket.channel, // @todo Multichannel
+      channel: targetChannel,
     }, socket);
   }
 
   // verify user input
-  // if this is a legacy client add missing params to payload
   if (socket.hcProtocol === 1) {
-    if (typeof socket.channel === 'undefined' || typeof payload.nick !== 'string') {
+    if (typeof payload.nick !== 'string') {
+      return true;
+    }
+  } else {
+    if (typeof payload.nick !== 'string' && typeof payload.userid !== 'number') {
       return true;
     }
 
-    payload.channel = socket.channel; // eslint-disable-line no-param-reassign
-  } else if (typeof payload.userid !== 'number' || typeof payload.channel !== 'string') {
-    return true;
+    if (typeof payload.channel !== 'string' && !targetChannel) {
+      return true;
+    }
   }
 
-  // @todo Verify this socket is part of payload.channel - multichannel patch
+  // sync payload channel for the finder
+  payload.channel = targetChannel;
+
   // find target user
   const targetUser = findUser(server, payload);
   if (!targetUser) {
@@ -74,20 +82,20 @@ export async function run({
       cmd: 'warn',
       text: 'Could not find user in that channel',
       id: Errors.Global.UNKNOWN_USER,
-      channel: socket.channel, // @todo Multichannel
+      channel: targetChannel,
     }, socket);
   }
 
-  // generate common channel
-  const channel = getChannel(payload.to);
+  // generate destination channel (either provided 'to' or random)
+  const destinationChannel = getChannel(payload.to);
 
   // build invite
   const outgoingPayload = {
     cmd: 'invite',
-    channel: socket.channel, // @todo Multichannel
+    channel: targetChannel,
     from: socket.userid,
     to: targetUser.userid,
-    inviteChannel: channel,
+    inviteChannel: destinationChannel,
   };
 
   // send invite notice to target client
@@ -97,7 +105,7 @@ export async function run({
     server.reply(outgoingPayload, targetUser);
   }
 
-  // send invite notice to this client
+  // send invite notice to this client (confirmation)
   if (socket.hcProtocol === 1) {
     server.reply(legacyInviteReply(outgoingPayload, targetUser.nick), socket);
   } else {

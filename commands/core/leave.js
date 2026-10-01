@@ -28,56 +28,47 @@ import {
 export async function run({
   core, server, socket, payload,
 }) {
+  const targetChannel = payload.channel;
+
+  // validate presence in channel
+  if (!targetChannel || !socket.channels || !socket.channels.includes(targetChannel)) {
+    return server.police.frisk(socket, 1);
+  }
+
   // check for spam
   if (server.police.frisk(socket, 3)) {
     return server.reply({
       cmd: 'warn',
-      text: 'You are leaving channels too fast. Wait a moment and try again.',
+      text: 'Issuing commands too quickly. Wait a moment before trying again',
       id: Errors.Global.RATELIMIT,
-      channel: false,
+      channel: targetChannel,
     }, socket);
   }
 
-  // check for required payload data
-  if (typeof payload.channel !== 'string') {
-    return server.reply({
-      cmd: 'warn',
-      text: 'Invalid channel specified.',
-      id: Errors.Global.INVALID_PAYLOAD,
-      channel: false,
-    }, socket);
+  // remove channel from the channels array
+  socket.channels = socket.channels.filter((c) => c !== targetChannel);
+
+  // remove channel specific state
+  if (socket.channelStates && socket.channelStates[targetChannel]) {
+    delete socket.channelStates[targetChannel];
   }
 
-  const { channel } = payload;
-
-  // verify the user is actually in the channel they are trying to leave
-  if (!socket.channels || !socket.channels.includes(channel)) {
-    return server.reply({
-      cmd: 'warn',
-      text: 'You are not in that channel.',
-      id: Errors.Global.INVALID_PAYLOAD,
-      channel: false,
-    }, socket);
-  }
-
-  socket.channels = socket.channels.filter((c) => c !== channel);
-
-  // @todo Multichannel update
-  if (socket.channel === channel) {
-    socket.channel = socket.channels.length > 0 ? socket.channels[0] : undefined;
-  }
-
-  const isDuplicate = socketInChannel(server, channel, socket);
+  // check if the user has other connections still in this channel
+  const isDuplicate = socketInChannel(server, targetChannel, socket);
 
   if (isDuplicate === false) {
     server.broadcast({
       cmd: 'onlineRemove',
       nick: socket.nick,
       userid: socket.userid,
-      channel,
-    }, { channel });
+      channel: targetChannel,
+    }, {
+      channels: (targetChannels) => Array.isArray(targetChannels)
+        && targetChannels.includes(targetChannel),
+    });
   }
 
+  // reply with updated session token
   server.reply({
     cmd: 'session',
     restored: false,
@@ -89,7 +80,7 @@ export async function run({
 }
 
 /**
-  * Automatically executes once after server is ready to register this modules hooks
+  * Automatically executes once after server is ready to register this module's hooks
   * @param {Object} server - Reference to server environment object
   * @public
   * @return {void}
@@ -113,14 +104,29 @@ export function runLeaveCheck({
     return false;
   }
 
+  let targetChannel = payload.channel;
+
+  // validate presence in channel
+  if (!targetChannel || !socket.channels || !socket.channels.includes(targetChannel)) {
+    return payload;
+  }
+
+  // intercept /leave command
   if (payload.text.startsWith('/leave')) {
+    const input = payload.text.split(' ');
+
+    if (input[1]) {
+      [, targetChannel] = input;
+    }
+
+    // trigger standard run execution
     this.run({
       core,
       server,
       socket,
       payload: {
         cmd: 'leave',
-        channel: socket.channel, // @todo Mutlichannel
+        channel: targetChannel,
       },
     });
 
@@ -136,7 +142,7 @@ export function runLeaveCheck({
   * @typedef {Object} leave/info
   * @property {string} name - Module command name
   * @property {string} category - Module category name
-  * @property {string} description - Information about module
+  * @property {string} description - Leave the target channel
   * @property {string} usage - Information about module usage
   */
 export const info = {

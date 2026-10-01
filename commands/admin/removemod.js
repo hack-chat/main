@@ -17,8 +17,10 @@ import {
   isModerator,
   levels,
   getUserDetails,
-  getAppearance,
 } from '../utility/_UAC.js';
+import {
+  getSession,
+} from '../core/session.js';
 
 /**
   * Executes when invoked by a remote client
@@ -30,7 +32,7 @@ export async function run({
   core, server, socket, payload,
 }) {
   // increase rate limit chance and ignore if not admin
-  if (!isAdmin(socket.level)) {
+  if (!isAdmin(socket)) {
     return server.police.frisk(socket, 20);
   }
 
@@ -40,63 +42,67 @@ export async function run({
     (mod) => mod.trip !== payload.trip,
   );
 
-  const { color, flair } = getAppearance(levels.default);
-
-  // find targets current connections
+  // find target's current connections
   const targetMod = server.findSockets({ trip: payload.trip });
+
   if (targetMod.length !== 0) {
-    // build update notice with new privileges
-    const updateNotice = {
-      ...getUserDetails(targetMod[0]),
-      ...{
-        cmd: 'updateUser',
-        uType: legacyLevelToLabel(levels.default),
-        level: levels.default,
-      },
-    };
-
     for (let i = 0, l = targetMod.length; i < l; i += 1) {
-      // downgrade privileges
-      targetMod[i].uType = legacyLevelToLabel(levels.default);
-      targetMod[i].level = levels.default;
-      targetMod[i].color = color;
-      targetMod[i].flair = flair;
+      const targetSocket = targetMod[i];
 
-      // inform ex-mod
-      server.send({
-        cmd: 'info',
-        text: 'You are now a user.',
-        id: Info.Admin.YOU_ARE_USER,
-        channel: targetMod[i].channel, // @todo Multichannel
-      }, targetMod[i]);
+      // downgrade global level
+      targetSocket.globalLevel = levels.default;
 
-      // notify channel
-      server.broadcast({
-        ...updateNotice,
-        ...{
-          channel: targetMod[i].channel,
-        },
-      }, { channel: targetMod[i].channel });
+      // update legacy properties
+      targetSocket.uType = legacyLevelToLabel(levels.default);
+      targetSocket.level = levels.default;
+
+      // notify channel peers of downgrade
+      targetSocket.channels.forEach((c) => {
+        server.send({
+          cmd: 'info',
+          text: 'You are no longer a global moderator',
+          id: Info.Admin.YOU_ARE_USER,
+          channel: c,
+        }, targetSocket);
+
+        const updateNotice = {
+          ...getUserDetails(targetSocket, c),
+          ...{
+            cmd: 'updateUser',
+            channel: c,
+          },
+        };
+
+        server.broadcast(updateNotice, (client) => client.channels && client.channels.includes(c));
+      });
+
+      // update session token
+      server.reply({
+        cmd: 'session',
+        restored: false,
+        token: getSession(targetSocket, core),
+        channels: targetSocket.channels,
+      }, targetSocket);
     }
   }
 
-  // return success message
+  // return success message to admin
   server.reply({
     cmd: 'info',
-    text: `Removed mod trip: ${
-      payload.trip
-    }, remember to run 'saveconfig' to make it permanent`,
+    text: `Removed mod: ${payload.trip}`,
     id: Info.Admin.MOD_REMOVED,
-    channel: socket.channel, // @todo Multichannel
+    args: { trip: payload.trip },
+    channel: payload.channel,
   }, socket);
 
   // notify all mods
   server.broadcast({
     cmd: 'info',
     text: `Removed mod: ${payload.trip}`,
-    id: Info.Admin.MOD_REMOVED_BROADCAST,
-    channel: false, // @todo Multichannel, false for global
-  }, { level: isModerator });
+    id: Info.Admin.MOD_REMOVED,
+    args: { trip: payload.trip },
+    channel: false,
+  }, (client) => isModerator(client));
 
   return true;
 }

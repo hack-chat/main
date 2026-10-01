@@ -1,22 +1,19 @@
-/* eslint no-console: 0 */
+/* eslint no-param-reassign: 0 */
 
 /**
   * @author Marzavec ( https://github.com/marzavec )
-  * @summary Unlock target channel
-  * @version 1.1.0
-  * @description Unlocks a channel allowing anyone to join
-  * @module unlockroom
+  * @summary Removes the password from the channel
+  * @version 1.0.0
+  * @description Removes the channel password allowing normal join flow
+  * @module clearpassword
   */
 
+import { Info } from '../utility/_Constants.js';
 import {
   isChannelModerator,
-  getUserLevel,
   levels,
+  getUserLevel,
 } from '../utility/_UAC.js';
-import {
-  Errors,
-  Info,
-} from '../utility/_Constants.js';
 
 /**
   * Automatically executes once after server is ready
@@ -25,9 +22,9 @@ import {
   * @return {void}
   */
 export async function init(core) {
-  // initialize locked state object
-  if (typeof core.locked === 'undefined') {
-    core.locked = {};
+  // initialize password storage if missing
+  if (typeof core.passwords === 'undefined') {
+    core.passwords = {};
   }
 }
 
@@ -49,43 +46,29 @@ export async function run({
 
   const currentLevel = getUserLevel(socket, targetChannel);
 
-  // verify moderator permissions
+  // enforce moderator permission
   if (currentLevel < levels.channelModerator) {
     return server.police.frisk(socket, 10);
   }
 
-  // check if channel is currently locked
-  if (typeof core.locked[targetChannel] === 'undefined' || core.locked[targetChannel] === false) {
+  // check if a password is even set
+  if (!core.passwords[targetChannel]) {
     return server.reply({
-      cmd: 'warn',
-      text: 'Channel is not locked',
-      id: Errors.LockRoom.NOT_LOCKED,
+      cmd: 'info',
+      text: 'Channel does not currently have a password',
+      id: Info.ChannelInfo.NO_PASS,
       channel: targetChannel,
     }, socket);
   }
 
-  // ensure user has sufficient rank to unlock
-  if (core.locked[targetChannel] > currentLevel) {
-    return server.reply({
-      cmd: 'warn',
-      text: `Level ${core.locked[targetChannel]} required, you are level ${currentLevel}`,
-      id: Errors.LockRoom.UNLOCK_REQ,
-      args: {
-        lockLevel: core.locked[targetChannel],
-        currentLevel,
-      },
-      channel: targetChannel,
-    }, socket);
-  }
+  // disable password protection
+  core.passwords[targetChannel] = false;
 
-  // remove lock status
-  core.locked[targetChannel] = false;
-
-  // notify moderators in channel
+  // notify moderators
   server.broadcast({
     cmd: 'info',
-    text: `Channel: ?${targetChannel} unlocked by [${socket.trip}]${socket.nick}`,
-    id: Info.Mod.UNLOCKED_DETAILED,
+    text: `Password protection removed on: ?${targetChannel} by [${socket.trip}]${socket.nick}`,
+    id: Info.Mod.PASS_DISABLED,
     args: {
       targetChannel,
       trip: socket.trip,
@@ -96,8 +79,6 @@ export async function run({
     const inChannel = (client.channels && client.channels.includes(targetChannel));
     return inChannel && isChannelModerator(client, targetChannel);
   });
-
-  console.log(`Channel: ?${targetChannel} unlocked by [${socket.trip}]${socket.nick}`);
 
   return true;
 }
@@ -113,8 +94,7 @@ export function initHooks(server) {
 }
 
 /**
-  * Executes every time an incoming chat command is invoked;
-  * hook incoming chat commands
+  * Executes every time an incoming chat command is invoked
   * @param {Object} env - Environment object with references to core, server, socket & payload
   * @public
   * @return {(Object|boolean|string)} Object = same/altered payload,
@@ -124,22 +104,18 @@ export function initHooks(server) {
 export function chatCheck({
   core, server, socket, payload,
 }) {
-  if (typeof payload.text !== 'string') {
-    return false;
-  }
+  // always verify user input
+  if (typeof payload.text !== 'string') return false;
 
-  // intercept /unlockroom command
-  if (payload.text.startsWith('/unlockroom')) {
-    const targetChannel = payload.channel;
-
-    // trigger standard run execution
+  // intercept clearpassword command
+  if (payload.text === '/clearpassword') {
     this.run({
       core,
       server,
       socket,
       payload: {
-        cmd: 'unlockroom',
-        channel: targetChannel,
+        cmd: 'clearpassword',
+        channel: payload.channel,
       },
     });
 
@@ -152,16 +128,17 @@ export function chatCheck({
 /**
   * Module meta information
   * @public
-  * @typedef {Object} unlockroom/info
+  * @typedef {Object} clearpassword/info
   * @property {string} name - Module command name
   * @property {string} category - Module category name
   * @property {string} description - Information about module
   * @property {string} usage - Information about module usage
   */
 export const info = {
-  name: 'unlockroom',
+  name: 'clearpassword',
   category: 'moderators',
-  description: 'Unlock the current channel you are in or target channel as specified',
+  description: 'Removes the password requirement from the current channel',
   usage: `
-    API: { cmd: 'unlockroom', channel: '<optional target channel>' }`,
+    API: { cmd: 'clearpassword' }
+    Text: /clearpassword`,
 };

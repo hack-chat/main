@@ -15,6 +15,7 @@ import {
 } from '../utility/_Constants.js';
 import {
   isAdmin,
+  getUserDetails,
 } from '../utility/_UAC.js';
 
 /**
@@ -23,25 +24,34 @@ import {
   * @public
   * @return {void}
   */
-export async function run({ server, socket }) {
+export async function run({ server, socket, payload }) {
   // increase rate limit chance and ignore if not admin
-  if (!isAdmin(socket.level)) {
+  if (!isAdmin(socket)) {
     return server.police.frisk(socket, 20);
   }
 
   // find all users currently in a channel
   const currentUsers = server.findSockets({
-    channel: () => true,
+    channels: (channels) => channels && channels.length > 0,
   });
 
   const channels = {};
+
+  // group active users by channel
   for (let i = 0, j = currentUsers.length; i < j; i += 1) {
     const user = currentUsers[i];
-    if (typeof channels[user.channel] === 'undefined') {
-      channels[user.channel] = [];
-    }
 
-    channels[user.channel].push(user);
+    if (user.channels && Array.isArray(user.channels)) {
+      for (let k = 0; k < user.channels.length; k += 1) {
+        const chanName = user.channels[k];
+
+        if (typeof channels[chanName] === 'undefined') {
+          channels[chanName] = [];
+        }
+
+        channels[chanName].push(user);
+      }
+    }
   }
 
   const channelList = Object.keys(channels).map((name) => ({
@@ -50,8 +60,10 @@ export async function run({ server, socket }) {
     count: channels[name].length,
   }));
 
+  // sort by most populated channels
   channelList.sort((a, b) => b.count - a.count);
 
+  // build markdown table output
   let reply = '| Channel | Trip | Nick | Hash |\n';
   reply += '| :--- | :--- | :--- | :--- |\n';
 
@@ -60,23 +72,24 @@ export async function run({ server, socket }) {
 
     for (let k = 0; k < users.length; k += 1) {
       const u = users[k];
-      const trip = u.trip || '(none)';
-      const hash = u.hash || '???';
+      const details = getUserDetails(u, name);
+      const trip = details.trip || '(none)';
+      const hash = details.hash || '???';
 
-      reply += `| ?${name} | ${trip} | ${u.nick} | ${hash} |\n`;
+      reply += `| ?${name} | ${trip} | ${details.nick} | ${hash} |\n`;
     }
   }
 
   reply += '\n---\n';
-  reply += `**Total Channels:** ${channelList.length}\n`;
-  reply += `**Total Users:** ${currentUsers.length}`;
+  reply += `**Total Active Channels:** ${channelList.length}\n`;
+  reply += `**Total Unique Connections:** ${currentUsers.length}`;
 
-  // send reply
+  // send reply to admin
   server.reply({
     cmd: 'info',
     text: reply,
     id: Info.Admin.USER_LIST,
-    channel: socket.channel, // @todo Multichannel
+    channel: payload.channel,
   }, socket);
 
   return true;

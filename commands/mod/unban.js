@@ -2,7 +2,7 @@
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Unban a user
   * @version 1.1.0
-  * @description Un-bans target user by ip or hash
+  * @description Unbans target user by IP or hash
   * @module unban
   */
 
@@ -23,8 +23,15 @@ import {
 export async function run({
   core, server, socket, payload,
 }) {
-  // increase rate limit chance and ignore if not admin or mod
-  if (!isModerator(socket.level)) {
+  // enforce moderation level
+  if (!isModerator(socket)) {
+    return server.police.frisk(socket, 10);
+  }
+
+  const targetChannel = payload.channel;
+
+  // validate presence in channel
+  if (!targetChannel || !socket.channels || !socket.channels.includes(targetChannel)) {
     return server.police.frisk(socket, 10);
   }
 
@@ -34,11 +41,11 @@ export async function run({
       cmd: 'warn',
       text: "hash:'targethash' or ip:'1.2.3.4' is required",
       id: Errors.Users.BAD_HASH_OR_IP,
-      channel: socket.channel, // @todo Multichannel
+      channel: targetChannel,
     }, socket);
   }
 
-  // find target
+  // determine target type
   let mode;
   let target;
   if (typeof payload.ip === 'string') {
@@ -52,29 +59,27 @@ export async function run({
   // remove arrest record
   server.police.pardon(target);
 
-  // mask ip if used
+  // mask ip for broadcast
   if (mode === 'ip') {
     target = server.getSocketHash(target);
   }
-  console.log(`${socket.nick} [${socket.trip}] unbanned ${target} in ${socket.channel}`);
 
-  // reply with success
-  server.reply({
-    cmd: 'info',
-    text: `Unbanned ${target}`,
-    id: Info.Mod.UNBANNED,
-    channel: socket.channel, // @todo Multichannel
-  }, socket);
+  console.log(`${socket.nick} [${socket.trip}] unbanned ${target} in ${targetChannel}`);
 
-  // notify mods
+  // notify moderators
   server.broadcast({
     cmd: 'info',
     text: `${socket.nick}#${socket.trip} unbanned: ${target}`,
     id: Info.Mod.UNBANNED_DETAILED,
-    channel: false, // @todo Multichannel, false for global
-  }, { level: isModerator });
+    args: {
+      nick: socket.nick,
+      trip: socket.trip,
+      target,
+    },
+    channel: targetChannel,
+  }, (client) => isModerator(client));
 
-  // stats are fun
+  // update ban stats
   core.stats.decrement('users-banned');
 
   return true;
@@ -92,7 +97,7 @@ export async function run({
 export const info = {
   name: 'unban',
   category: 'moderators',
-  description: 'Un-bans target user by ip or hash',
+  description: 'Unbans target user by IP or hash',
   usage: `
     API: { cmd: 'unban', ip/hash: '<target ip or hash>' }`,
 };

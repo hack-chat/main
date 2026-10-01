@@ -12,14 +12,11 @@ import {
 import {
   isAdmin,
   isModerator,
+  getUserLevel,
 } from '../utility/_UAC.js';
 import {
   Errors,
 } from '../utility/_Constants.js';
-import {
-  ACTIVE_MESSAGES,
-  MAX_MESSAGE_ID_LENGTH,
-} from './chat.js';
 
 /**
   * Executes when invoked by a remote client
@@ -27,35 +24,38 @@ import {
   * @public
   * @return {void}
   */
-export async function run({
-  server, socket, payload,
-}) {
-  // must be in a channel to run this command
-  if (typeof socket.channel === 'undefined') {
+export async function run({ server, socket, payload }) {
+  const targetChannel = payload.channel;
+
+  // validate presence in channel
+  if (!targetChannel || !socket.channels || !socket.channels.includes(targetChannel)) {
     return server.police.frisk(socket, 1);
   }
 
-  // undefined | "overwrite" | "append" | "prepend" | "complete"
   const { customId } = payload;
   let { mode, text } = payload;
 
+  // default mode if unspecified
   if (!mode) {
     mode = 'overwrite';
   }
 
+  // validate mode type
   if (mode !== 'overwrite' && mode !== 'append' && mode !== 'prepend' && mode !== 'complete') {
     return server.police.frisk(socket, 13);
   }
 
-  if (!customId || typeof customId !== 'string' || customId.length > MAX_MESSAGE_ID_LENGTH) {
+  // enforce id boundaries
+  const idStr = String(customId);
+  if (!customId || idStr.length > 10) {
     return server.police.frisk(socket, 13);
   }
 
-  if (typeof (text) !== 'string') {
+  // ensure text is valid
+  if (typeof text !== 'string') {
     return server.police.frisk(socket, 13);
   }
 
-  // sanitize input regardless of mode
   text = parseText(text);
 
   // allow empty overwrite (clearing message), otherwise block empty text
@@ -65,55 +65,115 @@ export async function run({
     return server.police.frisk(socket, 13);
   }
 
+  // spam prevention
   const score = text.length / 83 / 4;
   if (server.police.frisk(socket, score)) {
     return server.reply({
       cmd: 'warn',
-      text: 'You are sending too much text. Wait a moment and try again.',
+      text: 'Issuing commands too quickly. Wait a moment before trying again',
       id: Errors.Global.RATELIMIT,
-      channel: socket.channel,
+      channel: targetChannel,
     }, socket);
   }
 
-  // find the target message
-  const message = ACTIVE_MESSAGES.find(
-    (msg) => msg.userid === socket.userid && msg.customId === customId,
-  );
+  const effectiveLevel = getUserLevel(socket, targetChannel);
 
-  if (!message) {
-    return server.police.frisk(socket, 6);
-  }
-
-  if (mode === 'complete') {
-    message.toDelete = true;
-  }
-
+  // construct payload
   const outgoingPayload = {
     cmd: 'updateMessage',
     userid: socket.userid,
-    channel: socket.channel,
-    level: socket.level,
+    channel: targetChannel,
+    level: effectiveLevel,
     mode,
     text,
-    customId: message.customId,
+    customId,
   };
 
-  if (isAdmin(socket.level)) {
+  // append legacy perms
+  if (isAdmin(socket)) {
     outgoingPayload.admin = true;
-  } else if (isModerator(socket.level)) {
+  } else if (isModerator(socket)) {
     outgoingPayload.mod = true;
   }
 
-  server.broadcast(outgoingPayload, { channel: socket.channel });
+  // send to channel
+  server.broadcast(outgoingPayload, (client) => {
+    if (client.channels && client.channels.includes(targetChannel)) {
+      return true;
+    }
+
+    return false;
+  });
 
   return true;
+}
+
+/**
+  * Automatically executes once after server is ready to register this module's hooks
+  * @param {Object} server - Reference to server environment object
+  * @public
+  * @return {void}
+  */
+export function initHooks(server) {
+  server.registerHook('in', 'chat', this.commandCheckIn.bind(this), 20);
+}
+
+/**
+  * Executes every time an incoming chat command is invoked;
+  * checks for miscellaneous '/' based commands
+  * @param {Object} env - Environment object with references to core, server, socket & payload
+  * @public
+  * @return {(Object|boolean|string)} Object = same/altered payload,
+  * false = suppress action,
+  * string = error
+  */
+export function commandCheckIn({
+  core, server, socket, payload,
+}) {
+  if (!payload || typeof payload.text !== 'string') {
+    return false;
+  }
+
+  const targetChannel = payload.channel;
+
+  // validate presence in channel
+  if (!targetChannel || !socket.channels || !socket.channels.includes(targetChannel)) {
+    return payload;
+  }
+
+  // check if invoking /edit
+  if (payload.text.startsWith('/edit ')) {
+    const match = payload.text.match(/^\/edit\s+(\S+)\s+(.+)$/is);
+
+    // proxy command to execution function
+    if (match) {
+      const customId = match[1];
+      const text = match[2];
+
+      this.run({
+        core,
+        server,
+        socket,
+        payload: {
+          cmd: 'updateMessage',
+          customId,
+          text,
+          channel: targetChannel,
+        },
+      });
+
+      return false;
+    }
+  }
+
+  return payload;
 }
 
 /**
   * The following payload properties are required to invoke this module:
   * "text", "customId"
   * @public
-  * @typedef {Array} addmod/requiredData
+  * @typedef {Array} updateMessage/requiredData
   */
 export const requiredData = ['text', 'customId'];
 
@@ -131,5 +191,6 @@ export const info = {
   category: 'core',
   description: 'Update a message you have sent.',
   usage: `
-    API: { cmd: 'updateMessage', mode: 'overwrite'|'append'|'prepend'|'complete', text: '<text to apply>', customId: '<customId sent with the chat message>' }`,
+    API: { cmd: 'updateMessage', mode: 'overwrite'|'append'|'prepend'|'complete', text: '<text to apply>', customId: '<customId sent with the chat message>' }
+    Text: /edit <messageId> <new text>`,
 };

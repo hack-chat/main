@@ -2,7 +2,7 @@
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Get help
   * @version 1.0.0
-  * @description Outputs information about the servers current protocol
+  * @description Outputs information about the server's current protocol
   * @module help
   */
 
@@ -21,8 +21,10 @@ import {
 export async function run({
   core, server, socket, payload,
 }) {
-  // must be in a channel to run this command
-  if (typeof socket.channel === 'undefined') {
+  const targetChannel = payload.channel;
+
+  // validate presence in channel
+  if (!targetChannel || !socket.channels || !socket.channels.includes(targetChannel)) {
     return server.police.frisk(socket, 1);
   }
 
@@ -30,9 +32,9 @@ export async function run({
   if (server.police.frisk(socket, 2)) {
     return server.reply({
       cmd: 'warn',
-      text: 'You are sending too much text. Wait a moment and try again.\nPress the up arrow key to restore your last message.',
+      text: 'Issuing commands too quickly. Wait a moment before trying again',
       id: Errors.Global.RATELIMIT,
-      channel: socket.channel, // @todo Multichannel
+      channel: targetChannel,
     }, socket);
   }
 
@@ -42,21 +44,27 @@ export async function run({
   }
 
   let reply = '';
+
+  // display generic help or specific command info
   if (typeof payload.command === 'undefined') {
     reply += '# All commands:\n|Category:|Name:|\n|---:|---|\n';
 
+    // compile list of all available categories
     const categories = core.commands.categoriesList.sort();
     for (let i = 0, j = categories.length; i < j; i += 1) {
       reply += `|${categories[i].replace('../src/commands/', '').replace(/^\w/, (c) => c.toUpperCase())}:|`;
+
       const catCommands = core.commands.all(categories[i]).sort(
         (a, b) => a.info.name.localeCompare(b.info.name),
       );
+
       reply += `${catCommands.map((c) => `${c.info.name}`).join(', ')}|\n`;
     }
 
     reply += '---\nFor specific help on certain commands, use either:\nText: `/help <command name>`\nAPI: `{cmd: \'help\', command: \'<command name>\'}`';
     reply += `\n\nHackChat ${CodebaseVersion}`;
   } else {
+    // lookup specific command
     const command = core.commands.get(payload.command);
 
     if (typeof command === 'undefined') {
@@ -68,8 +76,7 @@ export async function run({
       reply += `|**Aliases:**|${typeof command.info.aliases !== 'undefined' ? command.info.aliases.join(', ') : 'None'}|\n`;
       reply += `|**Category:**|${command.info.category.replace('../src/commands/', '').replace(/^\w/, (c) => c.toUpperCase())}|\n`;
       reply += `|**Required Parameters:**|${command.requiredData || 'None'}|\n`;
-      // eslint-disable-next-line no-useless-escape
-      reply += `|**Description:**|${command.info.description || '¯\_(ツ)_/¯'}|\n\n`;
+      reply += `|**Description:**|${command.info.description || 'None'}|\n\n`;
       reply += `**Usage:** ${command.info.usage || command.info.name}`;
     }
   }
@@ -79,14 +86,14 @@ export async function run({
     cmd: 'info',
     text: reply,
     id: Info.Core.HELP_TEXT,
-    channel: socket.channel, // @todo Multichannel
+    channel: targetChannel,
   }, socket);
 
   return true;
 }
 
 /**
-  * Automatically executes once after server is ready to register this modules hooks
+  * Automatically executes once after server is ready to register this module's hooks
   * @param {Object} server - Reference to server environment object
   * @public
   * @return {void}
@@ -111,9 +118,18 @@ export function helpCheck({
     return false;
   }
 
-  if (payload.text.startsWith('/help')) {
-    const input = payload.text.substr(1).split(' ', 2);
+  const targetChannel = payload.channel;
 
+  // validate presence in channel
+  if (!targetChannel || !socket.channels || !socket.channels.includes(targetChannel)) {
+    return payload;
+  }
+
+  // intercept /help command
+  if (payload.text.startsWith('/help')) {
+    const input = payload.text.substring(1).split(' ', 2);
+
+    // trigger standard run execution
     this.run({
       core,
       server,
@@ -121,6 +137,7 @@ export function helpCheck({
       payload: {
         cmd: input[0],
         command: input[1],
+        channel: targetChannel,
       },
     });
 

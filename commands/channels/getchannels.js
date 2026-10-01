@@ -1,13 +1,16 @@
+/* eslint import/no-cycle: [0, { ignoreExternal: true }] */
+
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Get public channels
-  * @version 1.0.0
+  * @version 1.1.0
   * @description Sends back the public channel list with user counts
   * @module getchannels
   */
 
 import {
   Errors,
+  Info,
 } from '../utility/_Constants.js';
 
 /**
@@ -16,46 +19,79 @@ import {
   * @public
   * @return {void}
   */
-export async function run({ core, server, socket }) {
+export async function run({
+  core, server, socket, payload,
+}) {
+  const targetChannel = payload.channel;
+
+  // enforce rate limits
   if (server.police.frisk(socket, 4)) {
     return server.reply({
       cmd: 'warn',
-      text: 'Issuing commands too quickly. Wait a moment before trying again.',
+      text: 'Issuing commands too quickly. Wait a moment before trying again',
       id: Errors.Global.RATELIMIT,
-      channel: socket.channel, // @todo Multichannel
+      channel: targetChannel || false,
     }, socket);
   }
 
-  const count = core.appConfig.data.publicChannels.length;
+  // use object destructuring to satisfy linting
+  const { publicChannels } = core.appConfig.data;
   const list = [];
 
-  for (let i = 0; i < count; i += 1) {
-    list[i] = {
-      name: core.appConfig.data.publicChannels[i],
+  // initialize public channel list
+  for (let i = 0; i < publicChannels.length; i += 1) {
+    list.push({
+      name: publicChannels[i],
       count: 0,
-    };
+    });
   }
 
+  // iterate clients to count users in public channels
   server.clients.forEach((client) => {
-    if (client.channel) {
-      const listIndex = core.appConfig.data.publicChannels.indexOf(client.channel);
+    if (client.channels && Array.isArray(client.channels)) {
+      client.channels.forEach((channelName) => {
+        const listIndex = publicChannels.indexOf(channelName);
 
-      if (listIndex !== -1) {
-        list[listIndex].count += 1;
-      }
+        if (listIndex !== -1) {
+          list[listIndex].count += 1;
+        }
+      });
     }
   });
 
-  // dispatch info
+  // sort by count descending (most popular first)
+  list.sort((a, b) => b.count - a.count);
+
+  // if invoked via chat command, send a markdown table via 'info' event
+  if (payload.isChat) {
+    let reply = '| Channel | Users |\n';
+    reply += '| :--- | :--- |\n';
+
+    for (let i = 0; i < list.length; i += 1) {
+      // the ? prefix creates a clickable channel link in the client
+      reply += `| ?${list[i].name} | ${list[i].count} |\n`;
+    }
+
+    reply += '\n---\n';
+    reply += `**Total Public Channels:** ${list.length}`;
+
+    return server.reply({
+      cmd: 'info',
+      text: reply,
+      id: Info.Core.CHANNEL_LIST,
+      channel: targetChannel,
+    }, socket);
+  }
+
+  // standard api response (json)
   return server.reply({
     cmd: 'publicchannels',
-    // count,
     list,
   }, socket);
 }
 
 /**
-  * Automatically executes once after server is ready to register this modules hooks
+  * Automatically executes once after server is ready to register this module's hooks
   * @param {Object} server - Reference to server environment object
   * @public
   * @return {void}
@@ -75,22 +111,28 @@ export function initHooks(server) {
 export function runChatCheck({
   core, server, socket, payload,
 }) {
-  if (typeof payload.text !== 'string') {
+  if (!payload || typeof payload.text !== 'string') {
     return false;
   }
 
-  // must be in a channel to run this command
-  if (typeof socket.channel === 'undefined') {
-    return false;
+  const targetChannel = payload.channel;
+
+  // validate presence in channel
+  if (!targetChannel || !socket.channels || !socket.channels.includes(targetChannel)) {
+    return payload;
   }
 
+  // intercept /getchannels command
   if (payload.text.startsWith('/getchannels')) {
+    // trigger isChat run execution
     this.run({
       core,
       server,
       socket,
       payload: {
         cmd: 'getchannels',
+        channel: targetChannel,
+        isChat: true,
       },
     });
 
