@@ -26,9 +26,8 @@ export const MAX_MESSAGE_ID_LENGTH = 6;
 export async function run({
   core, server, socket, payload,
 }) {
-  const targetChannel = payload.channel;
+  const targetChannel = payload.channel || socket.channels[0] || false;
 
-  // validate presence in channel
   if (!targetChannel || !socket.channels || !socket.channels.includes(targetChannel)) {
     return server.police.frisk(socket, 1);
   }
