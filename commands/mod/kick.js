@@ -183,8 +183,8 @@ export async function run({
       args: {
         nick: client.nick,
         destChannel,
-        kickerTrip,
-        kickerNick,
+        kickerTrip: socket.trip,
+        kickerNick: socket.nick,
       },
       channel: targetChannel,
     }, (c) => {
