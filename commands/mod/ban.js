@@ -120,7 +120,7 @@ export async function run({
             nick: socket.nick,
             trip: socket.trip,
             targetNick,
-            targetChannel,
+            currentChannel: targetChannel,
             hash: targetUser.hash,
           },
           channel: c,

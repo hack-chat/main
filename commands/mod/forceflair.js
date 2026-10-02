@@ -61,7 +61,7 @@ export async function run({
   const newFlair = payload.flair;
 
   // validate flair length
-  if (!newFlair || newFlair.length > 2) {
+  if (newFlair === undefined || newFlair === null || newFlair.length > 2) {
     return server.reply({
       cmd: 'warn',
       text: 'Invalid flair',
@@ -195,8 +195,11 @@ export function flairCheck({
       return false;
     }
 
-    // missing flair parameter
-    if (input[2] === undefined) {
+    // capture the flair input
+    let flairInput = input[2];
+    if (flairInput === 'clear' || flairInput === 'none') {
+      flairInput = '';
+    } else if (flairInput === undefined) {
       server.reply({
         cmd: 'warn',
         text: 'Invalid flair',
@@ -217,7 +220,7 @@ export function flairCheck({
       payload: {
         cmd: 'forceflair',
         nick: target,
-        flair: input[2],
+        flair: flairInput,
         channel: targetChannel,
       },
     });

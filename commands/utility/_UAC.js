@@ -217,8 +217,6 @@ export function getUserDetails(socket, channel) {
   let finalEffect = socket.effect || 0;
 
   // apply global custom overrides
-  if (socket.color) finalColor = socket.color;
-  if (socket.flair) finalFlair = socket.flair;
   if (typeof socket.effect !== 'undefined') finalEffect = socket.effect;
 
   let trip = socket.trip || '';

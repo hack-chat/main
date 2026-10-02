@@ -178,11 +178,13 @@ export async function run({
     // notify mods of successful kick
     server.broadcast({
       cmd: 'info',
-      text: `${client.nick} was banished to ?${destChannel}`,
+      text: `${client.nick} was banished to ?${destChannel} by ${socket.trip}#${socket.nick}`,
       id: Info.Mod.KICKED_DETAILED,
       args: {
         nick: client.nick,
         destChannel,
+        kickerTrip,
+        kickerNick,
       },
       channel: targetChannel,
     }, (c) => {

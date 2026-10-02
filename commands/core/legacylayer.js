@@ -32,6 +32,7 @@ export function initHooks(server) {
     'stats',
     'ping',
     'updateMessage',
+    'kick',
   ];
 
   // register hooks for all applicable legacy commands
@@ -56,7 +57,9 @@ export function payloadCheck({ socket, payload }) {
 
   // inject missing channel property for v1 clients
   if (socket.hcProtocol === 1 && typeof payload.channel === 'undefined') {
-    payload.channel = socket.channels[0] || false;
+    if (typeof socket.channels !== 'undefined') {
+      payload.channel = socket.channels[0] || false;
+    }
   }
 
   return payload;
