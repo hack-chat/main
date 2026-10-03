@@ -205,6 +205,7 @@ export const info = {
   name: 'changecolor',
   category: 'core',
   description: 'Allows calling client to change their nickname color',
+  aliases: ['color'],
   usage: `
     API: { cmd: 'changecolor', color: '<new color as hex>' }
     Text: /color <new color as hex>

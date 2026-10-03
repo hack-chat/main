@@ -12,6 +12,7 @@ import {
   isModerator,
   getUserLevel,
   getAppearance,
+  getUserDetails,
 } from '../utility/_UAC.js';
 import { Errors, Info } from '../utility/_Constants.js';
 
@@ -26,7 +27,7 @@ export const MAX_MESSAGE_ID_LENGTH = 6;
 export async function run({
   core, server, socket, payload,
 }) {
-  const targetChannel = payload.channel || socket.channels[0] || false;
+  const targetChannel = payload.channel || (socket.channels ? socket.channels[0] : false);
 
   if (!targetChannel || !socket.channels || !socket.channels.includes(targetChannel)) {
     return server.police.frisk(socket, 1);
@@ -164,6 +165,52 @@ export function commandCheckIn({ server, socket, payload }) {
       channel: payload.channel,
     }, socket);
 
+    return false;
+  }
+
+  // intercept /userlist command
+  if (payload.text === '/userlist') {
+    const targetChannel = payload.channel;
+
+    // validate presence in channel
+    if (!targetChannel || !socket.channels || !socket.channels.includes(targetChannel)) {
+      return server.police.frisk(socket, 1);
+    }
+
+    // find all users currently in this specific channel
+    const channelUsers = server.findSockets({
+      channels: (channels) => channels && channels.includes(targetChannel),
+    });
+
+    // build markdown table output
+    let reply = '| Trip | Nick | Hash |\n';
+    reply += '| :--- | :--- | :--- |\n';
+
+    const seen = new Set();
+
+    for (let i = 0; i < channelUsers.length; i += 1) {
+      const u = channelUsers[i];
+      const details = getUserDetails(u, targetChannel);
+      const uniqueId = `${details.nick}::${details.hash}`;
+
+      if (!seen.has(uniqueId)) {
+        seen.add(uniqueId);
+
+        const trip = details.trip || '(none)';
+        const hash = details.hash || '???';
+
+        reply += `| ${trip} | ${details.nick} | ${hash} |\n`;
+      }
+    }
+
+    // send private reply back to the invoking user
+    server.reply({
+      cmd: 'info',
+      text: reply,
+      channel: targetChannel,
+    }, socket);
+
+    // return false to prevent the command text from broadcasting to the channel
     return false;
   }
 

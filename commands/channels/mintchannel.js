@@ -27,6 +27,7 @@ const channelStateLayout = borsh.struct([
   borsh.u8('bump'),
 ]);
 
+// format address for display
 const shortenAddress = (address) => `${address.slice(0, 5)}...${address.slice(-5)}`;
 
 /**

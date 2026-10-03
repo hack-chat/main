@@ -27,7 +27,7 @@ import {
   * @return {void}
   */
 export async function run({ server, socket, payload }) {
-  const targetChannel = payload.channel || socket.channels[0] || false;
+  const targetChannel = payload.channel || (socket.channels ? socket.channels[0] : false);
 
   // validate presence in channel
   if (!targetChannel || !socket.channels || !socket.channels.includes(targetChannel)) {

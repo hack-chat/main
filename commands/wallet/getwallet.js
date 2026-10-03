@@ -1,7 +1,7 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Retrieve a user's wallet address
-  * @version 1.0.0
+  * @version 1.1.0
   * @description Checks if a target user has a connected wallet and returns the address
   * @module getwallet
   */
@@ -13,6 +13,9 @@ import {
 import {
   findUser,
 } from '../utility/_Channels.js';
+
+// format address for display
+const shortenAddress = (address) => `${address.slice(0, 5)}...${address.slice(-5)}`;
 
 /**
   * Executes when invoked by a remote client
@@ -97,7 +100,16 @@ export async function run({
     channel: targetChannel,
   }, targetUser);
 
-  // return wallet address to requester
+  // if invoked via chat command, send a formatted text response via 'info' event
+  if (payload.isChat) {
+    return server.reply({
+      cmd: 'info',
+      text: `💳 **${targetUser.nick}**: [${shortenAddress(targetUser.wallet.address)}](https://solscan.io/account/${targetUser.wallet.address})`,
+      channel: targetChannel,
+    }, socket);
+  }
+
+  // standard api response
   return server.reply({
     cmd: 'walletInfo',
     userid: targetUser.userid,
@@ -158,7 +170,7 @@ export function chatCheck({
 
     const target = input[1].replace(/@/g, '');
 
-    // trigger standard run execution
+    // trigger isChat run execution
     this.run({
       core,
       server,
@@ -167,6 +179,7 @@ export function chatCheck({
         cmd: 'getwallet',
         nick: target,
         channel: targetChannel,
+        isChat: true,
       },
     });
 
