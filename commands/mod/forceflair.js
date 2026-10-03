@@ -61,7 +61,8 @@ export async function run({
   const newFlair = payload.flair;
 
   // validate flair length
-  if (newFlair === undefined || newFlair === null || newFlair.length > 2) {
+  const unicodeLength = Array.from(newFlair).length;
+  if (newFlair === undefined || newFlair === null || unicodeLength > 4) {
     return server.reply({
       cmd: 'warn',
       text: 'Invalid flair',
@@ -83,7 +84,9 @@ export async function run({
   }
 
   // prevent modifying users of equal or higher rank
-  if (targetUser.globalLevel >= socket.globalLevel && socket.nick !== targetUser.nick) {
+  const targetEffectiveLevel = getUserLevel(targetUser, targetChannel);
+
+  if (targetEffectiveLevel >= currentLevel && socket.nick !== targetUser.nick) {
     return server.reply({
       cmd: 'warn',
       text: 'You may not do that',
@@ -92,13 +95,12 @@ export async function run({
     }, socket);
   }
 
-  const targetLevel = getUserLevel(targetUser, targetChannel);
   const reservedFlairs = ['🌟', '⭐', '👑', '💫'];
 
   // restrict assignment of reserved administrative flairs
   if (reservedFlairs.includes(newFlair)) {
-    const appropriateFlair = levelAppearance[targetLevel]
-      ? levelAppearance[targetLevel].flair
+    const appropriateFlair = levelAppearance[targetEffectiveLevel]
+      ? levelAppearance[targetEffectiveLevel].flair
       : null;
 
     if (newFlair !== appropriateFlair) {

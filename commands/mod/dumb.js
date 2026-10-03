@@ -96,7 +96,10 @@ export async function run({
   }
 
   // likely dont need this, muting mods and admins is fine
-  if (targetUser.level >= socket.level) {
+  const targetEffectiveLevel = getUserLevel(targetUser, targetChannel);
+  const currentLevel = getUserLevel(socket, targetChannel);
+
+  if (targetEffectiveLevel >= currentLevel && socket.nick !== targetUser.nick) {
     return server.reply({
       cmd: 'warn',
       text: 'You may not do that',

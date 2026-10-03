@@ -73,6 +73,10 @@ export async function run({
   // check if found targets are kickable, add them to the list if they are
   const kicked = [];
   badClients.forEach((client) => {
+    if (client.userid === socket.userid) {
+      return;
+    }
+
     const targetLevel = getUserLevel(client, targetChannel);
 
     if (targetLevel >= requestLevel) {

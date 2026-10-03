@@ -1,7 +1,7 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Disconnect a user's wallet
-  * @version 1.0.0
+  * @version 1.0.1
   * @description Removes wallet session data and resets user state
   * @module disconnectwallet
   */
@@ -70,6 +70,22 @@ export async function run({
 
         if (isGlobalMod) {
           newLevel = levels.moderator;
+        }
+      }
+
+      // eval blockchain permissions
+      if (
+        currentTrip
+        && newLevel < levels.channelModerator
+        && core.chainCache?.channels?.[channelName]?.data?.moderatorTrips
+      ) {
+        const tripBuffer = Buffer.from(currentTrip);
+        const isWeb3Mod = core.chainCache.channels[channelName].data.moderatorTrips.some(
+          (modTripBytes) => Buffer.from(modTripBytes).equals(tripBuffer),
+        );
+
+        if (isWeb3Mod) {
+          newLevel = levels.channelModerator;
         }
       }
 

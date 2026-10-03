@@ -9,6 +9,7 @@
 import {
   isModerator,
   getUserDetails,
+  getUserLevel,
 } from '../utility/_UAC.js';
 import {
   Errors,
@@ -66,11 +67,13 @@ export async function run({
     }, socket);
   }
 
+  const currentLevel = getUserLevel(socket, targetChannel);
   const banned = [];
 
-  // check if found targets are bannable
   badClients.forEach((targetUser) => {
-    if (targetUser.globalLevel >= socket.globalLevel) {
+    const targetEffectiveLevel = getUserLevel(targetUser, targetChannel);
+
+    if (targetEffectiveLevel >= currentLevel) {
       server.reply({
         cmd: 'warn',
         text: 'You may not do that',

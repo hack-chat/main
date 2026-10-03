@@ -82,7 +82,9 @@ export async function run({
   }
 
   // prevent modifying users of equal or higher rank
-  if (targetUser.globalLevel >= socket.globalLevel) {
+  const targetEffectiveLevel = getUserLevel(targetUser, targetChannel);
+
+  if (targetEffectiveLevel >= currentLevel && socket.nick !== targetUser.nick) {
     return server.reply({
       cmd: 'warn',
       text: 'You may not do that',
