@@ -4,7 +4,7 @@
 /**
   * @author OpSimple ( https://github.com/OpSimple )
   * @summary Muzzle a user
-  * @version 1.1.0
+  * @version 1.1.1
   * @description Globally shadow mute a connection.
   * Optional allies array will see muted messages
   * @module dumb
@@ -16,7 +16,7 @@ import {
   getAppearance,
 } from '../utility/_UAC.js';
 import {
-  findUser,
+  findUsers,
 } from '../utility/_Channels.js';
 import {
   Errors,
@@ -75,18 +75,18 @@ export async function run({
   // check user input
   // accept either userid or nick, regardless of protocol
   if (typeof payload.userid !== 'number' && typeof payload.nick !== 'string') {
-    return true;
+    return server.reply({
+      cmd: 'warn',
+      text: 'Could not find user in that channel',
+      id: Errors.Global.UNKNOWN_USER,
+      channel: targetChannel,
+    }, socket);
   }
 
-  // ensure channel is set for nick lookups
-  if (!payload.channel) {
-    payload.channel = targetChannel;
-  }
+  // find target users
+  const targetUsers = findUsers(server, { ...payload, channel: targetChannel });
 
-  // find target user
-  const targetUser = findUser(server, payload);
-
-  if (!targetUser) {
+  if (targetUsers.length === 0) {
     return server.reply({
       cmd: 'warn',
       text: 'Could not find user in that channel',
@@ -96,10 +96,10 @@ export async function run({
   }
 
   // likely dont need this, muting mods and admins is fine
-  const targetEffectiveLevel = getUserLevel(targetUser, targetChannel);
+  const targetEffectiveLevel = getUserLevel(targetUsers[0], targetChannel);
   const currentLevel = getUserLevel(socket, targetChannel);
 
-  if (targetEffectiveLevel >= currentLevel && socket.nick !== targetUser.nick) {
+  if (targetEffectiveLevel >= currentLevel && socket.nick !== targetUsers[0].nick) {
     return server.reply({
       cmd: 'warn',
       text: 'You may not do that',
@@ -108,31 +108,39 @@ export async function run({
     }, socket);
   }
 
-  // store hash in mute list
-  const record = core.muzzledHashes[targetUser.hash] = {
-    dumb: true,
-  };
+  const uniqueHashes = new Set();
 
-  // store allies if needed
-  if (payload.allies && Array.isArray(payload.allies)) {
-    record.allies = payload.allies;
-  }
+  targetUsers.forEach((targetUser) => {
+    // store hash in mute list
+    const record = core.muzzledHashes[targetUser.hash] = {
+      dumb: true,
+    };
 
-  // notify mods
-  server.broadcast({
-    cmd: 'info',
-    text: `${socket.nick}#${socket.trip} muzzled ${targetUser.nick} in ${targetChannel}, `
-      + `userhash: ${targetUser.hash}`,
-    id: Info.Mod.MUZZLED_DETAILED,
-    args: {
-      nick: socket.nick,
-      trip: socket.trip,
-      targetUser: targetUser.nick,
-      targetChannel,
-      targetHash: targetUser.hash,
-    },
-    channel: targetChannel,
-  }, (client) => isModerator(client));
+    // store allies if needed
+    if (payload.allies && Array.isArray(payload.allies)) {
+      record.allies = payload.allies;
+    }
+
+    uniqueHashes.add(targetUser.hash);
+  });
+
+  // notify mods of every hash that was muzzled
+  uniqueHashes.forEach((hash) => {
+    server.broadcast({
+      cmd: 'info',
+      text: `${socket.nick}#${socket.trip} muzzled ${targetUsers[0].nick} in ?${targetChannel}, `
+        + `userhash: ${hash}`,
+      id: Info.Mod.MUZZLED_DETAILED,
+      args: {
+        nick: socket.nick,
+        trip: socket.trip,
+        targetUser: targetUsers[0].nick,
+        targetChannel,
+        targetHash: hash,
+      },
+      channel: targetChannel,
+    }, (client) => isModerator(client));
+  });
 
   return true;
 }
@@ -262,9 +270,9 @@ export function inviteCheck({
       }, socket);
     }
 
-    // find target user
-    const targetUser = findUser(server, payload);
-    if (!targetUser) {
+    // find target users
+    const targetUsers = findUsers(server, { ...payload, channel: currentChannel });
+    if (targetUsers.length === 0) {
       return server.reply({
         cmd: 'warn',
         text: 'Could not find user in that channel',
@@ -276,18 +284,18 @@ export function inviteCheck({
     // generate common channel
     const channel = getChannel(payload.to);
 
-    // build invite
+    // build invite receipt
     const outgoingPayload = {
       cmd: 'invite',
       channel: currentChannel,
       from: socket.userid,
-      to: targetUser.userid,
+      to: targetUsers[0].userid,
       inviteChannel: channel,
     };
 
-    // send invite notice only to the muzzled client
+    // send invite server reply
     if (socket.hcProtocol === 1) {
-      server.reply(legacyInviteReply(outgoingPayload, targetUser.nick), socket);
+      server.reply(legacyInviteReply(outgoingPayload, targetUsers[0].nick), socket);
     } else {
       server.reply(outgoingPayload, socket);
     }
@@ -333,8 +341,8 @@ export function whisperCheck({
       }, socket);
     }
 
-    const targetUser = findUser(server, payload);
-    if (!targetUser) {
+    const targetUsers = findUsers(server, { ...payload, channel: currentChannel });
+    if (targetUsers.length === 0) {
       return server.reply({
         cmd: 'warn',
         text: 'Could not find user in that channel',
@@ -347,18 +355,21 @@ export function whisperCheck({
       cmd: 'whisper',
       channel: currentChannel,
       from: socket.userid,
-      to: targetUser.userid,
+      to: targetUsers[0].userid,
       text,
     };
 
     // send whisper reply only to the muzzled client
     if (socket.hcProtocol === 1) {
-      server.reply(legacyWhisperReply(outgoingPayload, targetUser.nick), socket);
+      server.reply(legacyWhisperReply(outgoingPayload, targetUsers[0].nick), socket);
     } else {
       server.reply(outgoingPayload, socket);
     }
 
-    targetUser.whisperReply = socket.nick;
+    // apply the reply state
+    targetUsers.forEach((targetUser) => {
+      targetUser.whisperReply = socket.nick;
+    });
 
     return false;
   }
@@ -379,8 +390,9 @@ export function whisperCheck({
 export const info = {
   name: 'dumb',
   category: 'moderators',
-  description: 'Globally shadow mute a connection. Optional allies array will see muted messages.',
+  description: 'Globally shadow mute a connection. Optional allies array will see muted messages',
   aliases: ['muzzle', 'mute'],
   usage: `
-    API: { cmd: 'dumb', nick: '<target nick>', allies: ['<optional nick array>', ...] }`,
+    API: { cmd: 'dumb', nick: '<target nick>', allies: ['<optional nick array>', ...] }
+    API: { cmd: 'dumb', userid: <target number>, allies: ['<optional nick array>', ...] }`,
 };

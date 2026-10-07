@@ -1,7 +1,7 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary App settings
-  * @version 1.0.0
+  * @version 1.0.1
   * @description Exports an object that hold common constants
   * @module Constants
   */
@@ -315,5 +315,57 @@ export const ChannelCheckInterval = 1000 * 60 * 10; // 10 minutes
   * @typedef {number} InactiveAfter
   */
 export const InactiveAfter = 1000 * 60 * 60; // 1 hour
+
+/**
+  * Object defining labels for default permission ranges
+  * @typedef {Object} levels
+  * @property {number} admin Global administrator range
+  * @property {number} moderator Global moderator range
+  * @property {number} channelOwner Local administrator range
+  * @property {number} channelModerator Local moderator range
+  * @property {number} channelTrusted Local (non-public) channel trusted
+  * @property {number} trustedUser Public channel trusted
+  * @property {number} default Default user level
+  */
+export const levels = {
+  admin: 9999999,
+  moderator: 999999,
+
+  channelOwner: 99999,
+  channelModerator: 9999,
+  channelTrusted: 8999,
+
+  trustedUser: 500,
+  default: 100,
+  bot: 99,
+};
+
+/**
+  * Object defining visual appearance (color/flair) for permission ranges
+  * @typedef {Object} levelAppearance
+  * @property {number} admin Global administrator range
+  */
+export const levelAppearance = {
+  [levels.admin]: {
+    color: 'd73737',
+    flair: String.fromCodePoint(127775), // 🌟
+  },
+  [levels.moderator]: {
+    color: '1fad83',
+    flair: String.fromCodePoint(11088), // ⭐
+  },
+  [levels.channelOwner]: {
+    color: 'dd8800',
+    flair: String.fromCodePoint(128081), // 👑
+  },
+  [levels.channelModerator]: {
+    color: '2fa1ee',
+    flair: String.fromCodePoint(128171), // 💫
+  },
+  [levels.bot]: {
+    color: '2fa1ee',
+    flair: String.fromCodePoint(129302), // 🤖
+  },
+};
 
 export default Errors;

@@ -1,7 +1,7 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Sends a hack request to the target nick
-  * @version 1.0.0
+  * @version 1.1.0
   * @description Please note that the term 'hack' is used in jest here
   * @module hack
   */
@@ -11,7 +11,7 @@ import {
   levels,
 } from '../utility/_UAC.js';
 import {
-  findUser,
+  findUsers,
 } from '../utility/_Channels.js';
 import {
   Errors,
@@ -65,7 +65,12 @@ export async function run({
   const hasUserId = typeof payload.userid === 'number';
 
   if (!hasNick && !hasUserId) {
-    return true;
+    return server.reply({
+      cmd: 'warn',
+      text: 'Could not find user in that channel',
+      id: Errors.Global.UNKNOWN_USER,
+      channel: targetChannel,
+    }, socket);
   }
 
   if (!payload.channel) {
@@ -73,7 +78,12 @@ export async function run({
   }
 
   if (typeof payload.lib !== 'string' || !payload.lib) {
-    return true;
+    return server.reply({
+      cmd: 'warn',
+      text: 'Your URL should start with https://',
+      id: Errors.HackRequest.BAD_URL,
+      channel: targetChannel,
+    }, socket);
   }
 
   // validate payload library url length
@@ -96,10 +106,10 @@ export async function run({
     }, socket);
   }
 
-  // find target user
-  const targetUser = findUser(server, { ...payload, channel: targetChannel });
+  // find target users
+  const targetUsers = findUsers(server, { ...payload, channel: targetChannel });
 
-  if (!targetUser) {
+  if (targetUsers.length === 0) {
     return server.reply({
       cmd: 'warn',
       text: 'Could not find user in that channel',
@@ -108,17 +118,18 @@ export async function run({
     }, socket);
   }
 
-  // build request
-  const outgoingPayload = {
-    cmd: 'hackAttempt',
-    channel: targetChannel,
-    from: socket.userid,
-    fromNick: socket.nick,
-    lib: payload.lib,
-  };
+  targetUsers.forEach((targetUser) => {
+    const outgoingPayload = {
+      cmd: 'hackAttempt',
+      channel: targetChannel,
+      from: socket.userid,
+      fromNick: socket.nick,
+      lib: payload.lib,
+    };
 
-  // send request
-  server.reply(outgoingPayload, targetUser);
+    // send request
+    server.reply(outgoingPayload, targetUser);
+  });
 
   return true;
 }
@@ -135,7 +146,8 @@ export async function run({
 export const info = {
   name: 'hack',
   category: 'moderators',
-  description: 'Sends a hack request to the target nick.',
+  description: 'Sends a hack request to the target nick',
   usage: `
-    API: { cmd: 'hack', nick: '<target nickname>', lib: '<url to js>' }`,
+    API: { cmd: 'hack', nick: '<target nickname>', lib: '<url to js>' }
+    API: { cmd: 'hack', userid: <target number>, lib: '<url to js>' }`,
 };

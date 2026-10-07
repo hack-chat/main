@@ -84,7 +84,7 @@ export async function run({
   ) {
     return server.reply({
       cmd: 'warn',
-      text: 'Failed to set level: Invalid trip. Refer to `/help setlevel` for instructions on how to use this command.',
+      text: 'Failed to set level: Invalid trip. Refer to `/help setlevel` for instructions on how to use this command',
       id: Errors.SetLevel.BAD_TRIP,
       channel: targetChannel,
     }, socket);

@@ -1,13 +1,13 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Give da boot
-  * @version 1.1.0
+  * @version 1.1.1
   * @description Silently forces target client(s) into another channel
   * @module kick
   */
 
 import {
-  isModerator,
+  // isModerator,
   isChannelModerator,
   getUserDetails,
   getUserLevel,
@@ -95,14 +95,16 @@ export async function run({
     return true;
   }
 
-  let destChannel = Math.random().toString(36).substring(2, 8);
+  const destChannel = Math.random().toString(36).substring(2, 8);
 
+  /*
   // set optional target destination channel
   if (typeof payload.to === 'string' && !!payload.to.trim()) {
     if (isModerator(socket)) {
       destChannel = payload.to.trim();
     }
   }
+  */
 
   // announce the kicked clients arrival in destChannel and that they were kicked
   // before they arrive, so they don't see they got moved
@@ -344,7 +346,7 @@ export const info = {
   category: 'moderators',
   description: 'Silently forces target client(s) into another channel. `nick` may be string or array of strings',
   usage: `
-    API: { cmd: 'kick', nick: '<target nick>|[<target nicks>]', to: '<optional target channel>' }
-    API: { cmd: 'kick', userid: <target id>|[<target ids>], to: '<optional target channel>' }
+    API: { cmd: 'kick', nick: '<target nick>|[<target nicks>]' }
+    API: { cmd: 'kick', userid: <target id>|[<target ids>] }
     Text: /kick <target nick> [@anotherNick] ...`,
 };

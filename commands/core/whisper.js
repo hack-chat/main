@@ -1,13 +1,13 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Send whisper
-  * @version 1.0.0
+  * @version 1.1.0
   * @description Display text on target users screen that only they can see
   * @module whisper
   */
 
 import {
-  findUser,
+  findUsers,
 } from '../utility/_Channels.js';
 import {
   Errors,
@@ -34,6 +34,16 @@ export async function run({ server, socket, payload }) {
     return server.police.frisk(socket, 1);
   }
 
+  // accept either userid or nick, regardless of protocol
+  if (typeof payload.userid !== 'number' && typeof payload.nick !== 'string') {
+    return server.reply({
+      cmd: 'warn',
+      text: 'Could not find user in that channel',
+      id: Errors.Global.UNKNOWN_USER,
+      channel: targetChannel,
+    }, socket);
+  }
+
   // verify user input
   const text = parseText(payload.text);
 
@@ -53,11 +63,8 @@ export async function run({ server, socket, payload }) {
     }, socket);
   }
 
-  payload.channel = targetChannel;
-
-  // find target user
-  const targetUser = findUser(server, payload);
-  if (!targetUser) {
+  const targetUsers = findUsers(server, { ...payload, channel: targetChannel });
+  if (targetUsers.length === 0) {
     return server.reply({
       cmd: 'warn',
       text: 'Could not find user in that channel',
@@ -66,34 +73,45 @@ export async function run({ server, socket, payload }) {
     }, socket);
   }
 
-  // construct payload
-  const outgoingPayload = {
+  // build whisper
+  const replyPayload = {
     cmd: 'whisper',
     channel: targetChannel,
     from: socket.userid,
-    to: targetUser.userid,
+    to: targetUsers[0].userid,
     text,
   };
 
-  // send invite notice to target client
-  if (targetUser.hcProtocol === 1) {
-    server.reply(legacyWhisperOut(outgoingPayload, socket), targetUser);
-  } else {
-    server.reply(outgoingPayload, targetUser);
-  }
-
-  // send invite notice to this client
+  // send whisper server reply
   if (socket.hcProtocol === 1) {
-    server.reply(legacyWhisperReply(outgoingPayload, targetUser.nick), socket);
+    server.reply(legacyWhisperReply(replyPayload, targetUsers[0].nick), socket);
   } else {
-    server.reply(outgoingPayload, socket);
+    server.reply(replyPayload, socket);
   }
 
-  // store sender details for reply command
-  targetUser.whisperReply = {
-    nick: socket.nick,
-    channel: targetChannel,
-  };
+  // broadcast the whisper to connections
+  targetUsers.forEach((targetUser) => {
+    const outgoingPayload = {
+      cmd: 'whisper',
+      channel: targetChannel,
+      from: socket.userid,
+      to: targetUser.userid,
+      text,
+    };
+
+    // send whisper notice to target client
+    if (targetUser.hcProtocol === 1) {
+      server.reply(legacyWhisperOut(outgoingPayload, socket), targetUser);
+    } else {
+      server.reply(outgoingPayload, targetUser);
+    }
+
+    // store sender details for reply command
+    targetUser.whisperReply = {
+      nick: socket.nick,
+      channel: targetChannel,
+    };
+  });
 
   return true;
 }
@@ -218,11 +236,11 @@ export function whisperCheck({
 
 /**
   * The following payload properties are required to invoke this module:
-  * "nick", "text"
+  * "text"
   * @public
   * @typedef {Array} whisper/requiredData
   */
-export const requiredData = ['nick', 'text'];
+export const requiredData = ['text'];
 
 /**
   * Module meta information
@@ -239,6 +257,7 @@ export const info = {
   description: 'Display text on target users screen that only they can see',
   usage: `
     API: { cmd: 'whisper', nick: '<target name>', text: '<text to whisper>' }
+    API: { cmd: 'whisper', userid: <target number>, text: '<text to whisper>' }
     Text: /whisper <target name> <text to whisper>
     Text: /w <target name> <text to whisper>
     Alt Text: /reply <text to whisper, this will auto reply to the last person who whispered to you>

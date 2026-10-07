@@ -51,13 +51,8 @@ export async function run({
     return true;
   }
 
-  // ensure payload has the channel for findUsers
-  if (!payload.channel) {
-    payload.channel = targetChannel;
-  }
-
   // find target user(s)
-  const badClients = findUsers(server, payload);
+  const badClients = findUsers(server, { ...payload, channel: targetChannel });
   if (badClients.length === 0) {
     return server.reply({
       cmd: 'warn',

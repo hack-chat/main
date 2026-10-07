@@ -26,7 +26,7 @@ const isValidSolanaAddress = (address) => solanaAddressRegex.test(address);
 const getMessage = (locale, domain, address, nonce, expires) => {
   const now = new Date();
   let header = `${domain} wants you to sign in with your Solana account:`;
-  let body = 'This action will authenticate your session and grant you access to restricted features.';
+  let body = 'This action will authenticate your session and grant you access to restricted features';
 
   // construct standard siw footer
   const footer = `Version: 1\nChain ID: solana:mainnet\nNonce: ${nonce}\nIssued At: ${now.toISOString()}\nExpiration Time: ${expires.toISOString()}`;
@@ -125,7 +125,7 @@ export async function run({ server, socket, payload }) {
   if (!targetChannel || !socket.channels || !socket.channels.includes(targetChannel)) {
     return server.reply({
       cmd: 'warn',
-      text: 'You must be in a channel to connect a wallet.',
+      text: 'You must be in a channel to connect a wallet',
       id: Errors.Global.PERMISSION,
       channel: false,
     }, socket);

@@ -1,7 +1,7 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Color a user
-  * @version 1.1.0
+  * @version 1.1.1
   * @description Forces a user nick to become a certain color
   * @module forcecolor
   */
@@ -15,7 +15,7 @@ import {
   Errors,
 } from '../utility/_Constants.js';
 import {
-  findUser,
+  findUsers,
 } from '../utility/_Channels.js';
 import {
   getSession,
@@ -55,8 +55,22 @@ export async function run({
   }
 
   // check payload structure
-  if (typeof payload.nick !== 'string' || typeof payload.color !== 'string') {
-    return true;
+  if (typeof payload.nick !== 'string' && typeof payload.userid !== 'number') {
+    return server.reply({
+      cmd: 'warn',
+      text: 'Could not find user in that channel',
+      id: Errors.Global.UNKNOWN_USER,
+      channel: targetChannel,
+    }, socket);
+  }
+
+  if (typeof payload.color !== 'string') {
+    return server.reply({
+      cmd: 'warn',
+      text: 'Invalid color! Color must be in hex value',
+      id: Errors.ChangeColor.INVALID_COLOR,
+      channel: targetChannel,
+    }, socket);
   }
 
   // sanitize color input
@@ -70,9 +84,9 @@ export async function run({
     }, socket);
   }
 
-  // find target user
-  const targetUser = findUser(server, { ...payload, channel: targetChannel });
-  if (!targetUser) {
+  // find target users
+  const targetUsers = findUsers(server, { ...payload, channel: targetChannel });
+  if (targetUsers.length === 0) {
     return server.reply({
       cmd: 'warn',
       text: 'Could not find user in that channel',
@@ -82,9 +96,9 @@ export async function run({
   }
 
   // prevent modifying users of equal or higher rank
-  const targetEffectiveLevel = getUserLevel(targetUser, targetChannel);
+  const targetEffectiveLevel = getUserLevel(targetUsers[0], targetChannel);
 
-  if (targetEffectiveLevel >= currentLevel && socket.nick !== targetUser.nick) {
+  if (targetEffectiveLevel >= currentLevel && socket.nick !== targetUsers[0].nick) {
     return server.reply({
       cmd: 'warn',
       text: 'You may not do that',
@@ -93,47 +107,49 @@ export async function run({
     }, socket);
   }
 
-  // ensure channel states are initialized
-  if (!targetUser.channelStates) {
-    targetUser.channelStates = {};
-  }
-
-  if (!targetUser.channelStates[targetChannel]) {
-    targetUser.channelStates[targetChannel] = {
-      level: getUserLevel(targetUser, targetChannel),
-      trip: targetUser.trip,
-    };
-  }
-
-  // apply new color or reset
-  if (newColor === 'RESET') {
-    delete targetUser.channelStates[targetChannel].color;
-  } else {
-    targetUser.channelStates[targetChannel].color = newColor;
-  }
-
-  const details = getUserDetails(targetUser, targetChannel);
-
-  // broadcast updated user details to the channel
-  server.broadcast({
-    ...details,
-    cmd: 'updateUser',
-    channel: targetChannel,
-  }, (client) => {
-    if (client.channels && client.channels.includes(targetChannel)) {
-      return true;
+  targetUsers.forEach((targetUser) => {
+    // ensure channel states are initialized
+    if (!targetUser.channelStates) {
+      targetUser.channelStates = {};
     }
 
-    return false;
-  });
+    if (!targetUser.channelStates[targetChannel]) {
+      targetUser.channelStates[targetChannel] = {
+        level: getUserLevel(targetUser, targetChannel),
+        trip: targetUser.trip,
+      };
+    }
 
-  // sync session on target client
-  server.reply({
-    cmd: 'session',
-    restored: false,
-    token: getSession(targetUser, core),
-    channels: targetUser.channels,
-  }, targetUser);
+    // apply new color or reset
+    if (newColor === 'RESET') {
+      delete targetUser.channelStates[targetChannel].color;
+    } else {
+      targetUser.channelStates[targetChannel].color = newColor;
+    }
+
+    const details = getUserDetails(targetUser, targetChannel);
+
+    // broadcast updated user details to the channel
+    server.broadcast({
+      ...details,
+      cmd: 'updateUser',
+      channel: targetChannel,
+    }, (client) => {
+      if (client.channels && client.channels.includes(targetChannel)) {
+        return true;
+      }
+
+      return false;
+    });
+
+    // sync session on target client
+    server.reply({
+      cmd: 'session',
+      restored: false,
+      token: getSession(targetUser, core),
+      channels: targetUser.channels,
+    }, targetUser);
+  });
 
   return true;
 }
@@ -216,11 +232,11 @@ export function colorCheck({
 
 /**
   * The following payload properties are required to invoke this module:
-  * "nick", "color"
+  * "color"
   * @public
   * @typedef {Array} forcecolor/requiredData
   */
-export const requiredData = ['nick', 'color'];
+export const requiredData = ['color'];
 
 /**
   * Module meta information
@@ -237,5 +253,6 @@ export const info = {
   description: 'Forces a user nick to become a certain color',
   usage: `
     API: { cmd: 'forcecolor', nick: '<target nick>', color: '<color as hex>' }
+    API: { cmd: 'forcecolor', userid: <target number>, color: '<color as hex>' }
     Text: /forcecolor <target nick> <color as hex>`,
 };

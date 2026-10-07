@@ -1,4 +1,5 @@
 /* global fetch */
+/* eslint-disable no-unreachable */
 
 /**
   * @author Marzavec ( https://github.com/marzavec )

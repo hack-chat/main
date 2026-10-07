@@ -1,7 +1,7 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Allow a Solana transfer
-  * @version 1.0.1
+  * @version 1.1.0
   * @description Builds a transaction for a Solana transfer with a blockhash cache
   * @module sendsol
   */
@@ -20,7 +20,7 @@ import {
   Info,
 } from '../utility/_Constants.js';
 import {
-  findUser,
+  findUsers,
 } from '../utility/_Channels.js';
 
 // rpc and core transaction settings
@@ -131,26 +131,8 @@ export async function run({
     }, socket);
   }
 
-  let targetUser = null;
-
-  // find target user by id or nick
-  if (typeof payload.userid === 'number') {
-    targetUser = findUser(
-      server,
-      {
-        channel: targetChannel,
-        userid: payload.userid,
-      },
-    );
-  } else if (typeof payload.nick === 'string') {
-    targetUser = findUser(
-      server,
-      {
-        channel: targetChannel,
-        nick: payload.nick,
-      },
-    );
-  } else {
+  // warn on missing parameters
+  if (typeof payload.userid !== 'number' && typeof payload.nick !== 'string') {
     return server.reply({
       cmd: 'warn',
       text: 'Could not find user in that channel',
@@ -159,7 +141,10 @@ export async function run({
     }, socket);
   }
 
-  if (!targetUser) {
+  // find target users
+  const targetUsers = findUsers(server, { ...payload, channel: targetChannel });
+
+  if (targetUsers.length === 0) {
     return server.reply({
       cmd: 'warn',
       text: 'Could not find user in that channel',
@@ -167,9 +152,11 @@ export async function run({
       channel: targetChannel,
     }, socket);
   }
+
+  const primaryTarget = targetUsers[0];
 
   // prevent self-transfers
-  if (targetUser.userid === socket.userid) {
+  if (primaryTarget.userid === socket.userid) {
     return server.reply({
       cmd: 'warn',
       text: 'You cannot relay transactions to yourself',
@@ -179,28 +166,30 @@ export async function run({
   }
 
   // target user must have a confirmed wallet
-  if (typeof targetUser.wallet !== 'object' || typeof targetUser.wallet.address !== 'string') {
+  if (typeof primaryTarget.wallet !== 'object' || typeof primaryTarget.wallet.address !== 'string') {
     return server.send({
       cmd: 'warn',
-      text: `@${targetUser.nick} has not connected a wallet`,
+      text: `@${primaryTarget.nick} has not connected a wallet`,
       id: Errors.Wallet.USER_NOT_READY,
-      args: { nick: targetUser.nick },
+      args: { nick: primaryTarget.nick },
       channel: targetChannel,
     }, socket);
   }
 
-  // notify target user of wallet view
-  server.send({
-    cmd: 'info',
-    text: `${socket.nick} viewed your wallet`,
-    id: Info.Wallet.VIEWED,
-    args: { nick: socket.nick },
-    channel: targetChannel,
-  }, targetUser);
+  // notify the target user's connections
+  targetUsers.forEach((targetUser) => {
+    server.send({
+      cmd: 'info',
+      text: `${socket.nick} viewed your wallet`,
+      id: Info.Wallet.VIEWED,
+      args: { nick: socket.nick },
+      channel: targetChannel,
+    }, targetUser);
+  });
 
   // setup public keys
   const senderPubkey = new PublicKey(socket.wallet.address);
-  const recipientPubkey = new PublicKey(targetUser.wallet.address);
+  const recipientPubkey = new PublicKey(primaryTarget.wallet.address);
   const SERVER_ADDRESS = new PublicKey(SERVER_WALLET);
 
   // calculate transfer amounts and fees
@@ -358,11 +347,11 @@ export function runSendSolCheck({
 
 /**
   * The following payload properties are required to invoke this module:
-  * "userid", "amount"
+  * "amount"
   * @public
   * @typedef {Array} sendsol/requiredData
   */
-export const requiredData = ['userid', 'amount'];
+export const requiredData = ['amount'];
 
 /**
   * Module meta information
@@ -378,5 +367,6 @@ export const info = {
   description: 'Constructs a Solana transaction to send funds to another user',
   usage: `
     API: { cmd: 'sendsol', userid: <target userid>, amount: <numeric amount in sol> }
+    API: { cmd: 'sendsol', nick: <target nick>, amount: <numeric amount in sol> }
     Text: /sendsol @nick 23`,
 };

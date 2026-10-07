@@ -62,6 +62,15 @@ export async function run({
   const effectiveLevel = getUserLevel(socket, targetChannel);
   const appearance = getAppearance(effectiveLevel);
 
+  let messageFlair = appearance.flair;
+  if (
+    socket.channelStates
+    && socket.channelStates[targetChannel]
+    && socket.channelStates[targetChannel].flair !== undefined
+  ) {
+    messageFlair = socket.channelStates[targetChannel].flair;
+  }
+
   // resolve local or global trip
   const effectiveTrip = (
     socket.channelStates
@@ -89,7 +98,7 @@ export async function run({
     channel: targetChannel,
     text,
     level: effectiveLevel,
-    flair: appearance.flair,
+    flair: messageFlair,
     customId,
     id: messageId,
   };

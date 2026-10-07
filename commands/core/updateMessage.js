@@ -1,7 +1,7 @@
 /**
   * @author MinusGix ( https://github.com/MinusGix )
   * @summary Change target message
-  * @version v1.1.0
+  * @version v1.1.1
   * @description Will alter a previously sent message using that message's customId
   * @module updateMessage
   */
@@ -32,7 +32,7 @@ export async function run({ server, socket, payload }) {
     return server.police.frisk(socket, 1);
   }
 
-  const { customId } = payload;
+  const customId = payload.customId ? String(payload.customId) : '';
   let { mode, text } = payload;
 
   // default mode if unspecified
@@ -46,8 +46,7 @@ export async function run({ server, socket, payload }) {
   }
 
   // enforce id boundaries
-  const idStr = String(customId);
-  if (!customId || idStr.length > 10) {
+  if (!customId || customId.length > 10) {
     return server.police.frisk(socket, 13);
   }
 
@@ -143,12 +142,12 @@ export function commandCheckIn({
 
   // check if invoking /edit
   if (payload.text.startsWith('/edit ')) {
-    const match = payload.text.match(/^\/edit\s+(\S+)\s+(.+)$/is);
+    const match = payload.text.match(/^\/edit\s+(\S+)(?:\s+(.*))?$/is);
 
     // proxy command to execution function
     if (match) {
       const customId = match[1];
-      const text = match[2];
+      const text = match[2] || '';
 
       this.run({
         core,
@@ -189,7 +188,7 @@ export const requiredData = ['text', 'customId'];
 export const info = {
   name: 'updateMessage',
   category: 'core',
-  description: 'Update a message you have sent.',
+  description: 'Update a message you have sent',
   usage: `
     API: { cmd: 'updateMessage', mode: 'overwrite'|'append'|'prepend'|'complete', text: '<text to apply>', customId: '<customId sent with the chat message>' }
     Text: /edit <messageId> <new text>`,

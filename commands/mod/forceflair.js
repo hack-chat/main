@@ -1,7 +1,7 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Force a certain flair on a connection
-  * @version 1.1.0
+  * @version 1.1.1
   * @description Force a certain flair on a connection,
   * preventing unauthorized use of reserved flairs
   * @module forceflair
@@ -17,7 +17,7 @@ import {
   Errors,
 } from '../utility/_Constants.js';
 import {
-  findUser,
+  findUsers,
 } from '../utility/_Channels.js';
 import {
   getSession,
@@ -54,15 +54,16 @@ export async function run({
   }
 
   // check payload structure
-  if (typeof payload.nick !== 'string' || typeof payload.flair !== 'string') {
-    return true;
+  if (typeof payload.nick !== 'string' && typeof payload.userid !== 'number') {
+    return server.reply({
+      cmd: 'warn',
+      text: 'Could not find user in that channel',
+      id: Errors.Global.UNKNOWN_USER,
+      channel: targetChannel,
+    }, socket);
   }
 
-  const newFlair = payload.flair;
-
-  // validate flair length
-  const unicodeLength = Array.from(newFlair).length;
-  if (newFlair === undefined || newFlair === null || unicodeLength > 4) {
+  if (typeof payload.flair !== 'string') {
     return server.reply({
       cmd: 'warn',
       text: 'Invalid flair',
@@ -71,10 +72,24 @@ export async function run({
     }, socket);
   }
 
-  const targetUser = findUser(server, { ...payload, channel: targetChannel });
+  const newFlair = payload.flair;
 
-  // verify target user
-  if (!targetUser) {
+  // validate flair length
+  const unicodeLength = Array.from(newFlair).length;
+  if (unicodeLength > 4) {
+    return server.reply({
+      cmd: 'warn',
+      text: 'Invalid flair',
+      id: Errors.ForceFlairErrors.INVALID_FLAIR,
+      channel: targetChannel,
+    }, socket);
+  }
+
+  // find target users
+  const targetUsers = findUsers(server, { ...payload, channel: targetChannel });
+
+  // verify target users exist
+  if (targetUsers.length === 0) {
     return server.reply({
       cmd: 'warn',
       text: 'Could not find user in that channel',
@@ -84,9 +99,9 @@ export async function run({
   }
 
   // prevent modifying users of equal or higher rank
-  const targetEffectiveLevel = getUserLevel(targetUser, targetChannel);
+  const targetEffectiveLevel = getUserLevel(targetUsers[0], targetChannel);
 
-  if (targetEffectiveLevel >= currentLevel && socket.nick !== targetUser.nick) {
+  if (targetEffectiveLevel >= currentLevel && socket.nick !== targetUsers[0].nick) {
     return server.reply({
       cmd: 'warn',
       text: 'You may not do that',
@@ -113,43 +128,45 @@ export async function run({
     }
   }
 
-  // ensure channel states are initialized
-  if (!targetUser.channelStates) {
-    targetUser.channelStates = {};
-  }
-
-  if (!targetUser.channelStates[targetChannel]) {
-    targetUser.channelStates[targetChannel] = {
-      level: getUserLevel(targetUser, targetChannel),
-      trip: targetUser.trip,
-    };
-  }
-
-  // apply new flair to target
-  targetUser.channelStates[targetChannel].flair = newFlair;
-
-  const details = getUserDetails(targetUser, targetChannel);
-
-  // broadcast updated user details to the channel
-  server.broadcast({
-    ...details,
-    cmd: 'updateUser',
-    channel: targetChannel,
-  }, (client) => {
-    if (client.channels && client.channels.includes(targetChannel)) {
-      return true;
+  targetUsers.forEach((targetUser) => {
+    // ensure channel states are initialized
+    if (!targetUser.channelStates) {
+      targetUser.channelStates = {};
     }
 
-    return false;
-  });
+    if (!targetUser.channelStates[targetChannel]) {
+      targetUser.channelStates[targetChannel] = {
+        level: getUserLevel(targetUser, targetChannel),
+        trip: targetUser.trip,
+      };
+    }
 
-  // sync session on target client
-  server.reply({
-    cmd: 'session',
-    restored: false,
-    token: getSession(targetUser, core),
-    channels: targetUser.channels,
-  }, targetUser);
+    // apply new flair to target
+    targetUser.channelStates[targetChannel].flair = newFlair;
+
+    const details = getUserDetails(targetUser, targetChannel);
+
+    // broadcast updated user details to the channel
+    server.broadcast({
+      ...details,
+      cmd: 'updateUser',
+      channel: targetChannel,
+    }, (client) => {
+      if (client.channels && client.channels.includes(targetChannel)) {
+        return true;
+      }
+
+      return false;
+    });
+
+    // sync session on target client
+    server.reply({
+      cmd: 'session',
+      restored: false,
+      token: getSession(targetUser, core),
+      channels: targetUser.channels,
+    }, targetUser);
+  });
 
   return true;
 }
@@ -235,11 +252,11 @@ export function flairCheck({
 
 /**
   * The following payload properties are required to invoke this module:
-  * "nick", "flair"
+  * "flair"
   * @public
   * @typedef {Array} forceflair/requiredData
   */
-export const requiredData = ['nick', 'flair'];
+export const requiredData = ['flair'];
 
 /**
   * Module meta information
@@ -256,5 +273,6 @@ export const info = {
   description: 'Forces a flair onto a connection',
   usage: `
     API: { cmd: 'forceflair', nick: '<target nick>', flair: '<single utf flair>' }
+    API: { cmd: 'forceflair', userid: <target number>, flair: '<single utf flair>' }
     Text: /forceflair <target nick> <single utf flair>`,
 };

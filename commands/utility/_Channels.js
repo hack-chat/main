@@ -3,7 +3,7 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Channel helper
-  * @version 1.0.0
+  * @version 1.0.1
   * @description Functions to assist with channel manipulation
   * @module Channels
   */
@@ -18,13 +18,11 @@ import {
   createHash,
 } from 'node:crypto';
 import {
-  levels,
-} from './_UAC.js';
-import {
   Errors,
   DefaultChannelSettings,
   MaxChannelTrips,
   InactiveAfter,
+  levels,
 } from './_Constants.js';
 
 /**
@@ -206,7 +204,7 @@ export function setChannelTripLevel(config, channel, trip, level) {
 
   // verify channel is registered
   if (!channelSettings.owned) {
-    return 'This channel has no owner.';
+    return 'This channel has no owner';
   }
 
   const currentTrips = Object.keys(config.permissions[channelSettings.channelHash].tripLevels);
@@ -214,7 +212,7 @@ export function setChannelTripLevel(config, channel, trip, level) {
   // handle trip limits and removals
   if (currentTrips.length >= MaxChannelTrips) {
     if (level !== levels.default) {
-      return 'Too many trips used. Remove trips by setting their level to default level.';
+      return 'Too many trips used. Remove trips by setting their level to default level';
     }
 
     if (currentTrips.indexOf(trip) === -1) {

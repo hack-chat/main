@@ -1,7 +1,7 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Retrieve a user's wallet address
-  * @version 1.1.0
+  * @version 1.1.1
   * @description Checks if a target user has a connected wallet and returns the address
   * @module getwallet
   */
@@ -11,7 +11,7 @@ import {
   Info,
 } from '../utility/_Constants.js';
 import {
-  findUser,
+  findUsers,
 } from '../utility/_Channels.js';
 
 // format address for display
@@ -43,26 +43,8 @@ export async function run({
     }, socket);
   }
 
-  let targetUser = null;
-
-  // find target user by id or nick
-  if (typeof payload.userid === 'number') {
-    targetUser = findUser(
-      server,
-      {
-        channel: targetChannel,
-        userid: payload.userid,
-      },
-    );
-  } else if (typeof payload.nick === 'string') {
-    targetUser = findUser(
-      server,
-      {
-        channel: targetChannel,
-        nick: payload.nick,
-      },
-    );
-  } else {
+  // warn on missing parameters
+  if (typeof payload.userid !== 'number' && typeof payload.nick !== 'string') {
     return server.reply({
       cmd: 'warn',
       text: 'Could not find user in that channel',
@@ -71,7 +53,10 @@ export async function run({
     }, socket);
   }
 
-  if (!targetUser) {
+  // find target users
+  const targetUsers = findUsers(server, { ...payload, channel: targetChannel });
+
+  if (targetUsers.length === 0) {
     return server.reply({
       cmd: 'warn',
       text: 'Could not find user in that channel',
@@ -79,32 +64,36 @@ export async function run({
       channel: targetChannel,
     }, socket);
   }
+
+  const primaryTarget = targetUsers[0];
 
   // ensure target has a connected wallet
-  if (typeof targetUser.wallet !== 'object' || typeof targetUser.wallet.address !== 'string') {
+  if (typeof primaryTarget.wallet !== 'object' || typeof primaryTarget.wallet.address !== 'string') {
     return server.reply({
       cmd: 'warn',
-      text: `@${targetUser.nick} has not connected a wallet`,
+      text: `@${primaryTarget.nick} has not connected a wallet`,
       id: Errors.Wallet.USER_NOT_READY,
-      args: { nick: targetUser.nick },
+      args: { nick: primaryTarget.nick },
       channel: targetChannel,
     }, socket);
   }
 
   // alert target user of the query
-  server.send({
-    cmd: 'info',
-    text: `${socket.nick} requested your wallet address`,
-    id: Info.Wallet.ADDRESS_REQUESTED,
-    args: { nick: socket.nick },
-    channel: targetChannel,
-  }, targetUser);
+  targetUsers.forEach((targetUser) => {
+    server.send({
+      cmd: 'info',
+      text: `${socket.nick} requested your wallet address`,
+      id: Info.Wallet.ADDRESS_REQUESTED,
+      args: { nick: socket.nick },
+      channel: targetChannel,
+    }, targetUser);
+  });
 
   // if invoked via chat command, send a formatted text response via 'info' event
   if (payload.isChat) {
     return server.reply({
       cmd: 'info',
-      text: `💳 **${targetUser.nick}**: [${shortenAddress(targetUser.wallet.address)}](https://solscan.io/account/${targetUser.wallet.address})`,
+      text: `💳  **${primaryTarget.nick}**: [${shortenAddress(primaryTarget.wallet.address)}](https://solscan.io/account/${primaryTarget.wallet.address})`,
       channel: targetChannel,
     }, socket);
   }
@@ -112,9 +101,9 @@ export async function run({
   // standard api response
   return server.reply({
     cmd: 'walletInfo',
-    userid: targetUser.userid,
-    nick: targetUser.nick,
-    address: targetUser.wallet.address,
+    userid: primaryTarget.userid,
+    nick: primaryTarget.nick,
+    address: primaryTarget.wallet.address,
     channel: targetChannel,
   }, socket);
 }

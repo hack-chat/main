@@ -4,7 +4,7 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Join target channel
-  * @version 1.1.0
+  * @version 1.1.3
   * @description Join the target channel using the supplied nick and password
   * @module join
   */
@@ -182,6 +182,7 @@ export async function run({
 
   // check for naming collisions
   const userExists = server.findSockets((remoteSocket) => remoteSocket !== socket
+    && remoteSocket.readyState === 1
     && Array.isArray(remoteSocket.channels)
     && remoteSocket.channels.includes(channel)
     && typeof remoteSocket.nick === 'string'
@@ -243,22 +244,26 @@ export async function run({
   });
 
   const userInfo = getUserDetails(socket, channel);
-  const nicks = []; /* @legacy */
-  const users = [];
+
+  let nicks = []; /* @legacy  */
+  const usersMap = new Map();
+
   const joinAnnouncement = { ...{ cmd: 'onlineAdd' }, ...userInfo, channel };
 
   // send join announcement and prep online set reply
   for (let i = 0, l = newPeerList.length; i < l; i += 1) {
-    server.reply(joinAnnouncement, newPeerList[i]);
+    if (newPeerList[i].readyState === 1) {
+      server.reply(joinAnnouncement, newPeerList[i]);
 
-    nicks.push(newPeerList[i].nick); /* @legacy */
-    users.push({
-      ...{
-        channel,
-        isme: false,
-      },
-      ...getUserDetails(newPeerList[i], channel),
-    });
+      nicks.push(newPeerList[i].nick); /* @legacy */
+      usersMap.set(newPeerList[i].userid, {
+        ...{
+          channel,
+          isme: false,
+        },
+        ...getUserDetails(newPeerList[i], channel),
+      });
+    }
   }
 
   // store user info
@@ -278,7 +283,9 @@ export async function run({
   }
 
   nicks.push(userInfo.nick); /* @legacy */
-  users.push({ ...{ isme: true, isBot: socket.isBot || false }, ...userInfo });
+  usersMap.set(socket.userid, { ...{ isme: true, isBot: socket.isBot || false }, ...userInfo });
+  nicks = [...new Set(nicks)];
+  const users = Array.from(usersMap.values());
 
   // reply with channel peer list
   server.reply({
@@ -399,6 +406,7 @@ export function restoreJoin({
 
   // check for naming collisions
   const userExists = server.findSockets((remoteSocket) => remoteSocket !== socket
+    && remoteSocket.readyState === 1
     && remoteSocket.userid !== socket.userid
     && Array.isArray(remoteSocket.channels)
     && remoteSocket.channels.includes(channel)
@@ -444,8 +452,9 @@ export function restoreJoin({
     channels: (channels) => Array.isArray(channels) && channels.includes(channel),
   });
 
-  const nicks = []; /* @legacy */
-  const users = [];
+  let nicks = []; /* @legacy */
+  const usersMap = new Map();
+
   const joinAnnouncement = { ...{ cmd: 'onlineAdd' }, ...userInfo, channel };
   const updateAnnouncement = {
     ...userInfo,
@@ -460,24 +469,28 @@ export function restoreJoin({
 
   // send join announcement and prep online set reply
   for (let i = 0, l = newPeerList.length; i < l; i += 1) {
-    if (isDuplicate) {
-      server.reply(updateAnnouncement, newPeerList[i]);
-    } else {
-      server.reply(joinAnnouncement, newPeerList[i]);
-    }
+    if (newPeerList[i].readyState === 1) {
+      if (isDuplicate) {
+        server.reply(updateAnnouncement, newPeerList[i]);
+      } else {
+        server.reply(joinAnnouncement, newPeerList[i]);
+      }
 
-    nicks.push(newPeerList[i].nick); /* @legacy */
-    users.push({
-      ...{
-        channel,
-        isme: false,
-      },
-      ...getUserDetails(newPeerList[i], channel),
-    });
+      nicks.push(newPeerList[i].nick); /* @legacy */
+      usersMap.set(newPeerList[i].userid, {
+        ...{
+          channel,
+          isme: false,
+        },
+        ...getUserDetails(newPeerList[i], channel),
+      });
+    }
   }
 
   nicks.push(userInfo.nick); /* @legacy */
-  users.push({ ...{ isme: true, isBot: socket.isBot || false }, ...userInfo });
+  usersMap.set(socket.userid, { ...{ isme: true, isBot: socket.isBot || false }, ...userInfo });
+  nicks = [...new Set(nicks)];
+  const users = Array.from(usersMap.values());
 
   // reply with channel peer list
   server.reply({

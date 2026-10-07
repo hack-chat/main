@@ -33,7 +33,7 @@ export async function run({ server, socket, payload }) {
   const targetChannel = payload.channel || false;
 
   // handle specific rate-limit warning
-  if (payload.text === 'You are being rate-limited or blocked.') {
+  if (payload.text === 'You are being rate-limited or blocked') {
     return server.reply({
       cmd: 'warn',
       text: payload.text,

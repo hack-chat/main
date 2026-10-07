@@ -5,7 +5,7 @@
   * and simple helper functions related to users
   * @property {Object} levels - Defines labels for default permission ranges
   * @author MinusGix ( https://github.com/MinusGix )
-  * @version v1.0.0
+  * @version v1.0.1
   * @module UAC
   */
 
@@ -15,6 +15,12 @@ import {
 import {
   getChannelSettings,
 } from './_Channels.js';
+import {
+  levels,
+  levelAppearance,
+} from './_Constants.js';
+
+export { levels, levelAppearance };
 
 // generate a random rgb hex color
 const randomRGB = () => {
@@ -31,60 +37,6 @@ const randomRGB = () => {
   const b = `${Math.floor(255 * f(4)).toString(16)}`;
 
   return `${r}${g}${b}`;
-};
-
-/**
-  * Object defining labels for default permission ranges
-  * @typedef {Object} levels
-  * @property {number} admin Global administrator range
-  * @property {number} moderator Global moderator range
-  * @property {number} channelOwner Local administrator range
-  * @property {number} channelModerator Local moderator range
-  * @property {number} channelTrusted Local (non-public) channel trusted
-  * @property {number} trustedUser Public channel trusted
-  * @property {number} default Default user level
-  */
-// permission level constants
-export const levels = {
-  admin: 9999999,
-  moderator: 999999,
-
-  channelOwner: 99999,
-  channelModerator: 9999,
-  channelTrusted: 8999,
-
-  trustedUser: 500,
-  default: 100,
-  bot: 99,
-};
-
-/**
-  * Object defining visual appearance (color/flair) for permission ranges
-  * @typedef {Object} levelAppearance
-  * @property {number} admin Global administrator range
-  */
-// visual flair and colors for specific levels
-export const levelAppearance = {
-  [levels.admin]: {
-    color: 'd73737',
-    flair: String.fromCodePoint(127775), // 🌟
-  },
-  [levels.moderator]: {
-    color: '1fad83',
-    flair: String.fromCodePoint(11088), // ⭐
-  },
-  [levels.channelOwner]: {
-    color: 'dd8800',
-    flair: String.fromCodePoint(128081), // 👑
-  },
-  [levels.channelModerator]: {
-    color: '2fa1ee',
-    flair: String.fromCodePoint(128171), // 💫
-  },
-  [levels.bot]: {
-    color: '2fa1ee',
-    flair: String.fromCodePoint(129302), // 🤖
-  },
 };
 
 /**

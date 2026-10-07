@@ -1,7 +1,7 @@
 /**
   * @author Marzavec ( https://github.com/marzavec )
   * @summary Relay a transaction to another user for signing
-  * @version 1.0.0
+  * @version 1.1.1
   * @description Accepts a base64 transaction and forwards it to a target user to sign
   * @module relaytx
   */
@@ -11,7 +11,7 @@ import {
   Info,
 } from '../utility/_Constants.js';
 import {
-  findUser,
+  findUsers,
 } from '../utility/_Channels.js';
 
 /**
@@ -60,26 +60,8 @@ export async function run({
     }, socket);
   }
 
-  let targetUser = null;
-
-  // find target user by id or nick
-  if (typeof payload.userid === 'number') {
-    targetUser = findUser(
-      server,
-      {
-        channel: targetChannel,
-        userid: payload.userid,
-      },
-    );
-  } else if (typeof payload.nick === 'string') {
-    targetUser = findUser(
-      server,
-      {
-        channel: targetChannel,
-        nick: payload.nick,
-      },
-    );
-  } else {
+  // warn on missing parameters
+  if (typeof payload.userid !== 'number' && typeof payload.nick !== 'string') {
     return server.reply({
       cmd: 'warn',
       text: 'Could not find user in that channel',
@@ -88,7 +70,10 @@ export async function run({
     }, socket);
   }
 
-  if (!targetUser) {
+  // find target users
+  const targetUsers = findUsers(server, { ...payload, channel: targetChannel });
+
+  if (targetUsers.length === 0) {
     return server.reply({
       cmd: 'warn',
       text: 'Could not find user in that channel',
@@ -96,9 +81,11 @@ export async function run({
       channel: targetChannel,
     }, socket);
   }
+
+  const primaryTarget = targetUsers[0];
 
   // prevent self-transfers
-  if (targetUser.userid === socket.userid) {
+  if (primaryTarget.userid === socket.userid) {
     return server.reply({
       cmd: 'warn',
       text: 'You cannot relay transactions to yourself',
@@ -108,31 +95,33 @@ export async function run({
   }
 
   // target user must have a confirmed wallet
-  if (typeof targetUser.wallet !== 'object' || typeof targetUser.wallet.address !== 'string') {
+  if (typeof primaryTarget.wallet !== 'object' || typeof primaryTarget.wallet.address !== 'string') {
     return server.reply({
       cmd: 'warn',
-      text: `@${targetUser.nick} has not connected a wallet`,
+      text: `@${primaryTarget.nick} has not connected a wallet`,
       id: Errors.Wallet.USER_NOT_READY,
-      args: { nick: targetUser.nick },
+      args: { nick: primaryTarget.nick },
       channel: targetChannel,
     }, socket);
   }
 
-  // forward transaction to target user
-  server.reply({
-    cmd: 'signTransaction',
-    tx: payload.tx,
-    type: '3RD_PARTY_TRANSFER',
-    from: socket.nick,
-    channel: targetChannel,
-  }, targetUser);
+  // forward transaction prompt
+  targetUsers.forEach((targetUser) => {
+    server.reply({
+      cmd: 'signTransaction',
+      tx: payload.tx,
+      type: '3RD_PARTY_TRANSFER',
+      from: socket.nick,
+      channel: targetChannel,
+    }, targetUser);
+  });
 
   // notify sender of success
   return server.reply({
     cmd: 'info',
-    text: `TX sent to @${targetUser.nick}`,
+    text: `TX sent to @${primaryTarget.nick}`,
     id: Info.Wallet.TX_RELAYED,
-    args: { nick: targetUser.nick },
+    args: { nick: primaryTarget.nick },
     channel: targetChannel,
   }, socket);
 }
