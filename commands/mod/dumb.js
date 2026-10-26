@@ -108,7 +108,7 @@ export async function run({
     }, socket);
   }
 
-  const uniqueHashes = new Set();
+  const muzzledRecords = new Map();
 
   targetUsers.forEach((targetUser) => {
     // store hash in mute list
@@ -121,20 +121,22 @@ export async function run({
       record.allies = payload.allies;
     }
 
-    uniqueHashes.add(targetUser.hash);
+    if (!muzzledRecords.has(targetUser.hash)) {
+      muzzledRecords.set(targetUser.hash, targetUser.nick);
+    }
   });
 
-  // notify mods of every hash that was muzzled
-  uniqueHashes.forEach((hash) => {
+  // notify mods of every unique hash that was muzzled
+  muzzledRecords.forEach((targetNick, hash) => {
     server.broadcast({
       cmd: 'info',
-      text: `${socket.nick}#${socket.trip} muzzled ${targetUsers[0].nick} in ?${targetChannel}, `
+      text: `${socket.nick}#${socket.trip} muzzled ${targetNick} in ?${targetChannel}, `
         + `userhash: ${hash}`,
       id: Info.Mod.MUZZLED_DETAILED,
       args: {
         nick: socket.nick,
         trip: socket.trip,
-        targetUser: targetUsers[0].nick,
+        targetUser: targetNick,
         targetChannel,
         targetHash: hash,
       },

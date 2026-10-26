@@ -10,7 +10,7 @@
   * Internal version, used mainly for debugging
   * @typedef {string} CodebaseVersion
   */
-export const CodebaseVersion = '2.5.0';
+export const CodebaseVersion = '2.5.1';
 
 /* Base error ranges */
 const GlobalErrors = 10;
@@ -171,7 +171,7 @@ export const Errors = {
 };
 
 /* Base Info Ranges */
-const InfoStart = 1000; // Start high to avoid collision
+const InfoStart = 1000; // start high to avoid collision
 const AdminInfo = InfoStart + 100;
 const ModInfo = AdminInfo + 100;
 const CoreInfo = ModInfo + 100;
@@ -282,8 +282,12 @@ export const SystemMOTDs = [
   'Protip: You can do ==/help== or ==/help command==',
   'Protip: Privately message with: /whisper @name The message',
   'Protip: A moderator can lock a channel with: /lockroom',
-  'Miss the old hack.chat? Try legacy.hack.chat',
-  'Want a neat effect on your name? Checkout /donate',
+  'Miss the old hack.chat? Try: [legacy.hack.chat](https://legacy.hack.chat/)',
+  'Want a neat effect on your name? Checkout: /donate',
+  'Protip: Need to change your trip? Type: /logout',
+  'Protip: Too many messages? Type: /clear',
+  'Welcome to hack.chat v2, feel free to report issues to https://github.com/hack-chat/main/issues',
+  'You got hack.chat v2 before GTA 6',
 ];
 
 /**

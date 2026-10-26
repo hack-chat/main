@@ -98,7 +98,7 @@ export function initHooks(server) {
 export function chatHook({
   core, server, socket, payload,
 }) {
-  if (typeof payload.text !== 'string') {
+  if (!payload || typeof payload.text !== 'string') {
     return false;
   }
 

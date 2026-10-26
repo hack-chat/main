@@ -122,22 +122,26 @@ export function chatHook({
 
       // verify channel ownership status
       if (channelSettings.owned === false || socket.trip !== channelSettings.ownerTrip) {
-        return server.reply({
+        server.reply({
           cmd: 'warn',
           text: 'Failed to make channel public: You may not do that',
           id: Errors.MakePublic.MISSING_PERMS,
           channel: targetChannel,
         }, socket);
+
+        return false;
       }
 
       // prevent duplicate public listings
       if (core.appConfig.data.publicChannels.indexOf(targetChannel) !== -1) {
-        return server.reply({
+        server.reply({
           cmd: 'warn',
           text: 'Failed to make channel public: This channel is already public',
           id: Errors.MakePublic.ALREADY_PUBLIC,
           channel: targetChannel,
         }, socket);
+
+        return false;
       }
 
       // add channel to public directory

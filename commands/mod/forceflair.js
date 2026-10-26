@@ -98,37 +98,40 @@ export async function run({
     }, socket);
   }
 
-  // prevent modifying users of equal or higher rank
-  const targetEffectiveLevel = getUserLevel(targetUsers[0], targetChannel);
-
-  if (targetEffectiveLevel >= currentLevel && socket.nick !== targetUsers[0].nick) {
-    return server.reply({
-      cmd: 'warn',
-      text: 'You may not do that',
-      id: Errors.Global.PERMISSION,
-      channel: targetChannel,
-    }, socket);
-  }
-
   const reservedFlairs = ['🌟', '⭐', '👑', '💫'];
+  const notifiedNicks = new Set();
 
-  // restrict assignment of reserved administrative flairs
-  if (reservedFlairs.includes(newFlair)) {
-    const appropriateFlair = levelAppearance[targetEffectiveLevel]
-      ? levelAppearance[targetEffectiveLevel].flair
-      : null;
+  targetUsers.forEach((targetUser) => {
+    const userEffectiveLevel = getUserLevel(targetUser, targetChannel);
 
-    if (newFlair !== appropriateFlair) {
-      return server.reply({
+    // prevent modifying users of equal or higher rank
+    if (userEffectiveLevel >= currentLevel && socket.nick !== targetUser.nick) {
+      server.reply({
         cmd: 'warn',
         text: 'You may not do that',
         id: Errors.Global.PERMISSION,
         channel: targetChannel,
       }, socket);
+      return;
     }
-  }
 
-  targetUsers.forEach((targetUser) => {
+    // restrict assignment of reserved administrative flairs
+    if (reservedFlairs.includes(newFlair)) {
+      const appropriateFlair = levelAppearance[userEffectiveLevel]
+        ? levelAppearance[userEffectiveLevel].flair
+        : null;
+
+      if (newFlair !== appropriateFlair) {
+        server.reply({
+          cmd: 'warn',
+          text: 'You may not do that',
+          id: Errors.Global.PERMISSION,
+          channel: targetChannel,
+        }, socket);
+        return;
+      }
+    }
+
     // ensure channel states are initialized
     if (!targetUser.channelStates) {
       targetUser.channelStates = {};
@@ -136,7 +139,7 @@ export async function run({
 
     if (!targetUser.channelStates[targetChannel]) {
       targetUser.channelStates[targetChannel] = {
-        level: getUserLevel(targetUser, targetChannel),
+        level: userEffectiveLevel,
         trip: targetUser.trip,
       };
     }
@@ -144,20 +147,24 @@ export async function run({
     // apply new flair to target
     targetUser.channelStates[targetChannel].flair = newFlair;
 
-    const details = getUserDetails(targetUser, targetChannel);
+    if (!notifiedNicks.has(targetUser.nick)) {
+      const details = getUserDetails(targetUser, targetChannel);
 
-    // broadcast updated user details to the channel
-    server.broadcast({
-      ...details,
-      cmd: 'updateUser',
-      channel: targetChannel,
-    }, (client) => {
-      if (client.channels && client.channels.includes(targetChannel)) {
-        return true;
-      }
+      // broadcast updated user details to the channel
+      server.broadcast({
+        ...details,
+        cmd: 'updateUser',
+        channel: targetChannel,
+      }, (client) => {
+        if (client.channels && client.channels.includes(targetChannel)) {
+          return true;
+        }
 
-      return false;
-    });
+        return false;
+      });
+
+      notifiedNicks.add(targetUser.nick);
+    }
 
     // sync session on target client
     server.reply({

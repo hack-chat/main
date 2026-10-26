@@ -25,7 +25,6 @@ import {
 
 // rpc and core transaction settings
 const RPC_URL = 'https://api.mainnet-beta.solana.com';
-const SERVER_WALLET = 'HaCKy1tUTBDkfUkcYcUFkhC887ucAs3tEjcmqRa5cHat';
 const CACHE_TTL = 30000;
 
 /**
@@ -190,15 +189,11 @@ export async function run({
   // setup public keys
   const senderPubkey = new PublicKey(socket.wallet.address);
   const recipientPubkey = new PublicKey(primaryTarget.wallet.address);
-  const SERVER_ADDRESS = new PublicKey(SERVER_WALLET);
 
-  // calculate transfer amounts and fees
+  // calculate transfer amounts
   const mainAmountLamports = Math.floor(payload.amount * LAMPORTS_PER_SOL);
 
-  const feePercentage = 0.01;
-  const feeAmountLamports = Math.floor(mainAmountLamports * feePercentage);
-
-  if (mainAmountLamports < 1 || feeAmountLamports < 1) {
+  if (mainAmountLamports < 1) {
     return server.reply({
       cmd: 'warn',
       text: 'Invalid amount',
@@ -223,14 +218,6 @@ export async function run({
       fromPubkey: senderPubkey,
       toPubkey: recipientPubkey,
       lamports: mainAmountLamports,
-    }),
-  );
-
-  transaction.add(
-    SystemProgram.transfer({
-      fromPubkey: senderPubkey,
-      toPubkey: SERVER_ADDRESS,
-      lamports: feeAmountLamports,
     }),
   );
 

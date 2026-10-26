@@ -62,9 +62,12 @@ export async function run({
       nick: socket.nick,
       userid: socket.userid,
       channel: targetChannel,
-    }, {
-      channels: (targetChannels) => Array.isArray(targetChannels)
-        && targetChannels.includes(targetChannel),
+    }, (client) => {
+      if (client.channels && client.channels.includes(targetChannel)) {
+        return true;
+      }
+
+      return false;
     });
   }
 

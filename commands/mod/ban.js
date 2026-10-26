@@ -84,48 +84,60 @@ export async function run({
     return true;
   }
 
+  const notifiedChannels = new Set();
+  const loggedNicks = new Set();
+
   banned.forEach((targetUser) => {
     const targetNick = targetUser.nick;
 
     // commit arrest record
     server.police.arrest(targetUser.address, targetUser.hash);
 
-    console.log(`${socket.nick} [${socket.trip}] banned ${targetNick} in ${targetChannel}`);
+    if (!loggedNicks.has(targetNick)) {
+      console.log(`${socket.nick} [${socket.trip}] banned ${targetNick} in ${targetChannel}`);
+      loggedNicks.add(targetNick);
+    }
 
     // broadcast ban notifications
     if (targetUser.channels && Array.isArray(targetUser.channels)) {
       targetUser.channels.forEach((c) => {
-        // notify normal users
-        server.broadcast({
-          cmd: 'info',
-          text: `Banned ${targetNick}`,
-          id: Info.Mod.BANNED,
-          args: { targetNick },
-          user: getUserDetails(targetUser, c),
-          channel: c,
-        }, (client) => {
-          const inChannel = (client.channels && client.channels.includes(c));
-          return inChannel && !isModerator(client, targetChannel);
-        });
+        const dedupeKey = `${targetNick}-${c}`;
 
-        // notify moderators with details
-        server.broadcast({
-          cmd: 'info',
-          text: `${socket.nick}#${socket.trip} banned ${targetNick} in ${targetChannel}, `
-            + `userhash: ${targetUser.hash}`,
-          id: Info.Mod.BANNED_DETAILED,
-          args: {
-            nick: socket.nick,
-            trip: socket.trip,
-            targetNick,
-            currentChannel: targetChannel,
-            hash: targetUser.hash,
-          },
-          channel: c,
-          inChannel: targetChannel,
-          user: getUserDetails(targetUser, c),
-          banner: getUserDetails(socket, c),
-        }, (client) => isModerator(client));
+        if (!notifiedChannels.has(dedupeKey)) {
+          // notify normal users
+          server.broadcast({
+            cmd: 'info',
+            text: `Banned ${targetNick}`,
+            id: Info.Mod.BANNED,
+            args: { targetNick },
+            user: getUserDetails(targetUser, c),
+            channel: c,
+          }, (client) => {
+            const inChannel = (client.channels && client.channels.includes(c));
+            return inChannel && !isModerator(client, targetChannel);
+          });
+
+          // notify moderators with details
+          server.broadcast({
+            cmd: 'info',
+            text: `${socket.nick}#${socket.trip} banned ${targetNick} in ${targetChannel}, `
+              + `userhash: ${targetUser.hash}`,
+            id: Info.Mod.BANNED_DETAILED,
+            args: {
+              nick: socket.nick,
+              trip: socket.trip,
+              targetNick,
+              currentChannel: targetChannel,
+              hash: targetUser.hash,
+            },
+            channel: c,
+            inChannel: targetChannel,
+            user: getUserDetails(targetUser, c),
+            banner: getUserDetails(socket, c),
+          }, (client) => isModerator(client));
+
+          notifiedChannels.add(dedupeKey);
+        }
       });
     }
 
@@ -144,7 +156,7 @@ export async function run({
   });
 
   // update ban stats
-  core.stats.increment('users-banned', banned.length);
+  core.stats.increment('users-banned', loggedNicks.size);
 
   return true;
 }

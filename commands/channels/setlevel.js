@@ -347,24 +347,28 @@ export function setlevelCheck({
 
     // require trip parameter
     if (!input[1]) {
-      return server.reply({
+      server.reply({
         cmd: 'warn',
         text: 'Failed to set level: Invalid trip. Refer to `/help setlevel` for instructions on how to use this command',
         id: Errors.SetLevel.BAD_TRIP,
         channel: targetChannel,
       }, socket);
+
+      return false;
     }
 
     // require level parameter
     if (!input[2]) {
       const validLabels = core.levelLabels.join(', ');
-      return server.reply({
+      server.reply({
         cmd: 'warn',
         text: `Failed to set level: Invalid level label; choices are case sensitive: ${validLabels}`,
         id: Errors.SetLevel.BAD_LABEL,
         args: { validLabels },
         channel: targetChannel,
       }, socket);
+
+      return false;
     }
 
     // trigger standard run execution

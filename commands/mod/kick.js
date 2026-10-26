@@ -118,6 +118,8 @@ export async function run({
     }, (c) => c.channels && c.channels.includes(destChannel));
   });
 
+  const notifiedMods = new Set();
+
   // move all kicked clients to the new channel
   kicked.forEach((client) => {
     // remove from old channel
@@ -182,23 +184,26 @@ export async function run({
     client.shadowBansInverse[targetChannel] = destChannel;
 
     // notify mods of successful kick
-    server.broadcast({
-      cmd: 'info',
-      text: `${client.nick} was banished to ?${destChannel} by ${socket.trip}#${socket.nick}`,
-      id: Info.Mod.KICKED_DETAILED,
-      args: {
-        nick: client.nick,
-        destChannel,
-        kickerTrip: socket.trip,
-        kickerNick: socket.nick,
-      },
-      channel: targetChannel,
-    }, (c) => {
-      const inChannel = (c.channels && c.channels.includes(targetChannel));
-      return inChannel && isChannelModerator(c, targetChannel);
-    });
+    if (!notifiedMods.has(client.nick)) {
+      server.broadcast({
+        cmd: 'info',
+        text: `${client.nick} was banished to ?${destChannel} by ${socket.trip}#${socket.nick}`,
+        id: Info.Mod.KICKED_DETAILED,
+        args: {
+          nick: client.nick,
+          destChannel,
+          kickerTrip: socket.trip,
+          kickerNick: socket.nick,
+        },
+        channel: targetChannel,
+      }, (c) => {
+        const inChannel = (c.channels && c.channels.includes(targetChannel));
+        return inChannel && isChannelModerator(c, targetChannel);
+      });
 
-    console.log(`${socket.nick} [${socket.trip}] kicked ${client.nick} in ${targetChannel} to ${destChannel}`);
+      console.log(`${socket.nick} [${socket.trip}] kicked ${client.nick} in ${targetChannel} to ${destChannel}`);
+      notifiedMods.add(client.nick);
+    }
 
     // trigger client-side resync
     server.send({
@@ -219,7 +224,7 @@ export async function run({
     }, (c) => c.channels && c.channels.includes(targetChannel));
   });
 
-  const kickedNames = kicked.map((k) => k.nick).join(', ');
+  const kickedNames = [...new Set(kicked.map((k) => k.nick))].join(', ');
 
   // publicly broadcast kick event to the old channel
   server.broadcast({
@@ -231,7 +236,7 @@ export async function run({
   }, (c) => c.channels && c.channels.includes(targetChannel));
 
   // stats are fun
-  core.stats.increment('users-kicked', kicked.length);
+  core.stats.increment('users-kicked', kickedNames.split(', ').length);
 
   return true;
 }

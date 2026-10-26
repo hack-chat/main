@@ -139,7 +139,7 @@ export function initHooks(server) {
 export function colorCheck({
   core, server, socket, payload,
 }) {
-  if (typeof payload.text !== 'string') {
+  if (!payload || typeof payload.text !== 'string') {
     return false;
   }
 

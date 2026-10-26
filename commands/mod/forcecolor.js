@@ -107,15 +107,29 @@ export async function run({
     }, socket);
   }
 
+  const notifiedNicks = new Set();
+
   targetUsers.forEach((targetUser) => {
-    // ensure channel states are initialized
+    const userEffectiveLevel = getUserLevel(targetUser, targetChannel);
+
+    // prevent modifying users of equal or higher rank
+    if (userEffectiveLevel >= currentLevel && socket.nick !== targetUser.nick) {
+      server.reply({
+        cmd: 'warn',
+        text: 'You may not do that',
+        id: Errors.Global.PERMISSION,
+        channel: targetChannel,
+      }, socket);
+      return;
+    }
+
     if (!targetUser.channelStates) {
       targetUser.channelStates = {};
     }
 
     if (!targetUser.channelStates[targetChannel]) {
       targetUser.channelStates[targetChannel] = {
-        level: getUserLevel(targetUser, targetChannel),
+        level: userEffectiveLevel,
         trip: targetUser.trip,
       };
     }
@@ -127,20 +141,25 @@ export async function run({
       targetUser.channelStates[targetChannel].color = newColor;
     }
 
-    const details = getUserDetails(targetUser, targetChannel);
+    // deduplicate the public broadcast to the channel
+    if (!notifiedNicks.has(targetUser.nick)) {
+      const details = getUserDetails(targetUser, targetChannel);
 
-    // broadcast updated user details to the channel
-    server.broadcast({
-      ...details,
-      cmd: 'updateUser',
-      channel: targetChannel,
-    }, (client) => {
-      if (client.channels && client.channels.includes(targetChannel)) {
-        return true;
-      }
+      // broadcast updated user details to the channel
+      server.broadcast({
+        ...details,
+        cmd: 'updateUser',
+        channel: targetChannel,
+      }, (client) => {
+        if (client.channels && client.channels.includes(targetChannel)) {
+          return true;
+        }
 
-      return false;
-    });
+        return false;
+      });
+
+      notifiedNicks.add(targetUser.nick);
+    }
 
     // sync session on target client
     server.reply({
